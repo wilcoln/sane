@@ -10,9 +10,9 @@ import os.path as osp
 
 # Load dataset splits
 esnli_dir = osp.join(settings.data_dir, 'esnli')
-train_set = ESNLIDataset(path=esnli_dir, split='train', frac=.05)
-val_set = ESNLIDataset(path=esnli_dir, split='val', frac=.05)
-test_set = ESNLIDataset(path=esnli_dir, split='test', frac=.05)
+train_set = ESNLIDataset(path=esnli_dir, split='train', frac=.01)
+val_set = ESNLIDataset(path=esnli_dir, split='val', frac=.01)
+test_set = ESNLIDataset(path=esnli_dir, split='test', frac=.01)
 
 # Create Loaders
 
