@@ -1,16 +1,17 @@
 import json
 import os
 import os.path as osp
-import time
+from abc import ABC
 from datetime import datetime as dt
-from typing import Any, Callable
 
 import pandas as pd
-import torch.nn.functional as F
+from icecream import ic
+from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
 from torch import nn
 from torch.optim import Optimizer
 from utils.settings import settings
+
 
 def capitalize(underscore_string):
     return ' '.join(w.capitalize() for w in underscore_string.split('_'))
@@ -20,34 +21,39 @@ class BaseTrainer:
     def __init__(self, dataset_name: str = None):
         self.dataset_name = dataset_name
 
-    def train(self, *args, **kwargs) -> float:
+    def train(self, *args, **kwargs) -> dict:
         raise NotImplementedError
 
-    def test(self) -> dict:
+    def eval(self, *args, **kwargs) -> dict:
         raise NotImplementedError
-    
+
+    def test(self, *args, **kwargs) -> dict:
+        raise NotImplementedError
+
     def run(self, *args, **kwargs) -> dict:
         raise NotImplementedError
 
 
-class TorchModuleBaseTrainer(BaseTrainer):
+class TorchModuleBaseTrainer(BaseTrainer, ABC):
     def __init__(self,
                  model: nn.Module,
                  optimizer: Optimizer,
                  num_epochs: int,
-                 device: Any,
-                 *args,
+                 train_loader: DataLoader,
+                 val_loader: DataLoader,
+                 test_loader: DataLoader,
                  num_prints: int = 10,
-                 loss_fn: Callable,
+                 *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         self.model = model
         self.optimizer = optimizer
         self.num_epochs = num_epochs
         self.num_prints = num_prints
-        self.device = device
-        self.loss_fn = loss_fn
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.test_loader = test_loader
 
         self.results = []
 
@@ -64,13 +70,13 @@ class TorchModuleBaseTrainer(BaseTrainer):
             'model': str(self.model),
             'optimizer': str(self.optimizer),
             'num_epochs': self.num_epochs,
-            'device': self.device.type,
+            'device': settings.device.type,
         }
 
         # Create a timestamped and args-explicit named for the results folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
         folder_name = '_'.join([date] + [f'{k}={v}' for k, v in folder_name_dict.items()])
-        results_path = osp.join(settings.RESULTS_DIR, 'trainers', folder_name)
+        results_path = osp.join(settings.results_dir, 'trainers', folder_name)
 
         # Create results folder
         os.makedirs(results_path)
@@ -97,20 +103,15 @@ class TorchModuleBaseTrainer(BaseTrainer):
         # Print path to the results directory
         print(f'Results saved to {results_path}')
 
-    def run(self, return_best_epoch_only=True, val_metric='f1'):
-
+    def run(self, return_best_epoch_only=True, val_metric='acc'):
         for epoch in range(1, self.num_epochs + 1):
-            # Train & test
-            start = time.time()
-            loss = self.train(epoch)
-            train_time = time.time() - start
-
-            start = time.time()
+            # Train, eval & test
+            train_results = self.train()
+            eval_results = self.eval()
             test_results = self.test()
-            test_time = time.time() - start
 
             # Save epoch results
-            epoch_results = {'loss': loss, **test_results, 'train_time': train_time, 'test_time': test_time}
+            epoch_results = {**train_results, **eval_results, **test_results}
 
             # Clean epoch results
             epoch_results = {k: v for k, v in epoch_results.items() if v is not None}

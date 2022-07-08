@@ -1,8 +1,11 @@
-from torch.utils.data import DataLoader
-from icecream import ic
-from torch import nn
-from tqdm import tqdm
+import time
 
+from torch.utils.data import DataLoader
+import torch.optim as optim
+from tqdm import tqdm
+from collections import defaultdict
+
+from utils.trainers import TorchModuleBaseTrainer
 from utils.settings import settings
 from datasets.esnli import ESNLIDataset
 from models.kax import KAX
@@ -10,9 +13,9 @@ import os.path as osp
 
 # Load dataset splits
 esnli_dir = osp.join(settings.data_dir, 'esnli')
-train_set = ESNLIDataset(path=esnli_dir, split='train', frac=.01)
-val_set = ESNLIDataset(path=esnli_dir, split='val', frac=.01)
-test_set = ESNLIDataset(path=esnli_dir, split='test', frac=.01)
+train_set = ESNLIDataset(path=esnli_dir, split='train', frac=settings.data_frac)
+val_set = ESNLIDataset(path=esnli_dir, split='val', frac=settings.data_frac)
+test_set = ESNLIDataset(path=esnli_dir, split='test', frac=settings.data_frac)
 
 # Create Loaders
 train_loader = DataLoader(train_set, batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers)
@@ -23,97 +26,79 @@ test_loader = DataLoader(test_set, batch_size=settings.batch_size, shuffle=False
 model = KAX().to(settings.device)
 
 # Define loss function and optimizer
-import torch.optim as optim
-
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 # Train the network
-from collections import defaultdict
-
 losses = defaultdict(list)
 accuracies = defaultdict(list)
 
 
-# Definition of the Training/Evaluation Function
-def evaluate(dataloader, split):
-    assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
+class KAXTrainer(TorchModuleBaseTrainer):
+    def __init__(self, model, optimizer, train_loader, val_loader, test_loader):
+        super().__init__(model, optimizer, settings.num_epochs, train_loader, val_loader, test_loader)
 
-    train = split == 'train'
+    def evaluate(self, dataloader, split):
+        """Train, Evaluate, and Test the Model"""
+        assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
 
-    model.train() if train else model.eval()
+        train = split == 'train'
 
-    # Set current loss value
-    current_loss = 0.0
+        self.model.train() if train else self.model.eval()
 
-    # Reset values for accuracy computation
-    correct = 0
-    total = 0
+        # Set current loss value
+        current_loss = 0.0
 
-    # Iterate over the DataLoader for training data
-    for i, inputs in tqdm(list(enumerate(dataloader, 0))):
-        inputs['gold_label'] = inputs['gold_label'].long().to(settings.device)
+        # Reset values for accuracy computation
+        correct = 0
+        total = 0
 
-        if train:
-            # zero the parameter gradients
-            optimizer.zero_grad()
+        start = time.time()
+        # Iterate over the DataLoader for training data
+        pbar = tqdm(list(enumerate(dataloader, 0)))
+        description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
+        pbar.set_description(description[split])
+        for i, inputs in pbar:
+            inputs['gold_label'] = inputs['gold_label'].long().to(settings.device)
 
-        # forward pass & compute loss
-        (nles, outputs), loss = model(inputs)
+            if train:
+                # zero the parameter gradients
+                optimizer.zero_grad()
 
-        if train:
-            # backward pass + optimization step
-            loss.backward()
-            optimizer.step()
+            # forward pass & compute loss
+            (nles, outputs), loss = self.model(inputs)
 
-        # Update Loss
-        current_loss += loss.item()
+            if train:
+                # backward pass + optimization step
+                loss.backward()
+                optimizer.step()
 
-        # Update Accuracy
+            # Update Loss
+            current_loss += loss.item()
 
-        _, predicted = outputs.max(1)
-        total += inputs['gold_label'].size(0)
-        correct += predicted.eq(inputs['gold_label']).sum().item()
+            # Update Accuracy
 
-    current_loss /= len(dataloader)
-    current_accuracy = 100. * correct / total
+            _, predicted = outputs.max(1)
+            total += inputs['gold_label'].size(0)
+            correct += predicted.eq(inputs['gold_label']).sum().item()
+        split_time = time.time() - start
 
-    losses[split].append(current_loss)
-    accuracies[split].append(current_accuracy)
+        current_loss /= len(dataloader)
+        current_acc = 100. * correct / total
 
-    print('%s Loss: %.3f | %s Acc: %.1f' % (split.capitalize(), current_loss, split.capitalize(), current_accuracy))
+        return {
+            f'{split}_acc': current_acc,
+            f'{split}_loss': current_loss,
+            f'{split}_time': split_time
+        }
+
+    def train(self) -> dict:
+        return self.evaluate(self.train_loader, 'train')
+
+    def eval(self) -> dict:
+        return self.evaluate(self.val_loader, 'val')
+
+    def test(self) -> dict:
+        return self.evaluate(self.test_loader, 'test')
 
 
-train = lambda: evaluate(train_loader, split='train')
-valid = lambda: evaluate(val_loader, split='val')
-# test = lambda : evaluate(testloader, split='test')
-
-
-# Train & Evaluate
-for epoch in range(settings.num_epochs):  # loop over the dataset multiple times
-    print(f'---\nEpoch {epoch + 1}')
-    train()
-    valid()
-
-print('---\nFinished Training.')
-
-# Plot Learning curves (Loss & Accuracy)
-import matplotlib.pyplot as plt
-
-fig, (ax1, ax2) = plt.subplots(1, 2)
-fig.set_size_inches(16, 6)
-
-ax1.plot(losses['train'], '-o')
-ax1.plot(losses['val'], '-o')
-ax1.set_xlabel('Epochs')
-ax1.set_ylabel('Losses')
-ax1.set_title('Train vs Valid Losses')
-ax1.legend(['Train', 'Valid'])
-
-ax2.plot(accuracies['train'], '-o')
-ax2.plot(accuracies['val'], '-o')
-ax2.set_xlabel('Epochs')
-ax2.set_ylabel('Accuracies')
-ax2.set_title('Train vs Valid Accuracies')
-ax2.legend(['Train', 'Valid'])
-
-plt.show()
+KAXTrainer(model, optimizer, train_loader, val_loader, test_loader).run()

@@ -12,6 +12,8 @@ class ESNLIDataset(torch.utils.data.Dataset):
         assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
 
         super().__init__()
+        self.name = 'esnli'
+
         if split == 'train':
             train_set_1 = pd.read_csv(osp.join(path, 'esnli_train_1.csv'))
             train_set_2 = pd.read_csv(osp.join(path, 'esnli_train_2.csv'))

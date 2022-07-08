@@ -1,5 +1,4 @@
-
-
+import os
 from typing import List
 
 import logging
@@ -12,6 +11,7 @@ from flair.embeddings import WordEmbeddings, DocumentPoolEmbeddings
 from flair.data import Sentence
 
 logging.basicConfig(level='INFO')
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
 
 def bert(sentences: List[str], verbose: bool = False) -> torch.Tensor:
