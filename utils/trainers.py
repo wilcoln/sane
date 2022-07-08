@@ -105,6 +105,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
 
     def run(self, return_best_epoch_only=True, val_metric='acc'):
         for epoch in range(1, self.num_epochs + 1):
+            print(f'Epoch {epoch}')
             # Train, eval & test
             train_results = self.train()
             eval_results = self.eval()
