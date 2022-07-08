@@ -15,7 +15,6 @@ val_set = ESNLIDataset(path=esnli_dir, split='val', frac=.01)
 test_set = ESNLIDataset(path=esnli_dir, split='test', frac=.01)
 
 # Create Loaders
-
 train_loader = DataLoader(train_set, batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers)
 val_loader = DataLoader(val_set, batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers)
 test_loader = DataLoader(test_set, batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers)
