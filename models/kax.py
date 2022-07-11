@@ -16,12 +16,12 @@ class KAX(nn.Module):
 
     def forward(self, inputs):
         # fuse two modalities
-        ic('fusing')
+        # ic('fusing')
         inputs = self.fuser(inputs)
-        ic('explaining')
+        # ic('explaining')
         nles, nle_loss = self.explainer(inputs)
         # fuse explanation and inputs (orthogonal ?)
-        ic('predicting')
+        # ic('predicting')
         outputs, task_loss = self.predictor(inputs, nles)
-        ic('done')
+        # ic('done')
         return nles, outputs, settings.alpha*nle_loss + (1 - settings.alpha)*task_loss
