@@ -1,4 +1,3 @@
-import settings
 from torch import nn
 
 from utils.settings import settings
