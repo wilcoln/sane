@@ -65,7 +65,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 optimizer.zero_grad()
 
             # forward pass & compute loss
-            (nles, outputs), loss = self.model(inputs)
+            nles, outputs, loss = self.model(inputs)
 
             if train:
                 # backward pass + optimization step

@@ -11,14 +11,14 @@ from flair.embeddings import WordEmbeddings, DocumentPoolEmbeddings
 from flair.data import Sentence
 
 logging.basicConfig(level='INFO')
-os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 
 
 def bert(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     """Compute bert embeddings for nodes of a knowledge graph
     Args:
         sentences: text to use for each node
-        verbose: Whether or not to show progress bar
+        verbose: Whether to show progress bar
     Returns:
         A map nodes and their embeddings
     """
