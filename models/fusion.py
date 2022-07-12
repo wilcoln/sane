@@ -1,6 +1,9 @@
+import pandas as pd
 from torch import nn
 
-from utils.embeddings import bert
+import os.path as osp
+from utils.embeddings import bart
+from utils.settings import settings
 
 
 class Fuser(nn.Module):
@@ -8,6 +11,8 @@ class Fuser(nn.Module):
         super().__init__()
 
     def forward(self, inputs):
-        inputs['Sentence1_embeddings'] = bert(inputs['Sentence1'], verbose=False)
-        inputs['Sentence2_embeddings'] = bert(inputs['Sentence2'], verbose=False)
+        if 'Sentences_embeddings' not in inputs:
+            inputs['Sentences'] = [f'{sent1} -> {sent2}' for sent1, sent2 in zip(inputs['Sentence1'], inputs['Sentence2'])]
+            inputs['Sentences_embeddings'] = bart(inputs['Sentences'])
+
         return inputs

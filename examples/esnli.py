@@ -1,5 +1,6 @@
 import time
 
+from icecream import ic
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from tqdm import tqdm
@@ -13,9 +14,13 @@ import os.path as osp
 
 # Load dataset splits
 esnli_dir = osp.join(settings.data_dir, 'esnli')
-train_set = ESNLIDataset(path=esnli_dir, split='train', frac=settings.data_frac)
-val_set = ESNLIDataset(path=esnli_dir, split='val', frac=settings.data_frac)
-test_set = ESNLIDataset(path=esnli_dir, split='test', frac=settings.data_frac)
+conceptnet_path = osp.join(settings.data_dir, 'conceptnet', 'conceptnet-assertions-5.6.0_cleaned.csv')
+train_set = ESNLIDataset(path=esnli_dir, split='train', frac=settings.data_frac, add_conceptnet=True)
+
+# Print 5 first datapoints of train_set
+exit()
+val_set = ESNLIDataset(path=esnli_dir, split='val', frac=settings.data_frac, add_conceptnet=True)
+test_set = ESNLIDataset(path=esnli_dir, split='test', frac=settings.data_frac, add_conceptnet=True)
 
 # Create Loaders
 train_loader = DataLoader(train_set, batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers)

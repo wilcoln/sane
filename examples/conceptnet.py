@@ -4,25 +4,49 @@ import json
 
 from utils.settings import settings
 
-concept_path = osp.join(settings.data_dir, 'conceptnet/conceptnet-assertions-5.6.0.csv')
-cn = pd.read_csv(concept_path, sep='\t')
 
-# adding column name to the respective columns
-cn.columns = ['uri', 'relation', 'source', 'target', 'data']
+def clean():
+    conceptnet_path = osp.join(settings.data_dir, 'conceptnet/conceptnet-assertions-5.6.0.csv')
+    cn = pd.read_csv(conceptnet_path, sep='\t')
 
-# Remove uri column
-cn.drop(columns=['uri'], inplace=True)
+    # adding column name to the respective columns
+    cn.columns = ['uri', 'relation', 'source', 'target', 'data']
 
-# Keep only rows where language of the source and target is English
-cn = cn[(cn['source'].str.contains('/c/en/')) & (cn['target'].str.contains('/c/en/'))]
+    # Remove uri column
+    cn.drop(columns=['uri'], inplace=True)
 
-# Keep only the weight data
-cn['weight'] = cn.data.apply(lambda x: json.loads(x)['weight'])
+    # Keep only rows where language of the source and target is English
+    cn = cn[(cn['source'].str.contains('/c/en/')) & (cn['target'].str.contains('/c/en/'))]
 
-# Drop data column
-cn.drop(columns=['data'], inplace=True)
+    # Keep only the weight data
+    cn['weight'] = cn.data.apply(lambda x: json.loads(x)['weight'])
 
-# Drop duplicate rows
-cn.drop_duplicates(inplace=True)
+    # Drop data column
+    cn.drop(columns=['data'], inplace=True)
 
-cn.to_csv(osp.join(concept_path.replace('.csv', '_cleaned.csv')), index=False)
+    # Remove prefixes from the relation, source and target
+    cn['relation'] = cn['relation'].apply(lambda x: x.replace('/r/', ''))
+    cn['source'] = cn['source'].apply(lambda x: x.replace('/c/en/', ''))
+    cn['target'] = cn['target'].apply(lambda x: x.replace('/c/en/', ''))
+
+    # # Replace underscores with spaces
+    # cn['relation'] = cn['relation'].apply(lambda x: x.replace('_', ' '))
+    # cn['source'] = cn['source'].apply(lambda x: x.replace('_', ' '))
+    # cn['target'] = cn['target'].apply(lambda x: x.replace('_', ' '))
+
+    # Replace node letter type with word type
+    synset_types = [
+        ('/n', '/noun'),
+        ('/v', '/verb'),
+        ('/a', '/adjective'),
+        ('/r', '/adverb'),
+        ('/s', '/adjective_satellite'),
+    ]
+    for synset_type, word_type in synset_types:
+        cn['source'] = cn['source'].apply(lambda x: x.replace(synset_type, word_type))
+        cn['target'] = cn['target'].apply(lambda x: x.replace(synset_type, word_type))
+
+    # Drop duplicate rows
+    cn.drop_duplicates(inplace=True)
+
+    cn.to_csv(osp.join(conceptnet_path.replace('.csv', '_cleaned.csv')), index=False)

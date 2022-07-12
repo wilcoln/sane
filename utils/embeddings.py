@@ -4,6 +4,7 @@ from typing import List
 import logging
 import numpy as np
 import torch
+from transformers import BartTokenizer, BartModel
 
 from utils.settings import settings
 from sentence_transformers import SentenceTransformer
@@ -14,8 +15,35 @@ logging.basicConfig(level='INFO')
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 
 
-def bert(sentences: List[str], verbose: bool = False) -> torch.Tensor:
-    """Compute bert embeddings for nodes of a knowledge graph
+def transformer_mean_pooling(model_outputs, encoded_inputs):
+    token_embeddings = model_outputs['encoder_last_hidden_state']
+    input_mask_expanded = encoded_inputs['attention_mask'].unsqueeze(-1).expand(token_embeddings.size()).float()
+    sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+    sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    return sum_embeddings / sum_mask
+
+
+def bart(sentences: List[str]) -> torch.Tensor:
+    """Compute bart embeddings for texts.
+    Args:
+        sentences: text to use for each node
+    Returns:
+        embeddings: embeddings for each node
+
+    """
+
+    # ic | encoded_input.keys(): dict_keys(['input_ids', 'attention_mask'])
+    # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
+    model = BartModel.from_pretrained("facebook/bart-large")
+    tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
+    encoded_inputs = tokenizer(sentences, max_length=1024, truncation=True, padding=True, return_tensors='pt')
+    model_outputs = model(**encoded_inputs)
+
+    return transformer_mean_pooling(model_outputs, encoded_inputs)
+
+
+def sbert(sentences: List[str], verbose: bool = False) -> torch.Tensor:
+    """Compute sbert embeddings for nodes of a knowledge graph
     Args:
         sentences: text to use for each node
         verbose: Whether to show progress bar
