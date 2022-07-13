@@ -14,10 +14,13 @@ import os.path as osp
 
 # Load dataset splits
 esnli_dir = osp.join(settings.data_dir, 'esnli')
-conceptnet_path = osp.join(settings.data_dir, 'conceptnet', 'conceptnet-assertions-5.6.0_cleaned.csv')
-train_set = ESNLIDataset(path=esnli_dir, split='train', frac=settings.data_frac, add_conceptnet=True)
-val_set = ESNLIDataset(path=esnli_dir, split='val', frac=settings.data_frac, add_conceptnet=True)
-test_set = ESNLIDataset(path=esnli_dir, split='test', frac=settings.data_frac, add_conceptnet=True)
+train_set = ESNLIDataset(path=esnli_dir, split='train', frac=settings.data_frac, with_conceptnet=True)
+val_set = ESNLIDataset(path=esnli_dir, split='val', frac=settings.data_frac, with_conceptnet=True)
+test_set = ESNLIDataset(path=esnli_dir, split='test', frac=settings.data_frac, with_conceptnet=True)
+
+ic(train_set[:2])
+ic(val_set[:2])
+ic(test_set[:2])
 exit()
 
 # Create Loaders

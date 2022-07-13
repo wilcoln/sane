@@ -1,8 +1,7 @@
 import torch.utils.data
 import pandas as pd
 import os.path as osp
-from tqdm import tqdm 
-from icecream import ic
+from tqdm import tqdm
 from utils.settings import settings
 
 
@@ -10,21 +9,24 @@ class ESNLIDataset(torch.utils.data.Dataset):
     """
     A dataset for ESNLI
     """
-    def __init__(self, path: str, split: str = 'train', frac=1.0, add_conceptnet=False):
+
+    def __init__(self, path: str, split: str = 'train', frac=1.0, with_conceptnet=False):
         assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
         assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
 
         super().__init__()
         self.name = f'esnli_{split}'
 
-        if split == 'train':
-            train_set_1 = pd.read_csv(osp.join(path, 'esnli_train_1.csv'))
-            train_set_2 = pd.read_csv(osp.join(path, 'esnli_train_2.csv'))
-            self.esnli = pd.concat([train_set_1, train_set_2], axis=0, ignore_index=True)
-        elif split == 'val':
-            self.esnli = pd.read_csv(osp.join(path, 'esnli_dev.csv'))
-        elif split == 'test':
-            self.esnli = pd.read_csv(osp.join(path, 'esnli_test.csv'))
+        # Load the dataframe
+        if with_conceptnet:
+            self.esnli = pd.read_csv(osp.join(path, f'{self.name}_conceptnet.csv'))
+        else:
+            if split == 'train':
+                train_set_1 = pd.read_csv(osp.join(path, 'esnli_train_1.csv'))
+                train_set_2 = pd.read_csv(osp.join(path, 'esnli_train_2.csv'))
+                self.esnli = pd.concat([train_set_1, train_set_2], axis=0, ignore_index=True)
+            else:
+                self.esnli = pd.read_csv(osp.join(path, f'{self.name}.csv'))
 
         # Randomly sample a subset of the data
         if frac < 1:
@@ -39,17 +41,13 @@ class ESNLIDataset(torch.utils.data.Dataset):
         # Add sentence1 and sentence2 as a list of words
         self.esnli['Sentences'] = self.esnli['Sentence1'] + '->' + self.esnli['Sentence2']
 
-        # Add conceptnet data
-        if add_conceptnet is not None:
-            self.augment()
-
     def __len__(self):
         return len(self.esnli)
 
     def __getitem__(self, i):
         return dict(self.esnli.iloc[i])
 
-    def augment(self):
+    def add_conceptnet(self, save=True):
         conceptnet_path = osp.join(settings.data_dir, 'conceptnet', 'conceptnet-assertions-5.6.0_cleaned.csv')
         cn = pd.read_csv(conceptnet_path)
 
@@ -76,9 +74,7 @@ class ESNLIDataset(torch.utils.data.Dataset):
         #     # get the triples in cn with matching inputs and labels and add them to the esnli dataframe
         #     self.esnli.loc[i, 'triples'] = triples.to_dict('records')
 
-        
         self.esnli.reset_index(drop=True, inplace=True)
-                
         for i, row in tqdm(self.esnli.iterrows(), total=len(self.esnli)):
             row_vocab = set(row['Sentences'].lower().split(' '))
             # get the triples in cn with matching inputs and labels
@@ -89,13 +85,6 @@ class ESNLIDataset(torch.utils.data.Dataset):
         # Drop useless columns
         self.esnli.drop(columns=['Sentences'], inplace=True, errors='ignore')
         # Save the augmented dataframe to a csv file
-        self.esnli.to_csv(osp.join(settings.data_dir, 'esnli', f'{self.name}_conceptnet.csv'), index=False)
 
-
-
-
-
-
-
-
-
+        if save:
+            self.esnli.to_csv(osp.join(settings.data_dir, 'esnli', f'{self.name}_conceptnet.csv'), index=False)
