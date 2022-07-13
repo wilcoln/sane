@@ -1,7 +1,8 @@
 import torch.utils.data
 import pandas as pd
 import os.path as osp
-
+from tqdm import tqdm 
+from icecream import ic
 from utils.settings import settings
 
 
@@ -75,15 +76,20 @@ class ESNLIDataset(torch.utils.data.Dataset):
         #     # get the triples in cn with matching inputs and labels and add them to the esnli dataframe
         #     self.esnli.loc[i, 'triples'] = triples.to_dict('records')
 
-        for i, row in self.esnli.iterrows():
-            row_vocab = set(row['Sentences'].split(' '))
+        
+        self.esnli.reset_index(drop=True, inplace=True)
+                
+        for i, row in tqdm(self.esnli.iterrows(), total=len(self.esnli)):
+            row_vocab = set(row['Sentences'].lower().split(' '))
             # get the triples in cn with matching inputs and labels
             triples = cn[cn['source'].isin(row_vocab) | cn['target'].isin(row_vocab)].index.astype('str').tolist()
             # get the triples in cn with matching inputs and labels and add them to the esnli dataframe
-            self.esnli.loc[i, 'triple_ids'] = ', '.join(triples)
+            self.esnli.loc[i, 'Triple_ids'] = ', '.join(triples)
 
+        # Drop useless columns
+        self.esnli.drop(columns=['Sentences'], inplace=True, errors='ignore')
         # Save the augmented dataframe to a csv file
-        self.esnli.to_csv(osp.join(settings.data_dir, 'esnli', f'{self.name}_augmented.csv'), index=False)
+        self.esnli.to_csv(osp.join(settings.data_dir, 'esnli', f'{self.name}_conceptnet.csv'), index=False)
 
 
 
