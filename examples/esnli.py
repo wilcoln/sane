@@ -18,11 +18,6 @@ train_set = ESNLIDataset(path=esnli_dir, split='train', frac=settings.data_frac,
 val_set = ESNLIDataset(path=esnli_dir, split='val', frac=settings.data_frac, with_conceptnet=True)
 test_set = ESNLIDataset(path=esnli_dir, split='test', frac=settings.data_frac, with_conceptnet=True)
 
-ic(train_set[:2])
-ic(val_set[:2])
-ic(test_set[:2])
-exit()
-
 # Create Loaders
 train_loader = DataLoader(train_set, batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers)
 val_loader = DataLoader(val_set, batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers)
