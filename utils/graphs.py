@@ -26,36 +26,32 @@ def get_nodes_and_relations(conceptnet_df):
 concept_df, relation_df = get_nodes_and_relations(conceptnet_df)
 
 
-def triple_ids_to_pyg_data(triple_ids):
+def triple_ids_to_pyg_data(subgraph_list):
     """
-    Convert a list of conceptnet triples to pytorch geometric data.
+    Convert a list of list of conceptnet triples to pytorch geometric data.
     """
-    data = HeteroData()
+    data_list = []
+    for subgraph in subgraph_list:
+        triple_ids  = [int(i) for i in subgraph.split(',')]
+        data = HeteroData()
 
-    triples = conceptnet_df.iloc[triple_ids]
+        triples_df = conceptnet_df.iloc[triple_ids]
 
-    ic(triples)
+        ic(triples_df)
 
-    # Load nodes
-    concepts, relations = get_nodes_and_relations(triples)
-    mapping = {index: i for i, index in enumerate(concepts.index)}
-    data['concept'].num_nodes = len(mapping)
-    data['concept'].x = bart(concepts['name'].tolist())
+        # Load nodes
+        concepts, relations = get_nodes_and_relations(triples_df)
+        mapping = {index: i for i, index in enumerate(concepts.index)}
+        data['concept'].num_nodes = len(mapping)
+        data['concept'].x = bart(concepts['name'].tolist())
 
-    # Load edges
-    for relation in relations['name']:
-        src = [mapping[i] for i in triples[triples['relation'] == relation]['source_id'].tolist()]
-        dst = [mapping[i] for i in triples[triples['relation'] == relation]['target_id'].tolist()]
-        data['concept', relation, 'concept'].edge_index = torch.tensor([src, dst])
-        data['concept', relation, 'concept'].edge_label = bart([relation]).repeat(len(src))
-        # Ignoring weight for now
+        # Load edges
+        for relation in relations['name']:
+            src = [mapping[i] for i in triples_df[triples_df['relation'] == relation]['source_id'].tolist()]
+            dst = [mapping[i] for i in triples_df[triples_df['relation'] == relation]['target_id'].tolist()]
+            data['concept', relation, 'concept'].edge_index = torch.tensor([src, dst])
+            data['concept', relation, 'concept'].edge_label = bart([relation]).repeat(len(src), 1)
+            # Ignoring weight for now
 
-    ic(data)
-    return data
-
-
-pyg_data = triple_ids_to_pyg_data(list(range(10)))
-
-ic(pyg_data)
-
-
+        data_list.append(data)
+    return data_list

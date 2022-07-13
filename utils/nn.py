@@ -1,5 +1,7 @@
 from torch import nn
 import torch.nn.functional as F
+from torch_geometric.nn import SAGEConv, to_hetero, global_add_pool
+
 
 
 class MLP(nn.Module):
@@ -41,3 +43,20 @@ class MLP(nn.Module):
     def reset_parameters(self):
         for layer in self.layers:
             layer.reset_parameters()
+
+
+class GNN(nn.Module):
+    def __init__(self, hidden_channels, out_channels=None):
+        super().__init__()
+        out_channels = out_channels if out_channels is not None else hidden_channels
+
+        self.conv1 = SAGEConv((-1, -1), hidden_channels)
+        self.conv2 = SAGEConv((-1, -1), out_channels)
+
+    def forward(self, data):
+        x, edge_index = data.x, data.edge_index
+        x = self.conv1(x, edge_index).relu()
+        x = self.conv2(x, edge_index)
+        x = global_mean_pool(x, data.batch)
+        # x = self.mlp(x)
+        # return x
