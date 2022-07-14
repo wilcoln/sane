@@ -5,7 +5,7 @@ import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_epochs', help='Number of epochs', type=int, default=10)
-parser.add_argument('--batch_size', help='Batch size', type=int, default=3)
+parser.add_argument('--batch_size', help='Batch size', type=int, default=32)
 parser.add_argument('--colab', action='store_true', help="whether we are running on google colab", default=False)
 parser.add_argument('--dataset', help='Dataset to use', type=str)
 parser.add_argument('--ignore_datasets', nargs='*', help='Datasets to ignore', type=str)

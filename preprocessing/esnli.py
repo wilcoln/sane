@@ -7,7 +7,7 @@ from icecream import ic
 from utils.embeddings import bart
 from utils.settings import settings
 import os.path as osp
-
+import pickle
 
 # Load dataset
 esnli_dir = osp.join(settings.data_dir, 'esnli')
@@ -59,7 +59,7 @@ def reduce_to_toy(train_set, val_set, test_set):
     test_set.to_csv(osp.join(esnli_toy_dir, 'esnli_test.csv'), index=False)
 
 
-reduce_to_toy(train_set, val_set, test_set)
+# reduce_to_toy(train_set, val_set, test_set)
 
 
 # Load toy dataset
@@ -68,15 +68,24 @@ train_set = pd.read_csv(osp.join(esnli_toy_dir, 'esnli_train.csv'))
 val_set = pd.read_csv(osp.join(esnli_toy_dir, 'esnli_val.csv'))
 test_set = pd.read_csv(osp.join(esnli_toy_dir, 'esnli_test.csv'))
 
-# Encode dataset
 # Convert categorical variables from String to int representation
-train_set['gold_label'] = train_set['gold_label'].astype('category').cat.codes
+split_set_dict  = {'train': train_set, 'val': val_set, 'test': test_set}
 
-train_set = train_set.head(10).to_dict(orient='list')
-train_set['Sentence1_Embeddings'] = bart(train_set['Sentence1'])
-train_set['Sentence2_Embeddings'] = bart(train_set['Sentence2'])
+for split, split_set in split_set_dict.items():
+    ic(f'Starting {split} split')
 
-ic(train_set)
+    split_set['gold_label'] = split_set['gold_label'].astype('category').cat.codes
 
+    split_set = split_set.to_dict(orient='list')
 
+    # Encode sentences
+    ic(f'Encoding {split} split')
+    split_set['Sentence1_Embeddings'] = bart(split_set['Sentence1'])
+    split_set['Sentence2_Embeddings'] = bart(split_set['Sentence2'])
+
+    # write split_set to pickle_file
+    ic(f'Dumping pickle file for {split} split')
+    split_set_file = osp.join(esnli_toy_dir, f'esnli_{split}.pkl')
+    with open(split_set_file, 'wb') as f:
+        pickle.dump(split_set, f)
 

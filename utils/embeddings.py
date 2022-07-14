@@ -2,6 +2,7 @@ import os
 from typing import List
 
 import logging
+from tqdm import tqdm
 import numpy as np
 import torch
 from transformers import BartTokenizer, BartModel
@@ -34,12 +35,17 @@ def bart(sentences: List[str]) -> torch.Tensor:
 
     # ic | encoded_input.keys(): dict_keys(['input_ids', 'attention_mask'])
     # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
-    model = BartModel.from_pretrained("facebook/bart-large")
-    tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
-    encoded_inputs = tokenizer(sentences, max_length=1024, truncation=True, padding=True, return_tensors='pt')
-    model_outputs = model(**encoded_inputs)
+    batches = [sentences[i:i + 512] for i in range(0, len(sentences), 512)]
+    encoded_batches = []
 
-    return transformer_mean_pooling(model_outputs, encoded_inputs)
+    for batch in tqdm(batches):
+        model = BartModel.from_pretrained("facebook/bart-large")
+        tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
+        encoded_inputs = tokenizer(batch, max_length=1024, truncation=True, padding=True, return_tensors='pt')
+        model_outputs = model(**encoded_inputs)
+        encoded_batch = transformer_mean_pooling(model_outputs, encoded_inputs)
+
+    return torch.cat(encoded_batches, dim=0)
 
 
 def sbert(sentences: List[str], verbose: bool = False) -> torch.Tensor:

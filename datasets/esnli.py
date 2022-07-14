@@ -3,6 +3,8 @@ import pandas as pd
 import os.path as osp
 from tqdm import tqdm
 from utils.settings import settings
+import pickle
+from icecream import ic
 
 
 class ESNLIDataset(torch.utils.data.Dataset):
@@ -10,42 +12,22 @@ class ESNLIDataset(torch.utils.data.Dataset):
     A dataset for ESNLI
     """
 
-    def __init__(self, path: str, split: str = 'train', frac=1.0, with_conceptnet=False):
+    def __init__(self, path: str, split: str = 'train', frac=1.0):
         assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
         assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
 
         super().__init__()
         self.name = f'esnli_{split}'
 
-        # Load the dataframe
-        if with_conceptnet:
-            self.esnli = pd.read_csv(osp.join(path, f'{self.name}_conceptnet.csv'))
-        else:
-            if split == 'train':
-                train_set_1 = pd.read_csv(osp.join(path, 'esnli_train_1.csv'))
-                train_set_2 = pd.read_csv(osp.join(path, 'esnli_train_2.csv'))
-                self.esnli = pd.concat([train_set_1, train_set_2], axis=0, ignore_index=True)
-            else:
-                self.esnli = pd.read_csv(osp.join(path, f'{self.name}.csv'))
-
-        # Randomly sample a subset of the data
-        if frac < 1:
-            self.esnli = self.esnli.sample(frac=frac)
-
-        # Drop useless columns
-        self.esnli.drop(columns=['pairID', 'WorkerId'], inplace=True, errors='ignore')
-
-        # Convert categorical variables from String to int representation
-        self.esnli['gold_label'] = self.esnli['gold_label'].astype('category').cat.codes
-
-        # Add sentence1 and sentence2 as a list of words
-        self.esnli['Sentences'] = self.esnli['Sentence1'] + '->' + self.esnli['Sentence2']
+        # Load pickle file
+        esnli_path = osp.join(path, f'{self.name}.pkl')
+        self.esnli = pickle.load(open(esnli_path, 'rb'))
 
     def __len__(self):
-        return len(self.esnli)
+        return len(self.esnli['gold_label'])
 
     def __getitem__(self, i):
-        return dict(self.esnli.iloc[i])
+        return {k: v[i] for k, v in self.esnli.items()}
 
     def add_conceptnet(self, save=True):
         conceptnet_path = osp.join(settings.data_dir, 'conceptnet', 'conceptnet-assertions-5.6.0_cleaned.csv')
