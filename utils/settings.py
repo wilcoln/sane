@@ -27,8 +27,7 @@ parser.add_argument('--num_runs', help='Number of runs', type=int, default=1)
 parser.add_argument('--std', action='store_true', help='Include standard deviation in table output', default=False)
 parser.add_argument('--alpha',  help='Alpha', type=float, default=.4)
 parser.add_argument('--data_frac', help='Fraction of data to use', type=float, default=0.001)
-settings = parser.parse_args()
-
+settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
 
 if settings.colab:

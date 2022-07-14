@@ -32,7 +32,7 @@ def triple_ids_to_pyg_data(subgraph_list):
     """
     data_list = []
     for subgraph in subgraph_list:
-        triple_ids  = [int(i) for i in subgraph.split(',')]
+        triple_ids = [int(i) for i in subgraph.split(',')]
         data = HeteroData()
 
         triples_df = conceptnet_df.iloc[triple_ids]
