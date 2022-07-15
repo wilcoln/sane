@@ -1,6 +1,7 @@
+from icecream import ic
 from torch import nn
 import torch.nn.functional as F
-from torch_geometric.nn import SAGEConv, to_hetero, global_add_pool
+from torch_geometric.nn import SAGEConv, to_hetero, global_add_pool, HeteroConv, Linear
 
 
 
@@ -55,8 +56,34 @@ class GNN(nn.Module):
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
+        x = x.view(-1, 384) # TODO remove
         x = self.conv1(x, edge_index).relu()
         x = self.conv2(x, edge_index)
-        x = global_mean_pool(x, data.batch)
+        x = global_add_pool(x, data.batch)
         # x = self.mlp(x)
-        # return x
+        return x
+
+
+class HeteroGNN(nn.Module):
+    def __init__(self, metadata, hidden_channels, out_channels=None, num_layers=2):
+        super().__init__()
+        out_channels = out_channels if out_channels is not None else hidden_channels
+
+        self.convs = nn.ModuleList()
+        for _ in range(num_layers):
+            conv = HeteroConv({
+                edge_type: SAGEConv((-1, -1), hidden_channels)
+                for edge_type in metadata[1]
+            })
+            self.convs.append(conv)
+
+        self.lin = Linear(hidden_channels, out_channels)
+
+    def forward(self, data):
+        x_dict, edge_index_dict = data.x_dict, data.edge_index_dict
+        for conv in self.convs:
+            x_dict = conv(x_dict, edge_index_dict)
+            x_dict = {key: F.leaky_relu(x) for key, x in x_dict.items()}
+            # return self.lin(x_dict['author'])
+        x = global_mean_pool(x['concept'], data.batch)
+        return x

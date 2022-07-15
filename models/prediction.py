@@ -11,7 +11,7 @@ class Predictor(nn.Module):
         self.mlp = MLP(in_channels=384*4, out_channels=3, hidden_channels=settings.hidden_dim)
 
     def forward(self, inputs, nles):
-        embeddings = torch.cat([inputs['Sentence1_embeddings'], inputs['Sentence2_embeddings'], nles], dim=1)
+        embeddings = torch.cat([inputs['Sentences_embedding'], nles], dim=1)
         outputs = self.mlp(embeddings)
         loss = loss_fn(outputs, inputs['gold_label'])
 

@@ -32,7 +32,7 @@ concept_list, relation_list = concept_df['name'].tolist(), relation_df['name'].t
 concept_embedding_path = osp.join(settings.data_dir, 'conceptnet', 'concept_embedding.pkl')
 relation_embedding_path = osp.join(settings.data_dir, 'conceptnet', 'relation_embedding.pkl')
 try:
-    raise Exception
+    ic('Loading encoded concepts')
     concept_embedding = pickle.load(open(concept_embedding_path, 'rb'))
     relation_embedding = pickle.load(open(relation_embedding_path, 'rb'))
 except:
@@ -64,16 +64,15 @@ def triple_ids_to_pyg_data(triple_ids_list):
 
         triples_df = conceptnet_df.loc[triple_ids]
 
-        ic(triples_df)
-
         # Load nodes
         concepts, relations = get_nodes_and_relations(triples_df)
         mapping = {index: i for i, index in enumerate(concepts.index)}
         data['concept'].num_nodes = len(mapping)
         data['concept'].x = torch.cat([concept_embedding[concept_list.index(concept)] for concept in concepts['name']], dim=0)
+        # TODO: Dimension here is not ok, needs to reshape .view(num_nodes, -1)
 
         # Load edges
-        for i, relation in enumerate(relations['name']):
+        for relation in relations['name']:
             src = [mapping[i] for i in triples_df[triples_df['relation'] == relation]['source_id'].tolist()]
             dst = [mapping[i] for i in triples_df[triples_df['relation'] == relation]['target_id'].tolist()]
             data['concept', relation, 'concept'].edge_index = torch.tensor([src, dst])
