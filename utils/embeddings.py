@@ -39,7 +39,7 @@ def bart(sentences: List[str], verbose: bool = False, use_cache=False) -> torch.
     # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
     model = BartModel.from_pretrained("facebook/bart-large")
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
-    batches = [sentences[i:i + 512] for i in range(0, len(sentences), 512)]
+    batches = [sentences[i:i + 256] for i in range(0, len(sentences), 256)]
 
     batches = tqdm(batches) if verbose else batches
 
