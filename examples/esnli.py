@@ -13,10 +13,12 @@ from models.kax import KAX
 import os.path as osp
 
 # Load dataset splits
-esnli_dir = osp.join(settings.data_dir, 'esnli')
-train_set = ESNLIDataset(path=esnli_dir, split='train', frac=settings.data_frac, with_conceptnet=True)
-val_set = ESNLIDataset(path=esnli_dir, split='val', frac=settings.data_frac, with_conceptnet=True)
-test_set = ESNLIDataset(path=esnli_dir, split='test', frac=settings.data_frac, with_conceptnet=True)
+esnli_dir = osp.join(settings.data_dir, 'esnli', 'toy')
+train_set = ESNLIDataset(path=esnli_dir, split='train')
+
+ic(train_set[:5])
+val_set = ESNLIDataset(path=esnli_dir, split='val')
+test_set = ESNLIDataset(path=esnli_dir, split='test')
 
 # Create Loaders
 train_loader = DataLoader(train_set, batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers)

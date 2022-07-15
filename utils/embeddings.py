@@ -1,5 +1,7 @@
 import os
+import os.path as osp
 from typing import List
+import pickle
 
 import logging
 from tqdm import tqdm
@@ -24,7 +26,7 @@ def transformer_mean_pooling(model_outputs, encoded_inputs):
     return sum_embeddings / sum_mask
 
 
-def bart(sentences: List[str]) -> torch.Tensor:
+def bart(sentences: List[str], verbose: bool = False, use_cache=False) -> torch.Tensor:
     """Compute bart embeddings for texts.
     Args:
         sentences: text to use for each node
@@ -35,17 +37,36 @@ def bart(sentences: List[str]) -> torch.Tensor:
 
     # ic | encoded_input.keys(): dict_keys(['input_ids', 'attention_mask'])
     # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
+    model = BartModel.from_pretrained("facebook/bart-large")
+    tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
     batches = [sentences[i:i + 512] for i in range(0, len(sentences), 512)]
-    encoded_batches = []
 
-    for batch in tqdm(batches):
-        model = BartModel.from_pretrained("facebook/bart-large")
-        tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
+    batches = tqdm(batches) if verbose else batches
+
+    for i, batch in enumerate(batches):
         encoded_inputs = tokenizer(batch, max_length=1024, truncation=True, padding=True, return_tensors='pt')
         model_outputs = model(**encoded_inputs)
         encoded_batch = transformer_mean_pooling(model_outputs, encoded_inputs)
 
-    return torch.cat(encoded_batches, dim=0)
+        if use_cache:
+            with open(osp.join(settings.cache_dir, f'bart{i}.pkl'), 'wb') as f:
+                pickle.dump(encoded_batch, f)
+           
+        else:
+            if i == 0:
+                encoded_batches = encoded_batch
+            else:
+                encoded_batches = torch.cat([encoded_batches, encoded_batch], dim=0)
+    if use_cache:
+        del model, tokenizer
+        for i in range(len(batches)): 
+            encoded_batch = pickle.load(open(osp.join(settings.cache_dir, f'bart{i}.pkl'), 'rb'))
+            if i == 0:
+                encoded_batches = encoded_batch
+            else:
+                encoded_batches = torch.cat([encoded_batches, encoded_batch], dim=0)
+
+    return encoded_batches
 
 
 def sbert(sentences: List[str], verbose: bool = False) -> torch.Tensor:

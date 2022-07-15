@@ -78,10 +78,10 @@ for split, split_set in split_set_dict.items():
 
     split_set = split_set.to_dict(orient='list')
 
-    # Encode sentences
-    ic(f'Encoding {split} split')
-    split_set['Sentence1_Embeddings'] = bart(split_set['Sentence1'])
-    split_set['Sentence2_Embeddings'] = bart(split_set['Sentence2'])
+    # # Encode sentences
+    # ic(f'Encoding {split} split')
+    # split_set['Sentence1_Embeddings'] = bart(split_set['Sentence1'])
+    # split_set['Sentence2_Embeddings'] = bart(split_set['Sentence2'])
 
     # write split_set to pickle_file
     ic(f'Dumping pickle file for {split} split')
