@@ -105,7 +105,8 @@ class KAXTrainer(TorchModuleBaseTrainer):
         return self.evaluate(self.val_loader, 'val')
 
     def test(self) -> dict:
-        return self.evaluate(self.test_loader, 'test')
+        return dict()
+        # return self.evaluate(self.test_loader, 'test')
 
 
 KAXTrainer(model, optimizer, train_loader, val_loader, test_loader).run()

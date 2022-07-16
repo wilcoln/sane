@@ -21,7 +21,7 @@ class Explainer(nn.Module):
         # send tensors to gpu
         encoded_inputs = {k: v.to(settings.device) for k, v in encoded_inputs.items()}
         encoded_labels = {k: v.to(settings.device) for k, v in encoded_labels.items()}
-
-        model_outputs = self.model(**encoded_inputs, labels=encoded_labels['input_ids'])
+        encoded_knowledge = {'knowledge_embedding': inputs['Knowledge_embedding']}
+        model_outputs = self.model(**encoded_inputs, **encoded_knowledge, labels=encoded_labels['input_ids'])
 
         return transformer_mean_pooling(model_outputs, encoded_inputs), model_outputs['loss']
