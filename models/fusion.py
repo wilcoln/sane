@@ -18,7 +18,8 @@ class Fuser(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.gnn = GNN(hidden_channels=32)  # HeteroGNN(metadata=kwargs['metadata'], hidden_channels=32)
+        self.gnn = GNN(hidden_channels=settings.hidden_dim)  # HeteroGNN(metadata=kwargs['metadata'],
+        # hidden_channels=32)
 
     def forward(self, inputs):
         # frozen lm encoder

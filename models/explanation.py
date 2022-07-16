@@ -10,6 +10,7 @@ class Explainer(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.model = BartForExplanationGeneration.from_pretrained("facebook/bart-large")
+        self.model.knowledge_d = settings.hidden_dim
         self.tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
 
     def forward(self, inputs):
