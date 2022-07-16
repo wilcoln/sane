@@ -23,7 +23,7 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         # Initialize weights and apply final processing
         self.post_init()
 
-    def set_lm_head(self, knowledge_dim):
+    def set_lm_head(self, knowledge_dim: int):
         self.lm_head = nn.Linear(self.config.d_model + knowledge_dim, self.model.shared.num_embeddings, bias=False)
 
     def forward(
