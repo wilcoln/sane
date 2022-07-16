@@ -25,9 +25,9 @@ def collate_fn(batch):
     return {key: (default_collate([d[key] for d in batch]) if key != 'pyg_data' else [d[key] for d in batch] ) for key in elem}
 
 # Create Loaders
-train_loader = DataLoader(train_set, batch_size=1, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
-val_loader = DataLoader(val_set, batch_size=1, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
-test_loader = DataLoader(test_set, batch_size=1, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
+train_loader = DataLoader(train_set, batch_size=256, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
+val_loader = DataLoader(val_set, batch_size=256, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
+test_loader = DataLoader(test_set, batch_size=256, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
 
 # Define model
 model = KAX(metadata=train_set[0]['pyg_data'].metadata()).to(settings.device)

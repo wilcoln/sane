@@ -1,6 +1,7 @@
 from typing import Optional, List, Tuple, Union
 
 import torch
+from icecream import ic
 from transformers import BartConfig, BartModel, BartForConditionalGeneration
 from torch import nn
 from torch.nn import CrossEntropyLoss
@@ -82,7 +83,9 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )
-        lm_logits = self.lm_head(torch.cat([outputs[0], knowledge_embedding], dim=1)) + self.final_logits_bias
+        knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, outputs[0].shape[1], 1)
+
+        lm_logits = self.lm_head(torch.cat([outputs[0], knowledge_embedding], dim=2)) + self.final_logits_bias
 
         masked_lm_loss = None
         if labels is not None:
