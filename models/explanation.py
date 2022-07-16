@@ -2,13 +2,14 @@ from torch import nn
 
 from utils.embeddings import transformer_mean_pooling
 from utils.settings import settings
-from transformers import BartTokenizer, BartForConditionalGeneration
+from transformers import BartTokenizer
+from utils.transformers import BartForExplanationGeneration
 
 
 class Explainer(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.model = BartForConditionalGeneration.from_pretrained("facebook/bart-large")
+        self.model = BartForExplanationGeneration.from_pretrained("facebook/bart-large")
         self.tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
 
     def forward(self, inputs):
