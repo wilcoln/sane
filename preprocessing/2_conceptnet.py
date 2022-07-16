@@ -8,7 +8,7 @@ import json
 from icecream import ic
 from tqdm import tqdm
 
-# from utils.graphs import triple_ids_to_pyg_data
+from utils.graphs import triple_ids_to_pyg_data
 from utils.settings import settings
 from utils.embeddings import bart
 from nltk import word_tokenize
@@ -92,23 +92,23 @@ for split in splits:
     #     pickle.dump(esnli_pyg, f)
 #########################"
 
-    # # Add pyg_data
-    # esnli_toy_dir = osp.join(settings.data_dir, 'esnli', 'toy')
+    # Add pyg_data
+    esnli_toy_dir = osp.join(settings.data_dir, 'esnli', 'toy')
 
 
-    # esnli_path = osp.join(esnli_toy_dir, f'esnli_{split}.pkl')
-    # esnli = pickle.load(open(esnli_path, 'rb'))
-    # esnli = {k: v[:split_size[split]] for k, v in esnli.items()}
+    esnli_path = osp.join(esnli_toy_dir, f'esnli_{split}.pkl')
+    esnli = pickle.load(open(esnli_path, 'rb'))
+    esnli = {k: v[:split_size[split]] for k, v in esnli.items()}
 
-    # esnli_pyg_path = osp.join(esnli_toy_dir, f'esnli_pyg_{split}.pkl')
-    # esnli_pyg = pickle.load(open(esnli_pyg_path, 'rb'))
+    esnli_pyg_path = osp.join(esnli_toy_dir, f'esnli_pyg_{split}.pkl')
+    esnli_pyg = pickle.load(open(esnli_pyg_path, 'rb'))
 
-    # esnli['pyg_data'] = esnli_pyg
+    esnli['pyg_data'] = esnli_pyg
 
     # ic(esnli.keys())
     # ic({k: v[:1] for k, v in esnli.items()})
-    # with open(esnli_path, 'wb') as f:
-    #     pickle.dump(esnli, f)
+    with open(esnli_path, 'wb') as f:
+        pickle.dump(esnli, f)
 
 #############################################""
 

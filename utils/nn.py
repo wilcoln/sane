@@ -56,7 +56,6 @@ class GNN(nn.Module):
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
-        x = x.view(-1, 384) # TODO remove
         x = self.conv1(x, edge_index).relu()
         x = self.conv2(x, edge_index)
         x = global_add_pool(x, data.batch)
