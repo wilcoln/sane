@@ -1,3 +1,4 @@
+import torch
 from icecream import ic
 from torch import nn
 import torch.nn.functional as F
@@ -56,9 +57,10 @@ class GNN(nn.Module):
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
+        return x
         x = self.conv1(x, edge_index).relu()
         x = self.conv2(x, edge_index)
-        x = global_add_pool(x, data.batch)
+        # x = global_add_pool(x, data.batch)
         # x = self.mlp(x)
         return x
 
@@ -84,5 +86,22 @@ class HeteroGNN(nn.Module):
             x_dict = conv(x_dict, edge_index_dict)
             x_dict = {key: F.leaky_relu(x) for key, x in x_dict.items()}
             # return self.lin(x_dict['author'])
-        x = global_mean_pool(x['concept'], data.batch)
-        return x
+        # x = global_add_pool(x['concept'], data.batch)
+        return x_dict
+
+
+def singles_to_triples(x, edge_index):
+    heads = x[edge_index[0]]  # (E, D)
+    tails = x[edge_index[1]]  # (E, D)
+
+    # Add triples
+    triples = torch.cat([heads, tails], dim=1)  # (E, 2D)
+    # # add inverse triples
+    # inverse_triples = torch.cat([tails, heads], dim=1)  # (E, 2*D)
+    # triples = torch.cat([triples, inverse_triples], dim=0)  # (2E, 2D)
+
+    # # add self-loops
+    # self_loops = torch.cat([data, data], dim=1)  # (V, D)
+    # triples = torch.cat([triples, self_loops], dim=0)  # (2E + V, 2D)
+
+    return triples
