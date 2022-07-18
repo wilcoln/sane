@@ -57,12 +57,11 @@ class GNN(nn.Module):
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
-        return x
         x = self.conv1(x, edge_index).relu()
         x = self.conv2(x, edge_index)
         # x = global_add_pool(x, data.batch)
         # x = self.mlp(x)
-        return x
+        return x, edge_index
 
 
 class HeteroGNN(nn.Module):
@@ -87,7 +86,7 @@ class HeteroGNN(nn.Module):
             x_dict = {key: F.leaky_relu(x) for key, x in x_dict.items()}
             # return self.lin(x_dict['author'])
         # x = global_add_pool(x['concept'], data.batch)
-        return x_dict
+        return x_dict, edge_index_dict
 
 
 def singles_to_triples(x, edge_index):

@@ -19,7 +19,7 @@ parser.add_argument('--no_show', action='store_true', help="Do not show the figu
 parser.add_argument('--persistent_workers', action='store_true', help="Whether to make dataloader workers "
                                                                       "persistent", default=False)
 parser.add_argument('--num_workers', help='Number of workers', type=int, default=4)
-parser.add_argument('--hidden_dim', help='Hidden Dimension', type=int, default=64)
+parser.add_argument('--hidden_dim', help='Hidden Dimension', type=int, default=32)
 parser.add_argument('--lstm_num_inputs', help='Number of inputs for lstm aggregator', type=int)
 parser.add_argument('--no_eval_train', action='store_true', help="whether to evaluate on the train set as well",
                     default=False)
