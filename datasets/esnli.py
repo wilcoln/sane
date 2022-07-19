@@ -24,13 +24,6 @@ class ESNLIDataset(Dataset):
         esnli_path = osp.join(path, f'{self.name}.pkl')
         self.esnli = pickle.load(open(esnli_path, 'rb'))
 
-        # Move this fix to dataset creation
-        for k, v in self.esnli.items():
-            try:
-                v.requires_grad = False
-            except:
-                pass
-
     def __len__(self):
         return len(self.esnli['gold_label'])
 

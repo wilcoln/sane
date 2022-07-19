@@ -11,7 +11,7 @@ from utils.settings import settings
 
 conceptnet_path = osp.join(settings.data_dir, 'conceptnet', 'conceptnet-assertions-5.6.0_cleaned.csv')
 conceptnet_df = pd.read_csv(conceptnet_path)
-conceptnet_df = conceptnet_df.sample(frac=.01, random_state=0)
+# conceptnet_df = conceptnet_df.sample(frac=.01, random_state=0)
 
 
 def get_nodes_and_relations(conceptnet_df):
@@ -51,6 +51,7 @@ except:
     with open(relation_embedding_path, 'wb') as f:
         pickle.dump(relation_embedding, f)
 
+
 def triple_ids_to_pyg_data(triple_ids_list):
     """
     Convert a list of list of conceptnet triples to pytorch geometric data.
@@ -66,7 +67,6 @@ def triple_ids_to_pyg_data(triple_ids_list):
         mapping = dict(zip(concepts['name'], concepts.index))
         data['concept'].num_nodes = len(mapping)
         data['concept'].x = torch.cat([concept_embedding[concept_list.index(concept)] for concept in concepts['name']], dim=0).view(len(mapping), -1)
-        # TODO: Dimension here is not ok, needs to reshape .view(num_nodes, -1)
 
         # Load edges
         for relation in relations['name']:

@@ -1087,7 +1087,6 @@ class BartDecoder(BartPretrainedModel):
         )
 
 
-
 [DOCS]
 @add_start_docstrings(
     "The bare BART Model outputting raw hidden-states without any specific head on top.",
