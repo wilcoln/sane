@@ -112,6 +112,9 @@ def _add_concepts(splits, conceptnet_frac):
             triple_ids = cn[cn['Vocab'].str.contains(row_vocab, na=False)].index.tolist()
             split_set['Triple_ids'].append(triple_ids)
 
+        # Remove Vocab
+        del split_set['Vocab']
+
         # Compute pyg Data
         ic('Computing Pyg Data')
         split_set['pyg_data'] = triple_ids_to_pyg_data(split_set['Triple_ids'])
