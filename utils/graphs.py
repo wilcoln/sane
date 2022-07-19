@@ -11,6 +11,9 @@ from utils.settings import settings
 
 conceptnet_path = osp.join(settings.data_dir, 'conceptnet', 'conceptnet-assertions-5.6.0_cleaned.csv')
 conceptnet_df = pd.read_csv(conceptnet_path)
+for column in {'source', 'target', 'relation'}:
+    conceptnet_df[column] = conceptnet_df[column].astype('str')
+
 # conceptnet_df = conceptnet_df.sample(frac=.01, random_state=0)
 
 
@@ -29,6 +32,7 @@ concept_list, relation_list = concept_df['name'].tolist(), relation_df['name'].t
 concept_embedding_path = osp.join(settings.data_dir, 'conceptnet', 'concept_embedding.pkl')
 relation_embedding_path = osp.join(settings.data_dir, 'conceptnet', 'relation_embedding.pkl')
 try:
+    raise Exception
     ic('Loading encoded concepts')
     concept_embedding = pickle.load(open(concept_embedding_path, 'rb'))
     relation_embedding = pickle.load(open(relation_embedding_path, 'rb'))
@@ -50,6 +54,8 @@ except:
     ic('Saving relation encodings')
     with open(relation_embedding_path, 'wb') as f:
         pickle.dump(relation_embedding, f)
+
+    exit()
 
 
 def triple_ids_to_pyg_data(triple_ids_list):

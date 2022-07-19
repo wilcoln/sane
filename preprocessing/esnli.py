@@ -53,6 +53,9 @@ def _reduce_dataset(splits, frac):
         # Add vocabulary
         split_set['Vocab'] = split_set['Sentences'].apply(_tokenize)
 
+        # Update split_set
+        splits[split] = split_set
+
     return splits
 
 
@@ -60,6 +63,8 @@ def _encode(splits):
     for split, split_set in splits.items():
         split_set['Sentences_embedding'] = bart(split_set['Sentences'])
         split_set['Sentences_embedding'].requires_grad = False
+        # Update split_set
+        splits[split] = split_set
     return splits
 
 
@@ -111,6 +116,9 @@ def _add_concepts(splits, conceptnet_frac):
         # Compute pyg Data
         ic('Computing Pyg Data')
         split_set['pyg_data'] = triple_ids_to_pyg_data(split_set['Triple_ids'])
+
+        # Update split_set
+        splits[split] = split_set
 
     return splits
 

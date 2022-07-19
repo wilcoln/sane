@@ -9,9 +9,9 @@ from utils.transformers import BartForExplanationGeneration
 class Explainer(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.model = BartForExplanationGeneration.from_pretrained("facebook/bart-large")
+        self.model = BartForExplanationGeneration.from_pretrained("facebook/bart-base")
         self.model.set_lm_head(knowledge_dim=2*settings.hidden_dim)
-        self.tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
+        self.tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
 
     def forward(self, inputs):
         inputs['Sentences'] = [f'{sent1} -> {sent2}' for sent1, sent2 in zip(inputs['Sentence1'], inputs['Sentence2'])]

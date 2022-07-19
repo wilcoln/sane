@@ -37,14 +37,14 @@ def bart(sentences: List[str], verbose: bool = False, use_cache=False) -> torch.
 
     # ic | encoded_input.keys(): dict_keys(['input_ids', 'attention_mask'])
     # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
-    model = BartModel.from_pretrained("facebook/bart-large")
-    tokenizer = BartTokenizer.from_pretrained("facebook/bart-large")
+    model = BartModel.from_pretrained("facebook/bart-base")
+    tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
     batches = [sentences[i:i + 256] for i in range(0, len(sentences), 256)]
 
     batches = tqdm(batches) if verbose else batches
 
     for i, batch in enumerate(batches):
-        encoded_inputs = tokenizer(batch, max_length=1024, truncation=True, padding=True, return_tensors='pt')
+        encoded_inputs = tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')
         model_outputs = model(**encoded_inputs)
         encoded_batch = transformer_mean_pooling(model_outputs, encoded_inputs)
 
