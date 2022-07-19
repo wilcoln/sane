@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import os.path as osp
 
 import torch
@@ -14,7 +15,7 @@ conceptnet_df = pd.read_csv(conceptnet_path)
 for column in {'source', 'target', 'relation'}:
     conceptnet_df[column] = conceptnet_df[column].astype('str')
 
-# conceptnet_df = conceptnet_df.sample(frac=.01, random_state=0)
+conceptnet_df = conceptnet_df.sample(frac=settings.data_frac, random_state=0)
 
 
 def get_nodes_and_relations(conceptnet_df):
@@ -29,10 +30,14 @@ concept_df, relation_df = get_nodes_and_relations(conceptnet_df)
 
 concept_list, relation_list = concept_df['name'].tolist(), relation_df['name'].tolist()
 
-concept_embedding_path = osp.join(settings.data_dir, 'conceptnet', 'concept_embedding.pkl')
-relation_embedding_path = osp.join(settings.data_dir, 'conceptnet', 'relation_embedding.pkl')
+output_dir = osp.join(settings.data_dir, f'conceptnet_{settings.data_frac}')
+
+if not os.path.exists(output_dir):
+    os.mkdir(output_dir)
+concept_embedding_path = osp.join(output_dir, 'concept_embedding.pkl')
+relation_embedding_path = osp.join(output_dir, 'relation_embedding.pkl')
 try:
-    raise Exception
+    # raise Exception
     ic('Loading encoded concepts')
     concept_embedding = pickle.load(open(concept_embedding_path, 'rb'))
     relation_embedding = pickle.load(open(relation_embedding_path, 'rb'))
@@ -54,8 +59,6 @@ except:
     ic('Saving relation encodings')
     with open(relation_embedding_path, 'wb') as f:
         pickle.dump(relation_embedding, f)
-
-    exit()
 
 
 def triple_ids_to_pyg_data(triple_ids_list):

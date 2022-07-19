@@ -14,7 +14,6 @@ class Explainer(nn.Module):
         self.tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
 
     def forward(self, inputs):
-        inputs['Sentences'] = [f'{sent1} -> {sent2}' for sent1, sent2 in zip(inputs['Sentence1'], inputs['Sentence2'])]
         encoded_inputs = self.tokenizer(inputs['Sentences'], max_length=1024, truncation=True, padding=True,
                                      return_tensors="pt")
         encoded_labels = self.tokenizer(inputs['Explanation_1'], max_length=1024, truncation=True,

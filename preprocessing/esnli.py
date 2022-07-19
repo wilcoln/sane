@@ -61,8 +61,7 @@ def _reduce_dataset(splits, frac):
 
 def _encode(splits):
     for split, split_set in splits.items():
-        split_set['Sentences_embedding'] = bart(split_set['Sentences'])
-        split_set['Sentences_embedding'].requires_grad = False
+        split_set['Sentences_embedding'] = bart(split_set['Sentences']).detach()
         # Update split_set
         splits[split] = split_set
     return splits
@@ -145,6 +144,5 @@ def preprocess(esnli_frac: float = .01, conceptnet_frac: float = .01, output_dir
     ic('Done')
 
 
-preprocess(.001, .001, 'esnli_frac_001')
-preprocess(.01, .01, 'esnli_frac_01')
+preprocess(settings.data_frac, settings.data_frac, f'esnli_frac_{settings.data_frac}')
 

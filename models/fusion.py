@@ -11,7 +11,7 @@ from utils.nn import HeteroGNN, GNN, singles_to_triples
 class Fuser(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.lin = nn.Linear(2048 + 2*settings.hidden_dim, 1)
+        self.lin = nn.Linear(2*384 + 2*settings.hidden_dim, 1)
 
     def forward(self, inputs):
         for i, encoded_triples in enumerate(inputs['Knowledge_embedding']):
