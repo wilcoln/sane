@@ -26,5 +26,4 @@ class KAX(nn.Module):
         # fuse explanation and inputs (orthogonal ?)
         # ic('predicting')
         outputs, task_loss = self.predictor(inputs, nles)
-        # ic('done')
         return nles, outputs, settings.alpha*nle_loss + (1 - settings.alpha)*task_loss

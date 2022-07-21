@@ -13,21 +13,28 @@ class ESNLIDataset(Dataset):
     A dataset for ESNLI
     """
 
-    def __init__(self, path: str, split: str = 'train', frac=1.0):
+    def __init__(self, path: str, split: str = 'train', frac=1.0, chunk=0):
         assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
         assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
 
         super().__init__()
-        self.name = f'esnli_{split}'
+        self.name = f'esnli_{split}_{chunk}'
 
         # Load pickle file
-        esnli_path = osp.join(path, f'{self.name}.pkl')
-        self.esnli = pickle.load(open(esnli_path, 'rb'))
+        esnli_path = osp.join(path, f'esnli_{frac}')
+        suffix = '_1' if split == 'train' else ''
+        csv_path = osp.join(path, 'esnli', f'esnli_{split}{suffix}.csv')
+        keys = {'Sentences', 'Sentences_embedding', 'Explanation_1', 'Explanation_2', 'Explanation_3', 'gold_label', 'pyg_data'}
+        self.esnli = dict()
 
-        # ic(self.esnli.keys())
-
-        self.esnli['Sentences_embedding'] = torch.cat(self.esnli['Sentences_embedding'].get_chunks(), dim=0)
-        self.esnli['pyg_data'] = sum(self.esnli['pyg_data'].get_chunks(), [])
+        for k in keys:
+            try:
+                key_path = osp.join(esnli_path, f'{split}_{k}', f'chunk{chunk}.pkl')
+                self.esnli[k] = pickle.load(open(key_path, 'rb'))
+                if isinstance(self.esnli[k], torch.Tensor):
+                    self.esnli[k] = self.esnli[k]
+            except:
+                pass
 
     def __len__(self):
         return len(self.esnli['gold_label'])

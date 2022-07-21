@@ -16,9 +16,6 @@ conceptnet_df = pd.read_csv(conceptnet_path)
 for column in {'source', 'target', 'relation'}:
     conceptnet_df[column] = conceptnet_df[column].astype('str')
 
-conceptnet_df = conceptnet_df.sample(frac=settings.data_frac, random_state=0)
-
-
 def get_nodes_and_relations(conceptnet_df):
     source_df = conceptnet_df[['source']].rename(columns={'source': 'name'}).drop_duplicates()
     target_df = conceptnet_df[['target']].rename(columns={'target': 'name'}).drop_duplicates()
@@ -57,29 +54,30 @@ except:
     # ic('Encoding relations')
     # relation_embedding = ChunkedList(lst=relation_list, num_chunks=len(relation_list)//chunk_size).apply(lambda l : bart(l), dirpath=relation_embedding_path)
 
-
-def triple_ids_to_pyg_data(triple_ids_list):
+def concept_ids_to_pyg_data(node_ids_list):
     """
-    Convert a list of list of conceptnet triples to pytorch geometric data.
+    Convert a list of list of conceptnet nodes to pytorch geometric data.
     """
     data_list = []
-    for triple_ids in tqdm(triple_ids_list):
+    for node_ids in tqdm(node_ids_list):
         data = HeteroData()
-
-        triples_df = conceptnet_df.loc[triple_ids]
+        node_ids = concept_df[concept_df.index.isin(node_ids)].index
+        triples_df = conceptnet_df[conceptnet_df['source'].isin(concept_df['name'].loc[node_ids]) | conceptnet_df['target'].isin(concept_df['name'].loc[node_ids])]
 
         # Load nodes
         concepts, relations = get_nodes_and_relations(triples_df)
         mapping = dict(zip(concepts['name'], concepts.index))
         data['concept'].num_nodes = len(mapping)
-        data['concept'].x = torch.tensor([concept_list.index(concept) for concept in concepts['name']])
+        data['concept'].x = torch.LongTensor([concept_list.index(concept) for concept in concepts['name']])
 
         # Load edges
         for relation in relations['name']:
             src = [mapping[i] for i in triples_df[triples_df['relation'] == relation]['source'].tolist()]
             dst = [mapping[i] for i in triples_df[triples_df['relation'] == relation]['target'].tolist()]
-            data['concept', relation, 'concept'].edge_index = torch.tensor([src, dst])
-            data['concept', relation, 'concept'].edge_label = torch.tensor([relation_list.index(relation)]*len(src))
+            weight = torch.FloatTensor(triples_df[triples_df['relation'] == relation]['weight'].tolist())
+            rel = torch.LongTensor([relation_list.index(relation)]*len(src))
+            data['concept', relation, 'concept'].edge_index = torch.LongTensor([src, dst])
+            data['concept', relation, 'concept'].edge_label = torch.hstack((rel, weight))
             # Ignoring weight for now
 
         data_list.append(data)

@@ -26,16 +26,31 @@ class ChunkedList(Sequence):
         if self.is_big:
             current_chunk_name = self.chunks[i // self.k]
             if self.last_chunk_name == current_chunk_name:
-                chunk = self.last_chunk
+                current_chunk = self.last_chunk
             else:
-                chunk = pickle.load(open(os.path.join(self.dirpath, current_chunk_name), 'rb'))
-            self.last_chunk_name  == current_chunk_name
-            return chunk
+                current_chunk = pickle.load(open(os.path.join(self.dirpath, current_chunk_name), 'rb'))
+                self.last_chunk = current_chunk
+                self.last_chunk_name  = current_chunk_name
+            return current_chunk
         
         return self.chunks[i // self.k]
     
     def __getitem__(self, i):
-        return self.get_chunk(i)[i % self.k]
+        if isinstance(i, int):
+            return self.get_chunk(i)[i % self.k]
+        if isinstance(i, slice):
+            return [self[k] for k in range(self.n)[i]]
+
+    # def __iter__(self):
+    #     self.iter_idx = 0
+    #     return self
+
+    # def __next__(self):
+    #     if self.iter_idx < len(self):
+    #         elt = self[self.iter_idx]
+    #         self.iter_idx += 1
+    #         return elt
+    #     raise StopIteration
 
     def __len__(self):
         return self.n

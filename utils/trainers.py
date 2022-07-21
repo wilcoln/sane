@@ -39,9 +39,6 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
                  model: nn.Module,
                  optimizer: Optimizer,
                  num_epochs: int,
-                 train_loader: DataLoader,
-                 val_loader: DataLoader,
-                 test_loader: DataLoader,
                  num_prints: int = 10,
                  *args,
                  **kwargs):
@@ -51,10 +48,6 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         self.optimizer = optimizer
         self.num_epochs = num_epochs
         self.num_prints = num_prints
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.test_loader = test_loader
-
         self.results = []
 
     def save_results(self):
