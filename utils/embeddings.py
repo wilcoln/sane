@@ -66,7 +66,7 @@ def bart(sentences: List[str], verbose: bool = False, use_cache=False) -> torch.
             else:
                 encoded_batches = torch.cat([encoded_batches, encoded_batch], dim=0)
 
-    return encoded_batches
+    return encoded_batches.detach()
 
 
 def sbert(sentences: List[str], verbose: bool = False) -> torch.Tensor:

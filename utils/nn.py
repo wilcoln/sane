@@ -3,6 +3,7 @@ from icecream import ic
 from torch import nn
 import torch.nn.functional as F
 from torch_geometric.nn import SAGEConv, to_hetero, global_add_pool, HeteroConv, Linear
+from utils.graphs import concept_embedding
 
 
 
@@ -56,7 +57,7 @@ class GNN(nn.Module):
         self.conv2 = SAGEConv((-1, -1), out_channels)
 
     def forward(self, data):
-        x, edge_index = data.x, data.edge_index
+        x, edge_index = concept_embedding[data.x], data.edge_index
         x = self.conv1(x, edge_index).relu()
         x = self.conv2(x, edge_index)
         # x = global_add_pool(x, data.batch)

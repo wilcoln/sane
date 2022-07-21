@@ -13,7 +13,7 @@ from models.kax import KAX
 import os.path as osp
 
 # Load dataset splits
-esnli_dir = osp.join(settings.data_dir, 'esnli/esnli_frac_0.001')
+esnli_dir = osp.join(settings.data_dir, 'esnli_0.001')
 train_set = ESNLIDataset(path=esnli_dir, split='train')
 val_set = ESNLIDataset(path=esnli_dir, split='val')
 test_set = ESNLIDataset(path=esnli_dir, split='test')

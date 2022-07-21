@@ -24,8 +24,13 @@ class ESNLIDataset(Dataset):
         esnli_path = osp.join(path, f'{self.name}.pkl')
         self.esnli = pickle.load(open(esnli_path, 'rb'))
 
+        # ic(self.esnli.keys())
+
+        self.esnli['Sentences_embedding'] = torch.cat(self.esnli['Sentences_embedding'].get_chunks(), dim=0)
+        self.esnli['pyg_data'] = sum(self.esnli['pyg_data'].get_chunks(), [])
+
     def __len__(self):
         return len(self.esnli['gold_label'])
 
     def __getitem__(self, i):
-        return {k: v[i] for k, v in self.esnli.items() if k not in {'Triple_ids'}}
+        return {k: v[i] for k, v in self.esnli.items()}

@@ -17,8 +17,9 @@ class KAX(nn.Module):
 
     def forward(self, inputs):
         # fuse two modalities
-        # ic('fusing')
+        # ic('encode')
         inputs = self.encoder(inputs)
+        # ic('fusing')
         inputs = self.fuser(inputs)
         # ic('explaining')
         nles, nle_loss = self.explainer(inputs)
