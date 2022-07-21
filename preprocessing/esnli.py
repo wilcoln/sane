@@ -107,7 +107,7 @@ def _compute_concept_ids(cn, vocab_list):
     concept_ids_list = []
     for row_vocab in tqdm(vocab_list):
         # get the triples in cn with matching inputs and labels
-        concept_ids = cn[cn['Vocab'].str.contains(row_vocab, na=False)].index.tolist()
+        concept_ids = cn[cn['Vocab'].str.contains(row_vocab, na=False)].index.tolist() # TODO: Semantic similarity
         concept_ids_list.append(concept_ids)
     return concept_ids_list
 
@@ -127,7 +127,8 @@ def _add_concepts(splits, esnli_output_dir):
 
         with open(vocab_path, 'wb') as f:
             pickle.dump(cn['Vocab'], f)
-
+    
+    cn = cn.sample(frac=.1, random_state=0) #  TODO: Do Something about it
     ic('Add Knowledge to Data Points')
     for split, split_set in splits.items():
         concepts_path = os.path.join(esnli_output_dir, f'{split}_concept_ids')

@@ -49,8 +49,8 @@ accuracies = defaultdict(list)
 
 
 class KAXTrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, train_loaders, val_loaders, test_loaders):
-        super().__init__(model, optimizer, settings.num_epochs)
+    def __init__(self, model, optimizer, dataset_name, train_loaders, val_loaders, test_loaders):
+        super().__init__(model, optimizer, settings.num_epochs, dataset_name)
         self.train_loaders = train_loaders
         self.val_loaders = val_loaders
         self.test_loaders = test_loaders
@@ -121,4 +121,4 @@ class KAXTrainer(TorchModuleBaseTrainer):
         return self.evaluate(self.test_loaders, 'test')
 
 
-KAXTrainer(model, optimizer, train_loaders, val_loaders, test_loaders).run()
+KAXTrainer(model, optimizer, sample_train_set.name, train_loaders, val_loaders, test_loaders).run()

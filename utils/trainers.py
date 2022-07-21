@@ -40,6 +40,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
                  optimizer: Optimizer,
                  num_epochs: int,
                  num_prints: int = 10,
+                 dataset_name: str = None,
                  *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,6 +49,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         self.optimizer = optimizer
         self.num_epochs = num_epochs
         self.num_prints = num_prints
+        self.dataset_name = dataset_name
         self.results = []
 
     def save_results(self):
