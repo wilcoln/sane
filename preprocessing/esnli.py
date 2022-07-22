@@ -9,13 +9,15 @@ from icecream import ic
 from tqdm import tqdm
 import math
 
-from utils.graphs import concept_ids_to_pyg_data, concept_df
+from utils.graphs import concept_ids_to_pyg_data, concept_df, prune_conceptnet_df
 from utils.settings import settings
 from utils.embeddings import bart
 from nltk import word_tokenize
 from nltk.corpus import stopwords
 from utils.types import ChunkedList
 import shutil
+
+settings.max_num_concepts = 1500
 
 def _read_dataset():
     esnli_dir = osp.join(settings.data_dir, 'esnli')
@@ -49,17 +51,17 @@ def _reduce_dataset(splits, frac, output_dir):
         split_set.drop(columns=useless_columns, inplace=True, errors='ignore')
         # Convert labels to categorical
         split_set['gold_label'] = split_set['gold_label'].astype('category').cat.codes
-        # Add vocabulary
-        vocab_path = osp.join(output_dir, f'{split}_vocab.pkl')
-        try:
-            # Load esnli vocab
-            ic('Load esnli Vocab')
-            split_set['Vocab'] = pickle.load(open(os.path.join(vocab_path), 'rb'))
-        except:
-            ic('Create vocabulary for split')
-            split_set['Vocab'] = split_set['Sentences'].apply(_tokenize)
-            with open(vocab_path, 'wb') as f:
-                pickle.dump(split_set['Vocab'], f)
+        # # Add vocabulary
+        # vocab_path = osp.join(output_dir, f'{split}_vocab.pkl')
+        # try:
+        #     # Load esnli vocab
+        #     ic('Load esnli Vocab')
+        #     split_set['Vocab'] = pickle.load(open(os.path.join(vocab_path), 'rb'))
+        # except:
+        #     ic('Create vocabulary for split')
+        #     split_set['Vocab'] = split_set['Sentences'].apply(_tokenize)
+        #     with open(vocab_path, 'wb') as f:
+        #         pickle.dump(split_set['Vocab'], f)
 
         # Update split_set
         splits[split] = split_set
@@ -103,44 +105,57 @@ def _tokenize(sentence):
     tokens = '|'.join(set(i for i in word_tokenize(sentence.replace('_', ' ').lower()) if i not in stop))
     return tokens
 
-def _compute_concept_ids(cn, vocab_list):
+def _compute_concept_ids(cn, sentence_list):
     concept_ids_list = []
-    for row_vocab in tqdm(vocab_list):
+    for sentence in tqdm(sentence_list):
         # get the triples in cn with matching inputs and labels
-        concept_ids = cn[cn['Vocab'].str.contains(row_vocab, na=False)].index.tolist() # TODO: Semantic similarity
+        filter_ = cn['cleaned_name'].apply(lambda x: x in sentence.lower())
+        concept_ids = cn['cleaned_name'][filter_].str.len().sort_values(ascending=False).index[:settings.max_num_concepts].tolist() # TODO: Semantic similarity
         concept_ids_list.append(concept_ids)
     return concept_ids_list
 
 def _add_concepts(splits, esnli_output_dir):
     cn = concept_df
-    # Add Conceptnet Vocab
+    # Add Cleaned name
     output_dir = osp.join(settings.data_dir, f'conceptnet')
-    vocab_path = osp.join(output_dir, 'vocab.pkl')
+    cleaned_name_path = osp.join(output_dir, 'cleaned_name.pkl')
     try:
-        # Load conceptnet vocab
-        ic('Load conceptnet Vocab')
-        cn['Vocab'] = pickle.load(open(os.path.join(vocab_path), 'rb'))
+        # Load conceptnet cleaned_name
+        ic('Load conceptnet Clean names')
+        cn['cleaned_name'] = pickle.load(open(os.path.join(cleaned_name_path), 'rb'))
     except:
-        # Creating vocabulary for conceptnet
-        ic('Creating Conceptnet vocab')
-        cn['Vocab'] = (cn['name'].apply(_remove_qualifier)).apply(_tokenize)
+        # Creating cleaned_name for conceptnet
+        ic('Creating Conceptnet cleaned_name')
+        cn['cleaned_name'] = cn['name'].str.split('/').str[0].str.replace('_', ' ')
 
-        with open(vocab_path, 'wb') as f:
-            pickle.dump(cn['Vocab'], f)
+        with open(cleaned_name_path, 'wb') as f:
+            pickle.dump(cn['cleaned_name'], f)
+    # # Add Conceptnet Vocab
+    # output_dir = osp.join(settings.data_dir, f'conceptnet')
+    # vocab_path = osp.join(output_dir, 'vocab.pkl')
+    # try:
+    #     # Load conceptnet vocab
+    #     ic('Load conceptnet Vocab')
+    #     cn['Vocab'] = pickle.load(open(os.path.join(vocab_path), 'rb'))
+    # except:
+    #     # Creating vocabulary for conceptnet
+    #     ic('Creating Conceptnet vocab')
+    #     cn['Vocab'] = (cn['name'].apply(_remove_qualifier)).apply(_tokenize)
+
+    #     with open(vocab_path, 'wb') as f:
+    #         pickle.dump(cn['Vocab'], f)
     
-    cn = cn.sample(frac=.1, random_state=0) #  TODO: Do Something about it
+    # cn = cn.sample(frac=.1, random_state=0) #  TODO: Do Something about it
     ic('Add Knowledge to Data Points')
     for split, split_set in splits.items():
-        concepts_path = os.path.join(esnli_output_dir, f'{split}_concept_ids')
-        try:
-            ic(f'Loading Concept ids for {split} split')
-            split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
-        except:
-            ic(f'Computing concept ids for {split} split')
-            split_set['concept_ids'] = ChunkedList(lst=split_set['Vocab'], num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l: _compute_concept_ids(cn, l), concepts_path)
-
-        # Delete vocab for split
-        shutil.rmtree(os.path.join(esnli_output_dir, f'{split}_vocab'), ignore_errors=True)
+        if split != 'train':
+            concepts_path = os.path.join(esnli_output_dir, f'{split}_concept_ids')
+            try:
+                ic(f'Loading Concept ids for {split} split')
+                split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
+            except:
+                ic(f'Computing concept ids for {split} split')
+                split_set['concept_ids'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l: _compute_concept_ids(cn, l), concepts_path)
 
         # Adding Pyg Data
         pyg_data_path = os.path.join(esnli_output_dir, f'{split}_pyg_data')
@@ -150,15 +165,13 @@ def _add_concepts(splits, esnli_output_dir):
         except:
         # Compute pyg Data
             ic(f'Computing Pyg Data for {split} split')
-            split_set['pyg_data'] = split_set['concept_ids'].apply(concept_ids_to_pyg_data, pyg_data_path)
-
-        # Delete concept ids
-        shutil.rmtree(os.path.join(esnli_output_dir, f'{split}_concept_ids'), ignore_errors=True)
-        
+            # Prune conceptnet
+            conceptnet_df = prune_conceptnet_df(sum(split_set['concept_ids'].get_chunks(), []))
+            split_set['pyg_data'] = split_set['concept_ids'].apply(lambda l: concept_ids_to_pyg_data(conceptnet_df, l), pyg_data_path)
 
         # Remove Vocab
-        del split_set['Vocab']
-        del split_set['concept_ids']
+        if 'Vocab' in split_set: del split_set['Vocab']
+        if 'concept_ids' in split_set: del split_set['concept_ids']
 
         # Update split_set
         splits[split] = split_set

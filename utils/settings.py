@@ -19,7 +19,7 @@ parser.add_argument('--results_dir', help='Result directory to use', type=str, d
 parser.add_argument('--no_show', action='store_true', help="Do not show the figure at the end", default=False)
 parser.add_argument('--persistent_workers', action='store_true', help="Whether to make dataloader workers "
                                                                       "persistent", default=False)
-parser.add_argument('--num_workers', help='Number of workers', type=int, default=4)
+parser.add_argument('--num_workers', help='Number of workers', type=int, default=0)
 parser.add_argument('--hidden_dim', help='Hidden Dimension', type=int, default=32)
 parser.add_argument('--lstm_num_inputs', help='Number of inputs for lstm aggregator', type=int)
 parser.add_argument('--no_eval_train', action='store_true', help="whether to evaluate on the train set as well",
@@ -31,7 +31,7 @@ parser.add_argument('--std', action='store_true', help='Include standard deviati
 parser.add_argument('--alpha',  help='Alpha', type=float, default=.25)
 parser.add_argument('--data_frac', help='Fraction of data to use', type=float, default=0.001)
 settings, unknown = parser.parse_known_args()
-setattr(settings, 'device', torch.device('cuda'))
+setattr(settings, 'device', torch.device('cuda:3'))
 
 if settings.colab:
     settings.data_dir = '/content/data'

@@ -43,10 +43,6 @@ model = KAX(metadata=sample_train_set[0]['pyg_data'].metadata()).to(settings.dev
 # Define loss function and optimizer
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-# Train the network
-losses = defaultdict(list)
-accuracies = defaultdict(list)
-
 
 class KAXTrainer(TorchModuleBaseTrainer):
     def __init__(self, model, optimizer, dataset_name, train_loaders, val_loaders, test_loaders):

@@ -5,6 +5,7 @@ import os
 import fnmatch
 from tqdm import tqdm
 from collections.abc import Sequence
+import shutil
 
 class ChunkedList(Sequence):
     def __init__(self, lst=None, num_chunks=None, n=None, dirpath=None):
@@ -59,12 +60,16 @@ class ChunkedList(Sequence):
         # Only can only convert non big to big
         to_big = bool(dirpath)
         if to_big:
-            for i in tqdm(list(range(len(self.chunks)))):
-                chunk = self.get_chunk(i * self.k)
-                if not os.path.exists(dirpath):
+            if not os.path.exists(dirpath):
                     os.mkdir(dirpath)
-                with open(os.path.join(dirpath, f'chunk{i}.pkl'), 'wb') as f:
-                    pickle.dump(func(chunk), f)
+            try:
+                for i in tqdm(list(range(len(self.chunks)))):
+                    chunk = self.get_chunk(i * self.k)
+                    with open(os.path.join(dirpath, f'chunk{i}.pkl'), 'wb') as f:
+                        pickle.dump(func(chunk), f)
+            except KeyboardInterrupt:
+                shutil.rmtree(dirpath, ignore_errors=True)
+                raise KeyboardInterrupt
             return ChunkedList(n=self.n, num_chunks=len(self.chunks), dirpath=dirpath)
         
         self.chunks = [func(chunk) for chunk in self.chunks]
@@ -73,8 +78,8 @@ class ChunkedList(Sequence):
     def to_big(self, dirpath):
         return self.apply(func=lambda x : x, dirpath=dirpath)
 
-    def get_chunks(self):
-        return [self.get_chunk(i * self.k) for i in range(len(self.chunks))]
+    def get_chunks(self, astype=None):
+        return [self.get_chunk(i * self.k) if astype is None else astype(self.get_chunk(i * self.k)) for i in tqdm(list(range(len(self.chunks))))]
 
 
 # k = 100 # chunk size
