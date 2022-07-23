@@ -114,7 +114,7 @@ def _unstrip(sentence):
 def _compute_concept_ids(cn, sentence_len_list):
     setence_len_list = [(_unstrip(sentence).lower(), len_) for sentence, len_ in sentence_len_list]
     return [
-        cn['cleaned_name'][cn['cleaned_name'].astype(str).apply(lambda x: x in sentence)].str.len().sort_values(ascending=False).index[:len_].tolist()
+        cn['cleaned_name'][cn['cleaned_name'].astype(str).apply(lambda x: x in sentence)].index[:len_].tolist()
         for sentence, len_ in tqdm(sentence_len_list)
     ]
 
@@ -128,7 +128,8 @@ def _add_concepts(splits, esnli_output_dir):
         ic('Load conceptnet Clean names')
         cn['cleaned_name'] = pickle.load(open(os.path.join(cleaned_name_path), 'rb'))
         cn = cn.drop_duplicates(subset=['cleaned_name'])
-        cn['cleaned_name'] = ' ' + cn['cleaned_name'].astype(str) + ' ' 
+        cn['cleaned_name'] = ' ' + cn['cleaned_name'].astype(str) + ' '
+        cn = cn.sort_values(by='cleaned_name', key=lambda x: x.str.len(), ascending=False)
     except:
         # Creating cleaned_name for conceptnet
         ic('Creating Conceptnet cleaned_name')
