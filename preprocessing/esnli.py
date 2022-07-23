@@ -17,7 +17,7 @@ from nltk.corpus import stopwords
 from utils.types import ChunkedList
 import shutil
 
-settings.max_num_concepts = 1500
+settings.max_num_concepts = 100
 
 def _read_dataset():
     esnli_dir = osp.join(settings.data_dir, 'esnli')
@@ -145,17 +145,15 @@ def _add_concepts(splits, esnli_output_dir):
     #     with open(vocab_path, 'wb') as f:
     #         pickle.dump(cn['Vocab'], f)
     
-    # cn = cn.sample(frac=.1, random_state=0) #  TODO: Do Something about it
     ic('Add Knowledge to Data Points')
     for split, split_set in splits.items():
-        if split != 'train':
-            concepts_path = os.path.join(esnli_output_dir, f'{split}_concept_ids')
-            try:
-                ic(f'Loading Concept ids for {split} split')
-                split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
-            except:
-                ic(f'Computing concept ids for {split} split')
-                split_set['concept_ids'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l: _compute_concept_ids(cn, l), concepts_path)
+        concepts_path = os.path.join(esnli_output_dir, f'{split}_concept_ids')
+        try:
+            ic(f'Loading Concept ids for {split} split')
+            split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
+        except:
+            ic(f'Computing concept ids for {split} split')
+            split_set['concept_ids'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l: _compute_concept_ids(cn, l), concepts_path)
 
         # Adding Pyg Data
         pyg_data_path = os.path.join(esnli_output_dir, f'{split}_pyg_data')
