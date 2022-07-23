@@ -13,9 +13,13 @@ from utils.settings import settings
 from sentence_transformers import SentenceTransformer
 from flair.embeddings import WordEmbeddings, DocumentPoolEmbeddings
 from flair.data import Sentence
+import math
 
 logging.basicConfig(level='INFO')
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
+
+model = BartModel.from_pretrained("facebook/bart-base")
+tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
 
 
 def transformer_mean_pooling(model_outputs, encoded_inputs):
@@ -26,7 +30,7 @@ def transformer_mean_pooling(model_outputs, encoded_inputs):
     return sum_embeddings / sum_mask
 
 
-def bart(sentences: List[str], verbose: bool = False, use_cache=False) -> torch.Tensor:
+def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     """Compute bart embeddings for texts.
     Args:
         sentences: text to use for each node
@@ -37,34 +41,21 @@ def bart(sentences: List[str], verbose: bool = False, use_cache=False) -> torch.
 
     # ic | encoded_input.keys(): dict_keys(['input_ids', 'attention_mask'])
     # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
-    model = BartModel.from_pretrained("facebook/bart-base")
-    tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
-    batches = [sentences[i:i + 256] for i in range(0, len(sentences), 256)]
+    num_sentences = len(sentences)
+    batch_size = 256
+    batches = (sentences[i:i + batch_size] for i in range(0, num_sentences, batch_size))
 
-    batches = tqdm(batches) if verbose else batches
+    batches = tqdm(batches, total=math.ceil(num_sentences/batch_size)) if verbose else batches
 
     for i, batch in enumerate(batches):
         encoded_inputs = tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')
         model_outputs = model(**encoded_inputs)
         encoded_batch = transformer_mean_pooling(model_outputs, encoded_inputs)
 
-        if use_cache:
-            with open(osp.join(settings.cache_dir, f'bart{i}.pkl'), 'wb') as f:
-                pickle.dump(encoded_batch, f)
-           
+        if i == 0:
+            encoded_batches = encoded_batch
         else:
-            if i == 0:
-                encoded_batches = encoded_batch
-            else:
-                encoded_batches = torch.cat([encoded_batches, encoded_batch], dim=0)
-    if use_cache:
-        del model, tokenizer
-        for i in range(len(batches)): 
-            encoded_batch = pickle.load(open(osp.join(settings.cache_dir, f'bart{i}.pkl'), 'rb'))
-            if i == 0:
-                encoded_batches = encoded_batch
-            else:
-                encoded_batches = torch.cat([encoded_batches, encoded_batch], dim=0)
+            encoded_batches = torch.cat([encoded_batches, encoded_batch], dim=0)
 
     return encoded_batches.detach()
 

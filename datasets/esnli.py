@@ -20,11 +20,13 @@ class ESNLIDataset(Dataset):
         super().__init__()
         self.name = f'esnli_{split}_{chunk}'
 
+        ic(f'Loading Dataset {self.name}')
+
         # Load pickle file
         esnli_path = osp.join(path, f'esnli_{frac}')
         suffix = '_1' if split == 'train' else ''
         csv_path = osp.join(path, 'esnli', f'esnli_{split}{suffix}.csv')
-        keys = {'Sentences', 'Sentences_embedding', 'Explanation_1', 'Explanation_2', 'Explanation_3', 'gold_label', 'pyg_data'}
+        keys = ['Sentences', 'Sentences_embedding', 'Explanation_1', 'Explanation_2', 'Explanation_3', 'gold_label', 'pyg_data']
         self.esnli = dict()
 
         for k in keys:
@@ -33,7 +35,7 @@ class ESNLIDataset(Dataset):
                 self.esnli[k] = pickle.load(open(key_path, 'rb'))
                 if isinstance(self.esnli[k], torch.Tensor):
                     self.esnli[k] = self.esnli[k]
-            except:
+            except Exception as e:
                 pass
 
     def __len__(self):

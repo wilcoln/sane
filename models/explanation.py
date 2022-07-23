@@ -14,9 +14,9 @@ class Explainer(nn.Module):
         self.tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
 
     def forward(self, inputs):
-        encoded_inputs = self.tokenizer(inputs['Sentences'], max_length=1024, truncation=True, padding=True,
+        encoded_inputs = self.tokenizer(inputs['Sentences'], max_length=512, truncation=True, padding=True,
                                      return_tensors="pt")
-        encoded_labels = self.tokenizer(inputs['Explanation_1'], max_length=1024, truncation=True,
+        encoded_labels = self.tokenizer(inputs['Explanation_1'], max_length=512, truncation=True,
                                 padding=True, return_tensors="pt")
 
         # send tensors to gpu

@@ -5,7 +5,8 @@ import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_epochs', help='Number of epochs', type=int, default=10)
-parser.add_argument('--batch_size', help='Batch size', type=int, default=32)
+parser.add_argument('--batch_size', help='Batch size', type=int, default=64)
+parser.add_argument('--sent_dim', help='sent_dim', type=int, default=768) # Bart-base d_model = 768
 parser.add_argument('--chunk_size', help='Chunk size', type=int, default=10000)
 parser.add_argument('--colab', action='store_true', help="whether we are running on google colab", default=False)
 parser.add_argument('--dataset', help='Dataset to use', type=str)
@@ -19,7 +20,7 @@ parser.add_argument('--results_dir', help='Result directory to use', type=str, d
 parser.add_argument('--no_show', action='store_true', help="Do not show the figure at the end", default=False)
 parser.add_argument('--persistent_workers', action='store_true', help="Whether to make dataloader workers "
                                                                       "persistent", default=False)
-parser.add_argument('--num_workers', help='Number of workers', type=int, default=0)
+parser.add_argument('--num_workers', help='Number of workers', type=int, default=4)
 parser.add_argument('--hidden_dim', help='Hidden Dimension', type=int, default=32)
 parser.add_argument('--lstm_num_inputs', help='Number of inputs for lstm aggregator', type=int)
 parser.add_argument('--no_eval_train', action='store_true', help="whether to evaluate on the train set as well",

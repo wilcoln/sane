@@ -9,7 +9,6 @@ from icecream import ic
 from tqdm import tqdm
 import math
 
-from utils.graphs import concept_ids_to_pyg_data, concept_df, prune_conceptnet_df
 from utils.settings import settings
 from utils.embeddings import bart
 from nltk import word_tokenize
@@ -77,7 +76,7 @@ def _encode(splits, output_dir):
             split_set['Sentences_embedding'] = ChunkedList(n=len(split_set['Sentences']), dirpath=sentences_embedding_path)
         except:
             # Create sentence embeddings
-            split_set['Sentences_embedding'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l : bart(l), dirpath=sentences_embedding_path)
+            split_set['Sentences_embedding'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l : bart(l, verbose=True), dirpath=sentences_embedding_path)
         # Update split_set
         splits[split] = split_set
     return splits
@@ -102,7 +101,7 @@ def _remove_qualifier(string):
 def _tokenize(sentence):
     sentence = str(sentence)
     stop = set(stopwords.words('english') + list(string.punctuation))
-    tokens = '|'.join(set(i for i in word_tokenize(sentence.replace('_', ' ').lower()) if i not in stop))
+    tokens = '|'.join(set(filter(lambda p : p not in stop, word_tokenize(sentence.replace('_', ' ').lower()))))
     return tokens
 
 def _compute_concept_ids(cn, sentence_list):
@@ -191,9 +190,11 @@ def preprocess(esnli_frac: float = .01):
     # Convert to dict
     ic('Converting to dict')
     splits = _df_to_dict(splits)
-    # # Add concepts
+    # Add concepts
     ic('Adding concepts')
+    from utils.graphs import concept_ids_to_pyg_data, concept_df, prune_conceptnet_df
     splits = _add_concepts(splits, esnli_output_dir)
+    del concept_df
     # Encode sentences
     ic('Encoding sentences')
     splits = _encode(splits, esnli_output_dir)

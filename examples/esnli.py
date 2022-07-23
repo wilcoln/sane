@@ -15,7 +15,9 @@ from models.kax import KAX
 import os.path as osp
 
 # Load dataset splits
-original_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
+og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
+new_sizes = {split: int(og_size*settings.data_frac) for split, og_size in og_sizes.items()}
+num_chunks = {split: math.ceil(new_size/settings.chunk_size) for split, new_size in new_sizes.items()}
 
 # Custom collate fn
 def collate_fn(batch):
@@ -25,11 +27,8 @@ def collate_fn(batch):
 
 
 def get_loaders(split):
-    split_size = int(original_sizes[split]*settings.data_frac)
-    return [
-        DataLoader(ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk), batch_size=32, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
-        for chunk in range(math.ceil(split_size/settings.chunk_size))
-    ]
+    return (DataLoader(ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk), batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
+        for chunk in range(num_chunks[split]))
 
 # Create Loaders
 train_loaders = get_loaders('train')
@@ -39,6 +38,8 @@ test_loaders = get_loaders('test')
 sample_train_set = ESNLIDataset(path=settings.data_dir, frac=settings.data_frac, split='train', chunk=0)
 # Define model
 model = KAX(metadata=sample_train_set[0]['pyg_data'].metadata()).to(settings.device)
+dataset_name = sample_train_set.name
+del sample_train_set
 
 # Define loss function and optimizer
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -67,12 +68,12 @@ class KAXTrainer(TorchModuleBaseTrainer):
         total = 0
 
         start = time.time()
-        pbar = tqdm(dataloaders)
+        pbar = tqdm(dataloaders, total=num_chunks[split])
         description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
         pbar.set_description(description[split])
         for dataloader in pbar:
             # Iterate over the DataLoader for training data
-            for i, inputs in tqdm(list(enumerate(dataloader, 0))):
+            for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
                 for k in inputs:
                     if isinstance(inputs[k], torch.Tensor):
                         inputs[k] = inputs[k].to(settings.device)
@@ -98,7 +99,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 correct += predicted.eq(inputs['gold_label']).sum().item()
         
         split_time = time.time() - start
-        current_loss /= sum(len(dl) for dl in dataloaders)
+        current_loss /= (math.ceil(new_sizes[split]/settings.batch_size))
         current_acc = 100. * correct / total
 
         return {
@@ -117,4 +118,4 @@ class KAXTrainer(TorchModuleBaseTrainer):
         return self.evaluate(self.test_loaders, 'test')
 
 
-KAXTrainer(model, optimizer, sample_train_set.name, train_loaders, val_loaders, test_loaders).run()
+KAXTrainer(model, optimizer, dataset_name, train_loaders, val_loaders, test_loaders).run()

@@ -67,9 +67,9 @@ class ChunkedList(Sequence):
                     chunk = self.get_chunk(i * self.k)
                     with open(os.path.join(dirpath, f'chunk{i}.pkl'), 'wb') as f:
                         pickle.dump(func(chunk), f)
-            except KeyboardInterrupt:
+            except Exception:
                 shutil.rmtree(dirpath, ignore_errors=True)
-                raise KeyboardInterrupt
+                raise Exception
             return ChunkedList(n=self.n, num_chunks=len(self.chunks), dirpath=dirpath)
         
         self.chunks = [func(chunk) for chunk in self.chunks]
