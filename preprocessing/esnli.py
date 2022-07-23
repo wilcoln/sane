@@ -109,7 +109,7 @@ def _compute_concept_ids(cn, sentence_list):
     concept_ids_list = []
     for sentence in tqdm(sentence_list):
         # get the triples in cn with matching inputs and labels
-        filter_ = cn['cleaned_name'].apply(lambda x: x in sentence.lower())
+        filter_ = cn['cleaned_name'].apply(lambda x: x in str(sentence).lower())
         concept_ids = cn['cleaned_name'][filter_].str.len().sort_values(ascending=False).index[:settings.max_num_concepts].tolist() # TODO: Semantic similarity
         concept_ids_list.append(concept_ids)
     return concept_ids_list
