@@ -16,7 +16,7 @@ def get_node_embeddings():
 class MLP(nn.Module):
     """ Multi-layer perceptron. """
 
-    def __init__(self, in_channels, hidden_channels=100, out_channels=None, num_layers=2, batch_norm=False):
+    def __init__(self, in_channels, hidden_channels=100, out_channels=None, num_layers=1, batch_norm=False):
         assert num_layers >= 1, "num_layers must be at least 1"
         super(MLP, self).__init__()
 

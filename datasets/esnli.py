@@ -20,8 +20,6 @@ class ESNLIDataset(Dataset):
         super().__init__()
         self.name = f'esnli_{split}_{chunk}'
 
-        ic(f'Loading Dataset {self.name}')
-
         # Load pickle file
         esnli_path = osp.join(path, f'esnli_{frac}')
         suffix = '_1' if split == 'train' else ''

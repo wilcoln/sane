@@ -5,7 +5,7 @@ import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_epochs', help='Number of epochs', type=int, default=10)
-parser.add_argument('--batch_size', help='Batch size', type=int, default=64)
+parser.add_argument('--batch_size', help='Batch size', type=int, default=32)
 parser.add_argument('--sent_dim', help='sent_dim', type=int, default=768) # Bart-base d_model = 768
 parser.add_argument('--chunk_size', help='Chunk size', type=int, default=10000)
 parser.add_argument('--colab', action='store_true', help="whether we are running on google colab", default=False)
