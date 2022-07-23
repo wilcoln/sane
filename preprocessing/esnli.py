@@ -11,11 +11,14 @@ import math
 
 from utils.settings import settings
 from utils.embeddings import bart
+import nltk
 from nltk import word_tokenize
 from nltk.corpus import stopwords
 from utils.types import ChunkedList
 import shutil
 from utils.graphs import concept_ids_to_pyg_data, concept_df, prune_conceptnet_df
+# nltk.download('punkt')
+# nltk.download('stopwords')
 
 def _read_dataset():
     esnli_dir = osp.join(settings.data_dir, 'esnli')
@@ -99,9 +102,9 @@ def _remove_qualifier(string):
     return string.split('/')[0]
 
 
-def _tokenize(sentence):
+def _tokenize(sentence, ignore_stopwords=False):
     sentence = str(sentence)
-    stop = set(stopwords.words('english') + list(string.punctuation))
+    stop = set(stopwords.words('english') + list(string.punctuation)) if ignore_stopwords else []
     tokens = '|'.join(set(filter(lambda p : p not in stop, word_tokenize(sentence.replace('_', ' ').lower()))))
     return tokens
 
@@ -110,13 +113,10 @@ def _unstrip(sentence):
 
 def _compute_concept_ids(cn, sentence_len_list):
     setence_len_list = [(_unstrip(sentence).lower(), len_) for sentence, len_ in sentence_len_list]
-    concept_ids_list = []
-    for sentence, len_ in tqdm(sentence_len_list):
-        # get the triples in cn with matching inputs and labels
-        filter_ = cn['cleaned_name'].astype('str').apply(lambda x: x in sentence)
-        concept_ids = cn['cleaned_name'][filter_].str.len().sort_values(ascending=False).index[:len_].tolist() # TODO: Semantic similarity
-        concept_ids_list.append(concept_ids)
-    return concept_ids_list
+    return [
+        cn['cleaned_name'][cn['cleaned_name'].astype(str).apply(lambda x: x in sentence)].str.len().sort_values(ascending=False).index[:len_].tolist()
+        for sentence, len_ in tqdm(sentence_len_list)
+    ]
 
 def _add_concepts(splits, esnli_output_dir):
     cn = concept_df
