@@ -39,8 +39,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
                  model: nn.Module,
                  optimizer: Optimizer,
                  num_epochs: int,
-                 num_prints: int = 10,
                  dataset_name: str = None,
+                 num_prints: int = 10,
                  *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
