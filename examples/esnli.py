@@ -27,8 +27,8 @@ def collate_fn(batch):
 
 
 def get_loaders(split):
-    return (DataLoader(ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk), batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
-        for chunk in range(num_chunks[split]))
+    return [DataLoader(ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk), batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
+        for chunk in range(num_chunks[split])]
 
 # Create Loaders
 train_loaders = get_loaders('train')
@@ -99,7 +99,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 correct += predicted.eq(inputs['gold_label']).sum().item()
         
         split_time = time.time() - start
-        current_loss /= (math.ceil(new_sizes[split]/settings.batch_size))
+        current_loss /= sum(len(dl) for dl in dataloaders) # (math.ceil(new_sizes[split]/settings.batch_size))
         current_acc = 100. * correct / total
 
         return {
