@@ -30,23 +30,23 @@ concept_df, relation_df = get_nodes_and_relations(conceptnet_df)
 concept_dict = dict(zip(concept_df['name'], concept_df.index))
 relation_dict = dict(zip(relation_df['name'], relation_df.index))
 
-conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
+# conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
 
-if not os.path.exists(conceptnet_dir):
-    os.mkdir(conceptnet_dir)
-concept_embedding_path = osp.join(conceptnet_dir, 'concept_embedding')
-relation_embedding_path = osp.join(conceptnet_dir, 'relation_embedding')
+# if not os.path.exists(conceptnet_dir):
+#     os.mkdir(conceptnet_dir)
+# concept_embedding_path = osp.join(conceptnet_dir, 'concept_embedding')
+# relation_embedding_path = osp.join(conceptnet_dir, 'relation_embedding')
 
-try:
-    # raise Exception
-    ic('Loading encoded concepts')
-    concept_embedding = ChunkedList(n=len(concept_dict), dirpath=concept_embedding_path)
-    relation_embedding = ChunkedList(n=len(concept_dict), dirpath=relation_embedding_path)
+# try:
+#     # raise Exception
+#     ic('Loading encoded concepts')
+#     concept_embedding = ChunkedList(n=len(concept_dict), dirpath=concept_embedding_path)
+#     relation_embedding = ChunkedList(n=len(concept_dict), dirpath=relation_embedding_path)
 
-    concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
-    relation_embedding = torch.cat(relation_embedding.get_chunks(), dim=0)
-except:
-    pass
+#     concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
+#     relation_embedding = torch.cat(relation_embedding.get_chunks(), dim=0)
+# except:
+#     pass
     # chunk_size = 10000
     # # Encoding concepts
     # ic('Encoding concepts')
@@ -70,7 +70,7 @@ def concept_ids_to_pyg_data(conceptnet_df, node_ids_list):
         data = HeteroData()
         node_ids = concept_df[concept_df.index.isin(node_ids)].index
         triples_df = conceptnet_df[conceptnet_df['source'].isin(concept_df['name'].loc[node_ids]) | conceptnet_df['target'].isin(concept_df['name'].loc[node_ids])]
-        
+        ic(len(triples_df))
         # Load nodes
         sub_concepts, sub_relations = get_nodes_and_relations(triples_df)
         mapping = dict(zip(sub_concepts['name'], sub_concepts.index))

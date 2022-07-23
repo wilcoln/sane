@@ -15,8 +15,7 @@ from nltk import word_tokenize
 from nltk.corpus import stopwords
 from utils.types import ChunkedList
 import shutil
-
-settings.max_num_concepts = 100
+from utils.graphs import concept_ids_to_pyg_data, concept_df, prune_conceptnet_df
 
 def _read_dataset():
     esnli_dir = osp.join(settings.data_dir, 'esnli')
@@ -50,17 +49,19 @@ def _reduce_dataset(splits, frac, output_dir):
         split_set.drop(columns=useless_columns, inplace=True, errors='ignore')
         # Convert labels to categorical
         split_set['gold_label'] = split_set['gold_label'].astype('category').cat.codes
-        # # Add vocabulary
-        # vocab_path = osp.join(output_dir, f'{split}_vocab.pkl')
-        # try:
-        #     # Load esnli vocab
-        #     ic('Load esnli Vocab')
-        #     split_set['Vocab'] = pickle.load(open(os.path.join(vocab_path), 'rb'))
-        # except:
-        #     ic('Create vocabulary for split')
-        #     split_set['Vocab'] = split_set['Sentences'].apply(_tokenize)
-        #     with open(vocab_path, 'wb') as f:
-        #         pickle.dump(split_set['Vocab'], f)
+        # Add vocabulary
+        vocab_path = osp.join(output_dir, f'{split}_vocab.pkl')
+        try:
+            # Load esnli vocab
+            ic('Load esnli Vocab')
+            split_set['Vocab'] = pickle.load(open(os.path.join(vocab_path), 'rb'))
+        except:
+            ic('Create vocabulary for split')
+            split_set['Vocab'] = split_set['Sentences'].apply(_tokenize)
+            with open(vocab_path, 'wb') as f:
+                pickle.dump(split_set['Vocab'], f)
+
+        split_set['Vocab_len'] = split_set['Vocab'].str.count('\\|')
 
         # Update split_set
         splits[split] = split_set
@@ -104,12 +105,16 @@ def _tokenize(sentence):
     tokens = '|'.join(set(filter(lambda p : p not in stop, word_tokenize(sentence.replace('_', ' ').lower()))))
     return tokens
 
-def _compute_concept_ids(cn, sentence_list):
+def _unstrip(sentence):
+    return ' ' + str(sentence) + ' '
+
+def _compute_concept_ids(cn, sentence_len_list):
+    setence_len_list = [(_unstrip(sentence).lower(), len_) for sentence, len_ in sentence_len_list]
     concept_ids_list = []
-    for sentence in tqdm(sentence_list):
+    for sentence, len_ in tqdm(sentence_len_list):
         # get the triples in cn with matching inputs and labels
-        filter_ = cn['cleaned_name'].apply(lambda x: x in str(sentence).lower())
-        concept_ids = cn['cleaned_name'][filter_].str.len().sort_values(ascending=False).index[:settings.max_num_concepts].tolist() # TODO: Semantic similarity
+        filter_ = cn['cleaned_name'].astype('str').apply(lambda x: x in sentence)
+        concept_ids = cn['cleaned_name'][filter_].str.len().sort_values(ascending=False).index[:len_].tolist() # TODO: Semantic similarity
         concept_ids_list.append(concept_ids)
     return concept_ids_list
 
@@ -122,6 +127,8 @@ def _add_concepts(splits, esnli_output_dir):
         # Load conceptnet cleaned_name
         ic('Load conceptnet Clean names')
         cn['cleaned_name'] = pickle.load(open(os.path.join(cleaned_name_path), 'rb'))
+        cn = cn.drop_duplicates(subset=['cleaned_name'])
+        cn['cleaned_name'] = ' ' + cn['cleaned_name'].astype(str) + ' ' 
     except:
         # Creating cleaned_name for conceptnet
         ic('Creating Conceptnet cleaned_name')
@@ -129,6 +136,7 @@ def _add_concepts(splits, esnli_output_dir):
 
         with open(cleaned_name_path, 'wb') as f:
             pickle.dump(cn['cleaned_name'], f)
+
     # # Add Conceptnet Vocab
     # output_dir = osp.join(settings.data_dir, f'conceptnet')
     # vocab_path = osp.join(output_dir, 'vocab.pkl')
@@ -152,7 +160,7 @@ def _add_concepts(splits, esnli_output_dir):
             split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
         except:
             ic(f'Computing concept ids for {split} split')
-            split_set['concept_ids'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l: _compute_concept_ids(cn, l), concepts_path)
+            split_set['concept_ids'] = ChunkedList(lst=list(zip(split_set['Sentences'], split_set['Vocab_len'])), num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l: _compute_concept_ids(cn, l), concepts_path)
 
         # Adding Pyg Data
         pyg_data_path = os.path.join(esnli_output_dir, f'{split}_pyg_data')
@@ -169,6 +177,7 @@ def _add_concepts(splits, esnli_output_dir):
         # Remove Vocab
         if 'Vocab' in split_set: del split_set['Vocab']
         if 'concept_ids' in split_set: del split_set['concept_ids']
+        if 'Vocab_len' in split_set: del split_set['Vocab_len']
 
         # Update split_set
         splits[split] = split_set
@@ -192,9 +201,7 @@ def preprocess(esnli_frac: float = .01):
     splits = _df_to_dict(splits)
     # Add concepts
     ic('Adding concepts')
-    from utils.graphs import concept_ids_to_pyg_data, concept_df, prune_conceptnet_df
     splits = _add_concepts(splits, esnli_output_dir)
-    del concept_df
     # Encode sentences
     ic('Encoding sentences')
     splits = _encode(splits, esnli_output_dir)
