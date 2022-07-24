@@ -112,7 +112,7 @@ def _unstrip(sentence):
     return ' ' + str(sentence) + ' '
 
 def _compute_concept_ids(cn, sentence_len_list):
-    setence_len_list = [(_unstrip(sentence).lower(), len_) for sentence, len_ in sentence_len_list]
+    sentence_len_list = [(_unstrip(sentence).lower(), len_) for sentence, len_ in sentence_len_list]
     return [
         cn['cleaned_name'][cn['cleaned_name'].astype(str).apply(lambda x: x in sentence)].index[:len_].tolist()
         for sentence, len_ in tqdm(sentence_len_list)
