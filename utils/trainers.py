@@ -8,6 +8,7 @@ import pandas as pd
 from icecream import ic
 from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
+import torch
 from torch import nn
 from torch.optim import Optimizer
 from utils.settings import settings
@@ -94,6 +95,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
 
         with open(osp.join(results_path, 'results.json'), 'w') as f:
             json.dump(self.results, f)
+
+        torch.save(self.model.state_dict(), osp.join(results_path, 'model.pt'))
 
         # Print path to the results directory
         print(f'Results saved to {results_path}')
