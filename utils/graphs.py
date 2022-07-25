@@ -70,7 +70,6 @@ def concept_ids_to_pyg_data(conceptnet_df, node_ids_list):
         data = HeteroData()
         node_ids = concept_df[concept_df.index.isin(node_ids)].index
         triples_df = conceptnet_df[conceptnet_df['source'].isin(concept_df['name'].loc[node_ids]) | conceptnet_df['target'].isin(concept_df['name'].loc[node_ids])]
-        ic(len(triples_df))
         # Load nodes
         sub_concepts, sub_relations = get_nodes_and_relations(triples_df)
         mapping = dict(zip(sub_concepts['name'], sub_concepts.index))
