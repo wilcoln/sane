@@ -3,15 +3,9 @@ from icecream import ic
 from torch import nn
 import torch.nn.functional as F
 from torch_geometric.nn import SAGEConv, to_hetero, global_add_pool, HeteroConv, Linear
+from torch_geometric.utils.dropout import dropout_adj
 from utils.settings import settings
-from utils.types import ChunkedList
-import os.path as osp
-
-def get_node_embeddings():
-    conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
-    concept_embedding_path = osp.join(conceptnet_dir, 'concept_embedding')
-    concept_embedding = ChunkedList(n=5779, dirpath=concept_embedding_path)
-    return torch.cat(concept_embedding.get_chunks(), dim=0)
+from datasets.esnli import concept_embedding
 
 class MLP(nn.Module):
     """ Multi-layer perceptron. """
@@ -61,10 +55,10 @@ class GNN(nn.Module):
 
         self.conv1 = SAGEConv((-1, -1), hidden_channels)
         self.conv2 = SAGEConv((-1, -1), out_channels)
-        self.node_embeddings = get_node_embeddings()
 
     def forward(self, data):
-        x, edge_index = self.node_embeddings[data.x].to(settings.device), data.edge_index.to(settings.device)
+        x, edge_index = concept_embedding[data.x].to(settings.device), data.edge_index.to(settings.device)
+        # edge_index, _ = dropout_adj(edge_index, p=.9)
         x = self.conv1(x, edge_index).relu()
         x = self.conv2(x, edge_index)
         # x = global_add_pool(x, data.batch)

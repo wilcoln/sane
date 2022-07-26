@@ -63,7 +63,7 @@ def prune_conceptnet_df(node_ids_list):
 
 def concept_ids_to_pyg_data(conceptnet_df, node_ids_list):
     """
-    Convert a list of list of conceptnet nodes to pytorch geometric data.
+    Convert a list of list of conceptnet nodes to pytorch geometric data list.
     """
     data_list = []
     for node_ids in tqdm(node_ids_list):

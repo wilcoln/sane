@@ -41,8 +41,9 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
 
     # ic | encoded_input.keys(): dict_keys(['input_ids', 'attention_mask'])
     # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
+    sentences = [str(sent) for sent in sentences]
     num_sentences = len(sentences)
-    batch_size = 256
+    batch_size = 128
     batches = (sentences[i:i + batch_size] for i in range(0, num_sentences, batch_size))
 
     batches = tqdm(batches, total=math.ceil(num_sentences/batch_size)) if verbose else batches

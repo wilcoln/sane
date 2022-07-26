@@ -73,6 +73,7 @@ def _reduce_dataset(splits, frac, output_dir):
 
 
 def _encode(splits, output_dir):
+    settings.device = torch.device('cpu')
     for split, split_set in splits.items():
         sentences_embedding_path = osp.join(output_dir, f'{split}_Sentences_embedding')
         try:

@@ -1,12 +1,18 @@
 import torch.utils.data
 import pandas as pd
 import os.path as osp
+from utils.types import ChunkedList
 from tqdm import tqdm
 from utils.settings import settings
 import pickle
 from icecream import ic
 from torch_geometric.data.hetero_data import Data
 from torch.utils.data import Dataset
+
+conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
+concept_embedding = ChunkedList(n=5779, dirpath=osp.join(conceptnet_dir, 'concept_embedding'))
+concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
+conceptnet = torch.load(osp.join(conceptnet_dir, 'conceptnet.pyg'))
 
 class ESNLIDataset(Dataset):
     """
@@ -25,6 +31,7 @@ class ESNLIDataset(Dataset):
         suffix = '_1' if split == 'train' else ''
         csv_path = osp.join(path, 'esnli', f'esnli_{split}{suffix}.csv')
         keys = ['Sentences', 'Sentences_embedding', 'Explanation_1', 'Explanation_2', 'Explanation_3', 'gold_label', 'pyg_data']
+        string_keys = ['Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3']
         self.esnli = dict()
 
         for k in keys:
@@ -35,6 +42,15 @@ class ESNLIDataset(Dataset):
                     self.esnli[k] = self.esnli[k]
             except Exception as e:
                 pass
+
+        for k in self.esnli:
+            # # Reduce the dataset
+            # self.esnli[k] = self.esnli[k][:len(self.esnli[k])//5]
+            if k in string_keys:
+                self.esnli[k] = [str(elt) for elt in self.esnli[k]]
+
+        # self.esnli['pyg_data'] = [conceptnet.subgraph({'concept': torch.Tensor(v)}) for v in self.esnli['concept_ids']]
+        self.esnli['pyg_data'] = [data.to_homogeneous() for data in self.esnli['pyg_data']]
 
     def __len__(self):
         return len(self.esnli['gold_label'])

@@ -10,7 +10,7 @@ from collections import defaultdict
 from torch_geometric.data.hetero_data import HeteroData as PygData
 from utils.trainers import TorchModuleBaseTrainer
 from utils.settings import settings
-from datasets.esnli import ESNLIDataset
+from datasets.esnli import ESNLIDataset, conceptnet
 from models.kax import KAX
 import os.path as osp
 
@@ -35,11 +35,9 @@ train_loaders = get_loaders('train')
 val_loaders = get_loaders('val')
 test_loaders = get_loaders('test')
 
-sample_train_set = ESNLIDataset(path=settings.data_dir, frac=settings.data_frac, split='train', chunk=0)
 # Define model
-model = KAX(metadata=sample_train_set[0]['pyg_data'].metadata()).to(settings.device)
-dataset_name = sample_train_set.name
-del sample_train_set
+model = KAX(metadata=conceptnet.metadata()).to(settings.device)
+dataset_name = train_loaders[0].dataset.name
 
 # Define loss function and optimizer
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -67,10 +65,10 @@ class KAXTrainer(TorchModuleBaseTrainer):
         correct = 0
         total = 0
 
-        start = time.time()
         pbar = tqdm(dataloaders, total=num_chunks[split])
         description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
         pbar.set_description(description[split])
+        start = time.time()
         for dataloader in pbar:
             # Iterate over the DataLoader for training data
             for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
