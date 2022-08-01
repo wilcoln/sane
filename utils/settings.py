@@ -5,7 +5,7 @@ import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_epochs', help='Number of epochs', type=int, default=5)
-parser.add_argument('--batch_size', help='Batch size', type=int, default=32)
+parser.add_argument('--batch_size', help='Batch size', type=int, default=64)
 parser.add_argument('--sent_dim', help='sent_dim', type=int, default=768) # Bart-base d_model = 768
 parser.add_argument('--chunk_size', help='Chunk size', type=int, default=10000)
 parser.add_argument('--colab', action='store_true', help="whether we are running on google colab", default=False)
@@ -32,7 +32,7 @@ parser.add_argument('--std', action='store_true', help='Include standard deviati
 parser.add_argument('--alpha',  help='Alpha', type=float, default=.25)
 parser.add_argument('--data_frac', help='Fraction of data to use', type=float, default=0.001)
 settings, unknown = parser.parse_known_args()
-setattr(settings, 'device', torch.device('cuda:3'))
+setattr(settings, 'device', torch.device('cuda'))
 
 if settings.colab:
     settings.data_dir = '/content/data'
