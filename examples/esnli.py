@@ -11,7 +11,7 @@ from torch_geometric.data.hetero_data import HeteroData as PygData
 from utils.trainers import TorchModuleBaseTrainer
 from utils.settings import settings
 from datasets.esnli import ESNLIDataset, conceptnet
-from models.kax import KAX
+from models.kax import KAX, KAXWK
 import os.path as osp
 
 # Load dataset splits
@@ -81,7 +81,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
                     self.optimizer.zero_grad()
 
                 # forward pass & compute loss
-                nles, outputs, loss = self.model(inputs)
+                attns, nles, outputs, loss = self.model(inputs)
 
                 if train:
                     # backward pass + optimization step
@@ -103,7 +103,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
         return {
             f'{split}_acc': current_acc,
             f'{split}_loss': current_loss,
-            f'{split}_time': split_time
+            f'{split}_time': split_time,
         }
 
     def train(self) -> dict:

@@ -59,7 +59,7 @@ relation_dict = dict(zip(relation_df['name'], relation_df.index))
 def prune_conceptnet_df(node_ids_list):
     ic('Pruning Conceptnet_df')
     node_ids = list(set().union(*[set(l) for l in node_ids_list]))
-    return conceptnet_df[conceptnet_df['source'].isin(concept_df['name'].loc[node_ids]) | conceptnet_df['target'].isin(concept_df['name'].loc[node_ids])]
+    return conceptnet_df[conceptnet_df['source'].isin(concept_df['name'].loc[node_ids]) & conceptnet_df['target'].isin(concept_df['name'].loc[node_ids])]
 
 def concept_ids_to_pyg_data(conceptnet_df, node_ids_list):
     """
@@ -69,7 +69,7 @@ def concept_ids_to_pyg_data(conceptnet_df, node_ids_list):
     for node_ids in tqdm(node_ids_list):
         data = HeteroData()
         node_ids = concept_df[concept_df.index.isin(node_ids)].index
-        triples_df = conceptnet_df[conceptnet_df['source'].isin(concept_df['name'].loc[node_ids]) | conceptnet_df['target'].isin(concept_df['name'].loc[node_ids])]
+        triples_df = conceptnet_df[conceptnet_df['source'].isin(concept_df['name'].loc[node_ids]) & conceptnet_df['target'].isin(concept_df['name'].loc[node_ids])]
         # Load nodes
         sub_concepts, sub_relations = get_nodes_and_relations(triples_df)
         mapping = dict(zip(sub_concepts['name'], sub_concepts.index))

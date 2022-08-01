@@ -2,10 +2,8 @@ import torch
 from icecream import ic
 from torch import nn
 import torch.nn.functional as F
-from torch_geometric.nn import SAGEConv, to_hetero, global_add_pool, HeteroConv, Linear
-from torch_geometric.utils.dropout import dropout_adj
+from torch_geometric.nn import SAGEConv, HeteroConv
 from utils.settings import settings
-from datasets.esnli import concept_embedding
 
 class MLP(nn.Module):
     """ Multi-layer perceptron. """
@@ -56,9 +54,10 @@ class GNN(nn.Module):
         self.conv1 = SAGEConv((-1, -1), hidden_channels)
         self.conv2 = SAGEConv((-1, -1), out_channels)
 
-    def forward(self, data):
-        x, edge_index = concept_embedding[data.x].to(settings.device), data.edge_index.to(settings.device)
-        # edge_index, _ = dropout_adj(edge_index, p=.9)
+    def forward(self, x, edge_index):
+        x, edge_index = x.to(settings.device), edge_index.to(settings.device)
+        # indices = torch.randperm(data.edge_index.shape[0])[:20]
+        # edge_index = edge_index[indices]
         x = self.conv1(x, edge_index).relu()
         x = self.conv2(x, edge_index)
         # x = global_add_pool(x, data.batch)
@@ -71,23 +70,22 @@ class HeteroGNN(nn.Module):
         super().__init__()
         out_channels = out_channels if out_channels is not None else hidden_channels
 
-        self.convs = nn.ModuleList()
-        for _ in range(num_layers):
-            conv = HeteroConv({
-                edge_type: SAGEConv((-1, -1), hidden_channels)
-                for edge_type in metadata[1]
-            })
-            self.convs.append(conv)
+        self.conv1 = HeteroConv({
+            edge_type: SAGEConv((-1, -1), hidden_channels)
+            for edge_type in metadata[1]
+        })
 
-        self.lin = Linear(hidden_channels, out_channels)
+        self.conv2 = HeteroConv({
+            edge_type: SAGEConv((-1, -1), out_channels)
+            for edge_type in metadata[1]
+        })
 
     def forward(self, data):
+        data = data.to(settings.device)
         x_dict, edge_index_dict = data.x_dict, data.edge_index_dict
-        for conv in self.convs:
-            x_dict = conv(x_dict, edge_index_dict)
-            x_dict = {key: F.leaky_relu(x) for key, x in x_dict.items()}
-            # return self.lin(x_dict['author'])
-        # x = global_add_pool(x['concept'], data.batch)
+        x_dict = self.conv1(x_dict, edge_index_dict)
+        x_dict = {key: F.relu(x) for key, x in x_dict.items()}
+        x_dict = self.conv2(x_dict, edge_index_dict)
         return x_dict, edge_index_dict
 
 
@@ -106,3 +104,24 @@ def singles_to_triples(x, edge_index):
     # triples = torch.cat([triples, self_loops], dim=0)  # (2E + V, 2D)
 
     return triples
+
+def hetero_singles_to_triples(x_dict, edge_index_dict):
+    triples = []
+    for _, relation, _ in edge_index_dict:
+        heads = x_dict['concept'][edge_index_dict['concept', relation, 'concept'][0]]  # (E, D)
+        tails = x_dict['concept'][edge_index_dict['concept', relation, 'concept'][1]]  # (E, D)
+
+
+        # data['concept', relation, 'concept'].edge_label = torch.hstack((rel, weight))
+        # Add triples
+        triples.append(torch.cat([heads, tails], dim=1))  # (E, 2D)
+
+    # # add inverse triples
+    # inverse_triples = torch.cat([tails, heads], dim=1)  # (E, 2*D)
+    # triples = torch.cat([triples, inverse_triples], dim=0)  # (2E, 2D)
+
+    # # add self-loops
+    # self_loops = torch.cat([data, data], dim=1)  # (V, D)
+    # triples = torch.cat([triples, self_loops], dim=0)  # (2E + V, 2D)
+
+    return torch.cat(triples, dim=0)
