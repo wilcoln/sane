@@ -8,7 +8,7 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 from transformers import BartTokenizer, BartModel
 
-from ..utils.settings import settings
+from src.utils.settings import settings
 
 logging.basicConfig(level='INFO')
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'

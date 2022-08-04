@@ -11,10 +11,10 @@ from nltk import word_tokenize
 from nltk.corpus import stopwords
 from tqdm import tqdm
 
-from ..conceptnet import Conceptnet
-from ..utils.embeddings import bart
-from ..utils.settings import settings
-from ..utils.types import ChunkedList
+from src.conceptnet import Conceptnet
+from src.utils.embeddings import bart
+from src.utils.settings import settings
+from src.utils.types import ChunkedList
 
 
 def _read_dataset():

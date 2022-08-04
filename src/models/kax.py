@@ -3,7 +3,7 @@ from torch import nn
 from models.explanation import Explainer, ExplainerWithoutKnowledge
 from models.fusion import Fuser, Encoder
 from models.prediction import Predictor
-from ..utils.settings import settings
+from src.utils.settings import settings
 
 
 class KAX(nn.Module):

@@ -3,7 +3,7 @@ import os.path as osp
 
 import pandas as pd
 
-from ..utils.settings import settings
+from src.utils.settings import settings
 
 
 def clean():

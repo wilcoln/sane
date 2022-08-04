@@ -6,8 +6,8 @@ from icecream import ic
 from torch.utils.data import Dataset
 from transformers import BartTokenizer
 
-from ..utils.settings import settings
-from ..utils.types import ChunkedList
+from src.utils.settings import settings
+from src.utils.types import ChunkedList
 
 conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
 concept_embedding = ChunkedList(n=5779, dirpath=osp.join(conceptnet_dir, 'concept_embedding'))

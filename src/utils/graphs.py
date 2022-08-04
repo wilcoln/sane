@@ -6,7 +6,7 @@ from icecream import ic
 from torch_geometric.data import HeteroData
 from tqdm import tqdm
 
-from ..utils.settings import settings
+from src.utils.settings import settings
 
 
 
