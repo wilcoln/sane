@@ -109,7 +109,7 @@ def _tokenize(sentence, ignore_stopwords=False):
 
 def _compute_concept_ids(cn, sentence_list):
     return [
-        cn.nodes2ids(cn.subgraph(cn.search(sentence), radius=2).nodes)
+        cn.nodes2ids(cn.subgraph(cn.search(sentence), radius=1).nodes)
         for sentence in tqdm(sentence_list)
     ]
 
