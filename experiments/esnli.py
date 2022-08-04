@@ -38,7 +38,7 @@ val_loaders = get_loaders('val')
 test_loaders = get_loaders('test')
 
 # Define model
-model = KAXWK(metadata=conceptnet.metadata()).to(settings.device)
+model = KAX(metadata=conceptnet.metadata()).to(settings.device)
 dataset_name = train_loaders[0].dataset.name
 
 # Define loss function and optimizer
