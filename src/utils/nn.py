@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from torch import nn
 from torch_geometric.nn import SAGEConv, HeteroConv
 
-from utils.settings import settings
+from ..utils.settings import settings
 
 
 class MLP(nn.Module):

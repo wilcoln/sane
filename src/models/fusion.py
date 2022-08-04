@@ -3,8 +3,8 @@ from torch import nn
 from torch_geometric.utils import subgraph
 
 from datasets.esnli import conceptnet, concept_embedding
-from utils.nn import HeteroGNN, GNN, singles_to_triples
-from utils.settings import settings
+from ..utils.nn import HeteroGNN, GNN, singles_to_triples
+from ..utils.settings import settings
 
 
 # class Fuser(nn.Module):

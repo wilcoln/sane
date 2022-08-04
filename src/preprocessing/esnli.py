@@ -11,14 +11,11 @@ from nltk import word_tokenize
 from nltk.corpus import stopwords
 from tqdm import tqdm
 
-from utils.embeddings import bart
-from utils.graphs import concept_ids_to_pyg_data, concept_df, prune_conceptnet_df
-from utils.settings import settings
-from utils.types import ChunkedList
+from ..conceptnet import Conceptnet
+from ..utils.embeddings import bart
+from ..utils.settings import settings
+from ..utils.types import ChunkedList
 
-
-# nltk.download('punkt')
-# nltk.download('stopwords')
 
 def _read_dataset():
     esnli_dir = osp.join(settings.data_dir, 'esnli')
@@ -103,11 +100,6 @@ def _save_splits(splits, output_dir):
                     k_path)
 
 
-def _remove_qualifier(string):
-    string = str(string)
-    return string.split('/')[0]
-
-
 def _tokenize(sentence, ignore_stopwords=False):
     sentence = str(sentence)
     stop = set(stopwords.words('english') + list(string.punctuation)) if ignore_stopwords else []
@@ -115,52 +107,15 @@ def _tokenize(sentence, ignore_stopwords=False):
     return tokens
 
 
-def _unstrip(sentence):
-    return ' ' + str(sentence) + ' '
-
-
-def _compute_concept_ids(cn, sentence_len_list):
-    sentence_len_list = [(_unstrip(sentence).lower(), len_) for sentence, len_ in sentence_len_list]
+def _compute_concept_ids(cn, sentence_list):
     return [
-        cn['cleaned_name'][cn['cleaned_name'].astype(str).apply(lambda x: x in sentence)].index[:len_].tolist()
-        for sentence, len_ in tqdm(sentence_len_list)
+        list(cn.subgraph(cn.search(sentence), radius=1).nodes)
+        for sentence in tqdm(sentence_list)
     ]
 
 
 def _add_concepts(splits, esnli_output_dir):
-    cn = concept_df
-    # Add Cleaned name
-    output_dir = osp.join(settings.data_dir, f'conceptnet')
-    cleaned_name_path = osp.join(output_dir, 'cleaned_name.pkl')
-    try:
-        # Load conceptnet cleaned_name
-        ic('Load conceptnet Clean names')
-        cn['cleaned_name'] = pickle.load(open(os.path.join(cleaned_name_path), 'rb'))
-        cn = cn.drop_duplicates(subset=['cleaned_name'])
-        cn['cleaned_name'] = ' ' + cn['cleaned_name'].astype(str) + ' '
-        cn = cn.sort_values(by='cleaned_name', key=lambda x: x.str.len(), ascending=False)
-    except:
-        # Creating cleaned_name for conceptnet
-        ic('Creating Conceptnet cleaned_name')
-        cn['cleaned_name'] = cn['name'].str.split('/').str[0].str.replace('_', ' ')
-
-        with open(cleaned_name_path, 'wb') as f:
-            pickle.dump(cn['cleaned_name'], f)
-
-    # # Add Conceptnet Vocab
-    # output_dir = osp.join(settings.data_dir, f'conceptnet')
-    # vocab_path = osp.join(output_dir, 'vocab.pkl')
-    # try:
-    #     # Load conceptnet vocab
-    #     ic('Load conceptnet Vocab')
-    #     cn['Vocab'] = pickle.load(open(os.path.join(vocab_path), 'rb'))
-    # except:
-    #     # Creating vocabulary for conceptnet
-    #     ic('Creating Conceptnet vocab')
-    #     cn['Vocab'] = (cn['name'].apply(_remove_qualifier)).apply(_tokenize)
-
-    #     with open(vocab_path, 'wb') as f:
-    #         pickle.dump(cn['Vocab'], f)
+    cn = Conceptnet()
 
     ic('Add Knowledge to Data Points')
     for split, split_set in splits.items():
@@ -170,23 +125,9 @@ def _add_concepts(splits, esnli_output_dir):
             split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
         except:
             ic(f'Computing concept ids for {split} split')
-            split_set['concept_ids'] = ChunkedList(lst=list(zip(split_set['Sentences'], split_set['Vocab_len'])),
-                                                   num_chunks=math.ceil(
+            split_set['concept_ids'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(
                                                        len(split_set['Sentences']) / settings.chunk_size)).apply(
                 lambda l: _compute_concept_ids(cn, l), concepts_path)
-
-        # Adding Pyg Data
-        pyg_data_path = os.path.join(esnli_output_dir, f'{split}_pyg_data')
-        try:
-            ic(f'Loading Pyg Data for {split} split')
-            split_set['pyg_data'] = ChunkedList(n=len(split_set['Sentences']), dirpath=pyg_data_path)
-        except:
-            # Compute pyg Data
-            ic(f'Computing Pyg Data for {split} split')
-            # Prune conceptnet
-            conceptnet_df = prune_conceptnet_df(sum(split_set['concept_ids'].get_chunks(), []))
-            split_set['pyg_data'] = split_set['concept_ids'].apply(lambda l: concept_ids_to_pyg_data(conceptnet_df, l),
-                                                                   pyg_data_path)
 
         # Remove Vocab
         if 'Vocab' in split_set: del split_set['Vocab']

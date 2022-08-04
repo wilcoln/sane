@@ -3,8 +3,8 @@ import os.path as osp
 import torch
 from torch_geometric.data import HeteroData
 
-from utils.graphs import conceptnet_df, concept_df, relation_df, concept_dict, relation_dict
-from utils.settings import settings
+from ..utils.graphs import conceptnet_df, concept_df, relation_df, concept_dict, relation_dict
+from ..utils.settings import settings
 
 data = HeteroData()
 node_ids = concept_df.index

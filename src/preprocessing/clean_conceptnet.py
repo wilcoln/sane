@@ -3,7 +3,7 @@ import os.path as osp
 
 import pandas as pd
 
-from utils.settings import settings
+from ..utils.settings import settings
 
 
 def clean():
@@ -31,9 +31,9 @@ def clean():
     cn['target'] = cn['target'].apply(lambda x: x.replace('/c/en/', ''))
 
     # # Replace underscores with spaces
-    # cn['relation'] = cn['relation'].apply(lambda x: x.replace('_', ' '))
-    # cn['source'] = cn['source'].apply(lambda x: x.replace('_', ' '))
-    # cn['target'] = cn['target'].apply(lambda x: x.replace('_', ' '))
+    cn['relation'] = cn['relation'].apply(lambda x: x.replace('_', ' '))
+    cn['source'] = cn['source'].apply(lambda x: x.replace('_', ' '))
+    cn['target'] = cn['target'].apply(lambda x: x.replace('_', ' '))
 
     # Replace node letter type with word type
     synset_types = [

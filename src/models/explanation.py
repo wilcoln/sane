@@ -1,9 +1,9 @@
 from torch import nn
 from transformers import BartTokenizer
 
-from utils.embeddings import transformer_mean_pooling
-from utils.settings import settings
-from utils.transformers import BartForExplanationGeneration, BartForExplanationGenerationWK
+from ..utils.embeddings import transformer_mean_pooling
+from ..utils.settings import settings
+from ..utils.transformers import BartForExplanationGeneration, BartForExplanationGenerationWK
 
 
 class Explainer(nn.Module):

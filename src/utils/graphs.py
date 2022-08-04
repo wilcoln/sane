@@ -6,27 +6,8 @@ from icecream import ic
 from torch_geometric.data import HeteroData
 from tqdm import tqdm
 
-from utils.settings import settings
+from ..utils.settings import settings
 
-conceptnet_path = osp.join(settings.data_dir, 'conceptnet', 'conceptnet-assertions-5.6.0_cleaned.csv')
-conceptnet_df = pd.read_csv(conceptnet_path)
-
-for column in {'source', 'target', 'relation'}:
-    conceptnet_df[column] = conceptnet_df[column].astype('str')
-
-
-def get_nodes_and_relations(conceptnet_df):
-    source_df = conceptnet_df[['source']].rename(columns={'source': 'name'}).drop_duplicates()
-    target_df = conceptnet_df[['target']].rename(columns={'target': 'name'}).drop_duplicates()
-    concept_df = pd.concat([source_df, target_df], ignore_index=True).drop_duplicates().reset_index()
-    relation_df = conceptnet_df[['relation']].rename(columns={'relation': 'name'}).drop_duplicates().reset_index()
-    return concept_df, relation_df
-
-
-concept_df, relation_df = get_nodes_and_relations(conceptnet_df)
-
-concept_dict = dict(zip(concept_df['name'], concept_df.index))
-relation_dict = dict(zip(relation_df['name'], relation_df.index))
 
 
 # conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')

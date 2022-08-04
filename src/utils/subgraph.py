@@ -6,6 +6,7 @@ from torch_geometric.data.storage import (NodeStorage,
                                           EdgeStorage)
 from torch_geometric.typing import NodeType, EdgeType, PairTensor
 from torch_geometric.utils.mask import index_to_mask
+from torch_geometric.utils.num_nodes import maybe_num_nodes
 
 NodeOrEdgeType = Union[NodeType, EdgeType]
 NodeOrEdgeStorage = Union[NodeStorage, EdgeStorage]

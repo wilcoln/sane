@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from datasets.esnli import ESNLIDataset, conceptnet, tokenizer
 from models.kax import KAXWK
-from utils.settings import settings
+from ..utils.settings import settings
 
 
 def collate_fn(batch):
