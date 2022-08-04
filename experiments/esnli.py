@@ -1,34 +1,36 @@
+import math
 import time
 
-import math
 import torch
-from icecream import ic
-from torch.utils.data import DataLoader, default_collate
 import torch.optim as optim
+from torch.utils.data import DataLoader, default_collate
 from tqdm import tqdm
-from collections import defaultdict
-from torch_geometric.data.hetero_data import HeteroData as PygData
-from utils.trainers import TorchModuleBaseTrainer
-from utils.settings import settings
+
 from datasets.esnli import ESNLIDataset, conceptnet
-from models.kax import KAX, KAXWK
-import os.path as osp
+from models.kax import KAXWK
+from utils.settings import settings
+from utils.trainers import TorchModuleBaseTrainer
 
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
-new_sizes = {split: int(og_size*settings.data_frac) for split, og_size in og_sizes.items()}
-num_chunks = {split: math.ceil(new_size/settings.chunk_size) for split, new_size in new_sizes.items()}
+new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_sizes.items()}
+num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
+
 
 # Custom collate fn
 def collate_fn(batch):
     elem = batch[0]
     elem_type = type(elem)
-    return {key: (default_collate([d[key] for d in batch]) if key != 'pyg_data' else [d[key] for d in batch] ) for key in elem}
+    return {key: (default_collate([d[key] for d in batch]) if key != 'pyg_data' else [d[key] for d in batch]) for key in
+            elem}
 
 
 def get_loaders(split):
-    return [DataLoader(ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk), batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers, collate_fn=collate_fn)
-        for chunk in range(num_chunks[split])]
+    return [DataLoader(ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk),
+                       batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers,
+                       collate_fn=collate_fn)
+            for chunk in range(num_chunks[split])]
+
 
 # Create Loaders
 train_loaders = get_loaders('train')
@@ -95,9 +97,9 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 _, predicted = outputs.max(1)
                 total += inputs['gold_label'].size(0)
                 correct += predicted.eq(inputs['gold_label']).sum().item()
-        
+
         split_time = time.time() - start
-        current_loss /= sum(len(dl) for dl in dataloaders) # (math.ceil(new_sizes[split]/settings.batch_size))
+        current_loss /= sum(len(dl) for dl in dataloaders)  # (math.ceil(new_sizes[split]/settings.batch_size))
         current_acc = 100. * correct / total
 
         return {
