@@ -5,7 +5,7 @@ from icecream import ic
 from torch.utils.data import DataLoader, default_collate
 from tqdm import tqdm
 
-from datasets.esnli import ESNLIDataset, conceptnet, tokenizer
+from src.datasets.esnli import ESNLIDataset, conceptnet, tokenizer
 from models.kax import KAXWK
 from src.utils.settings import settings
 

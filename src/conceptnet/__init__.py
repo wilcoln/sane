@@ -11,27 +11,39 @@ from typing import Tuple, List
 
 import networkx as onx
 import pandas as pd
+import torch
 
 from src.utils.nltk import all_grams
 from src.utils.settings import settings
+from src.utils.types import ChunkedList
+
+conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
+concept_embedding = ChunkedList(n=5779, dirpath=osp.join(conceptnet_dir, 'concept_embedding'))
+concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
 
 
 class Conceptnet:
     nx = None
     df = None
+    pyg = None
 
     def __init__(self):
         cn_dir = osp.join(settings.data_dir, 'conceptnet')
+
+        # Dataframe objects
         csv_path = osp.join(cn_dir, 'conceptnet-assertions-5.6.0_cleaned.csv')
         self.df = pd.read_csv(csv_path)
         for column in {'source', 'target', 'relation'}:
             self.df[column] = self.df[column].astype('str')
         self.concept_df, self.relation_df = self.decompose_df(self.df)
+
+        # Dictionary objects
         self.concept_dict = dict(zip(self.concept_df['name'], self.concept_df.index))
         self.relation_dict = dict(zip(self.relation_df['name'], self.relation_df.index))
         self.inv_concept_dict = dict(zip(self.concept_df.index, self.concept_df['name']))
         self.inv_relation_dict = dict(zip(self.relation_df.index, self.relation_df['name']))
 
+        # Networkx object
         if self.nx is None:
             gpickle_path = osp.join(cn_dir, 'conceptnet.gpickle')
             try:
@@ -41,6 +53,15 @@ class Conceptnet:
                     self.df, source='source', target='target', edge_key='relation',
                     edge_attr='weight', create_using=onx.MultiDiGraph())
                 onx.write_gpickle(self.nx, gpickle_path)
+
+        # PyG object
+        if self.pyg is None:
+            pyg_path = osp.join(cn_dir, 'conceptnet.pyg')
+            try:
+                self.pyg = torch.load(pyg_path)
+            except FileNotFoundError:
+                # See .ignore/cn_to_pyg.py for the implementation of this function.
+                raise Exception('Conceptnet pyg graph not found')
 
     @property
     def size(self) -> Tuple[int, int]:
@@ -83,3 +104,6 @@ class Conceptnet:
         relation_df = df[['relation']].rename(columns={'relation': 'name'}).drop_duplicates().reset_index()
         return concept_df, relation_df
 
+
+# Singleton object
+conceptnet = Conceptnet()

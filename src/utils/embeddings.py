@@ -17,7 +17,7 @@ model = BartModel.from_pretrained("facebook/bart-base")
 tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
 
 
-def transformer_mean_pooling(model_outputs, encoded_inputs):
+def transformer_mean_pool(model_outputs, encoded_inputs):
     token_embeddings = model_outputs['encoder_last_hidden_state']
     input_mask_expanded = encoded_inputs['attention_mask'].unsqueeze(-1).expand(token_embeddings.size()).float()
     sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
@@ -25,10 +25,25 @@ def transformer_mean_pooling(model_outputs, encoded_inputs):
     return sum_embeddings / sum_mask
 
 
+def transformer_cls_pool(model_outputs):
+    token_embeddings = model_outputs['last_hidden_state']
+    return token_embeddings[:, 0, :]
+
+
+TRANSFORMER_SENTENCE_POOL = {
+    'mean': transformer_mean_pool,
+    'cls': transformer_cls_pool
+}
+
+
+transformer_sentence_pool = TRANSFORMER_SENTENCE_POOL[settings.sentence_pool]
+
+
 def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     """Compute bart embeddings for texts.
     Args:
         sentences: text to use for each node
+        verbose: Whether to show progress bar
     Returns:
         embeddings: embeddings for each node
 
@@ -46,7 +61,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     for i, batch in enumerate(batches):
         encoded_inputs = tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')
         model_outputs = model(**encoded_inputs)
-        encoded_batch = transformer_mean_pooling(model_outputs, encoded_inputs)
+        encoded_batch = transformer_sentence_pool(model_outputs, encoded_inputs)
 
         if i == 0:
             encoded_batches = encoded_batch

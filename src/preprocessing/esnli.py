@@ -1,23 +1,18 @@
 import math
 import os
 import os.path as osp
-import pickle
-import string
 
 import pandas as pd
-import torch
 from icecream import ic
-from nltk import word_tokenize
-from nltk.corpus import stopwords
 from tqdm import tqdm
 
-from src.conceptnet import Conceptnet
 from src.utils.embeddings import bart
 from src.utils.settings import settings
 from src.utils.types import ChunkedList
+from src.conceptnet import conceptnet as cn
 
 
-def _read_dataset():
+def read_dataset():
     esnli_dir = osp.join(settings.data_dir, 'esnli')
     train_set_1 = pd.read_csv(osp.join(esnli_dir, 'esnli_train_1.csv'))
     train_set_2 = pd.read_csv(osp.join(esnli_dir, 'esnli_train_2.csv'))
@@ -30,7 +25,7 @@ def _read_dataset():
     return {'train': train_set, 'val': val_set, 'test': test_set}
 
 
-def _reduce_dataset(splits, frac, output_dir):
+def reduce_dataset(splits, frac):
     for split, split_set in splits.items():
         split_set = split_set.sample(int(len(split_set) * frac), random_state=0)
         # Replace Sentence1 and Sentence2 with Sentences
@@ -49,35 +44,22 @@ def _reduce_dataset(splits, frac, output_dir):
         split_set.drop(columns=useless_columns, inplace=True, errors='ignore')
         # Convert labels to categorical
         split_set['gold_label'] = split_set['gold_label'].astype('category').cat.codes
-        # Add vocabulary
-        vocab_path = osp.join(output_dir, f'{split}_vocab.pkl')
-        try:
-            # Load esnli vocab
-            ic('Load esnli Vocab')
-            split_set['Vocab'] = pickle.load(open(os.path.join(vocab_path), 'rb'))
-        except:
-            ic('Create vocabulary for split')
-            split_set['Vocab'] = split_set['Sentences'].apply(_tokenize)
-            with open(vocab_path, 'wb') as f:
-                pickle.dump(split_set['Vocab'], f)
-
-        split_set['Vocab_len'] = split_set['Vocab'].str.count('\\|')
-
         # Update split_set
         splits[split] = split_set
 
     return splits
 
 
-def _encode(splits, output_dir):
-    settings.device = torch.device('cpu')
+def encode(splits, output_dir):
     for split, split_set in splits.items():
         sentences_embedding_path = osp.join(output_dir, f'{split}_Sentences_embedding')
         try:
             # Load Sentences_embeddings
+            ic('Loading Sentences_embeddings')
             split_set['Sentences_embedding'] = ChunkedList(n=len(split_set['Sentences']),
                                                            dirpath=sentences_embedding_path)
-        except:
+        except FileNotFoundError:
+            ic('Computing Sentences_embeddings')
             # Create sentence embeddings
             split_set['Sentences_embedding'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(
                 len(split_set['Sentences']) / settings.chunk_size)).apply(lambda l: bart(l, verbose=True),
@@ -87,11 +69,11 @@ def _encode(splits, output_dir):
     return splits
 
 
-def _df_to_dict(splits):
+def df_to_dict(splits):
     return {split: split_set.to_dict(orient='list') for split, split_set in splits.items()}
 
 
-def _save_splits(splits, output_dir):
+def save_splits(splits, output_dir):
     for split, split_set in splits.items():
         for k, v in split_set.items():
             if not isinstance(v, ChunkedList):
@@ -100,40 +82,25 @@ def _save_splits(splits, output_dir):
                     k_path)
 
 
-def _tokenize(sentence, ignore_stopwords=False):
-    sentence = str(sentence)
-    stop = set(stopwords.words('english') + list(string.punctuation)) if ignore_stopwords else []
-    tokens = '|'.join(set(filter(lambda p: p not in stop, word_tokenize(sentence.replace('_', ' ').lower()))))
-    return tokens
-
-
-def _compute_concept_ids(cn, sentence_list):
+def compute_concept_ids(sentence_list):
     return [
         cn.nodes2ids(cn.subgraph(cn.search(sentence), radius=1).nodes)
         for sentence in tqdm(sentence_list)
     ]
 
 
-def _add_concepts(splits, esnli_output_dir):
-    cn = Conceptnet()
-
+def add_concepts(splits, esnli_output_dir):
     ic('Add Knowledge to Data Points')
     for split, split_set in splits.items():
         concepts_path = os.path.join(esnli_output_dir, f'{split}_concept_ids')
         try:
             ic(f'Loading Concept ids for {split} split')
             split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
-        except:
+        except FileNotFoundError:
             ic(f'Computing concept ids for {split} split')
             split_set['concept_ids'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(
                                                        len(split_set['Sentences']) / settings.chunk_size)).apply(
-                lambda l: _compute_concept_ids(cn, l), concepts_path)
-
-        # Remove Vocab
-        if 'Vocab' in split_set: del split_set['Vocab']
-        if 'concept_ids' in split_set: del split_set['concept_ids']
-        if 'Vocab_len' in split_set: del split_set['Vocab_len']
-
+                lambda l: compute_concept_ids(l), concepts_path)
         # Update split_set
         splits[split] = split_set
 
@@ -147,23 +114,24 @@ def preprocess(esnli_frac: float = .01):
 
     # Read dataset
     ic('Reading dataset')
-    splits = _read_dataset()
+    splits = read_dataset()
     # Reduce dataset
     ic('Reducing dataset')
-    splits = _reduce_dataset(splits, esnli_frac, esnli_output_dir)
+    splits = reduce_dataset(splits, esnli_frac)
     # Convert to dict
     ic('Converting to dict')
-    splits = _df_to_dict(splits)
+    splits = df_to_dict(splits)
     # Add concepts
     ic('Adding concepts')
-    splits = _add_concepts(splits, esnli_output_dir)
+    splits = add_concepts(splits, esnli_output_dir)
     # Encode sentences
     ic('Encoding sentences')
-    splits = _encode(splits, esnli_output_dir)
+    splits = encode(splits, esnli_output_dir)
     # Save splits
     ic('Saving splits')
-    _save_splits(splits, esnli_output_dir)
+    save_splits(splits, esnli_output_dir)
     ic('Done')
 
 
-preprocess(settings.data_frac)
+if __name__ == 'main':
+    preprocess(settings.data_frac)

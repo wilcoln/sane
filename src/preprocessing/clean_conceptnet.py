@@ -6,7 +6,7 @@ import pandas as pd
 from src.utils.settings import settings
 
 
-def clean():
+def clean_conceptnet():
     conceptnet_path = osp.join(settings.data_dir, 'conceptnet/conceptnet-assertions-5.6.0.csv')
     cn = pd.read_csv(conceptnet_path, sep='\t')
 
@@ -51,3 +51,7 @@ def clean():
     cn.drop_duplicates(inplace=True)
 
     cn.to_csv(osp.join(conceptnet_path.replace('.csv', '_cleaned.csv')), index=False)
+
+
+if __name__ == '__main__':
+    clean_conceptnet()

@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, default_collate
 from tqdm import tqdm
 
-from datasets.esnli import ESNLIDataset, conceptnet
+from src.datasets.esnli import ESNLIDataset, conceptnet
 from models.kax import KAXWK
 from src.utils.settings import settings
 from src.utils.trainers import TorchModuleBaseTrainer
