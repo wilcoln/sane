@@ -73,7 +73,8 @@ class HeteroEncoder(nn.Module):
 
     def forward(self, inputs):
         # trainable gnn encoder
-        node_ids_list = [e['concept'].x[torch.randperm(e['concept'].x.size(0))[:200]] for e in inputs['pyg_data']]
+        # node_ids_list = [e['concept'].x[torch.randperm(e['concept'].x.size(0))[:200]] for e in inputs['pyg_data']]
+        node_ids_list = [e['concept'].x for e in inputs['pyg_data']]
         subset = torch.unique(torch.cat(node_ids_list, dim=0))
         subset_dict = {'concept': subset}
         data = subgraph(conceptnet, subset_dict)

@@ -36,7 +36,7 @@ val_loaders = get_loaders('val')
 test_loaders = get_loaders('test')
 
 # Define model
-model = KAX(metadata=conceptnet.metadata()).to(settings.device)
+model = KAXWK(metadata=conceptnet.metadata()).to(settings.device)
 dataset_name = train_loaders[0].dataset.name
 
 # Define loss function and optimizer
@@ -81,7 +81,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
                     self.optimizer.zero_grad()
 
                 # forward pass & compute loss
-                attns, nles, outputs, loss = self.model(inputs)
+                attns, nles_tokens, nles, outputs, loss = self.model(inputs)
 
                 if train:
                     # backward pass + optimization step

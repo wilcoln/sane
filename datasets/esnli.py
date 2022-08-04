@@ -8,11 +8,13 @@ import pickle
 from icecream import ic
 from torch_geometric.data.hetero_data import Data
 from torch.utils.data import Dataset
+from transformers import BartTokenizer
 
 conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
 concept_embedding = ChunkedList(n=5779, dirpath=osp.join(conceptnet_dir, 'concept_embedding'))
 concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
 conceptnet = torch.load(osp.join(conceptnet_dir, 'conceptnet.pyg'))
+tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
 
 class ESNLIDataset(Dataset):
     """
@@ -22,6 +24,7 @@ class ESNLIDataset(Dataset):
     def __init__(self, path: str, split: str = 'train', frac=1.0, chunk=0):
         assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
         assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
+        chunk = 14 if chunk == 6 else chunk
 
         super().__init__()
         self.name = f'esnli_{split}_{chunk}'
@@ -41,7 +44,7 @@ class ESNLIDataset(Dataset):
                 if isinstance(self.esnli[k], torch.Tensor):
                     self.esnli[k] = self.esnli[k]
             except Exception as e:
-                pass
+                ic(e, key_path)
 
         for k in self.esnli:
             # # Reduce the dataset
@@ -56,4 +59,7 @@ class ESNLIDataset(Dataset):
         return len(self.esnli['gold_label'])
 
     def __getitem__(self, i):
-        return {k: v[i] for k, v in self.esnli.items()}
+        try:
+            return {k: v[i] for k, v in self.esnli.items()}
+        except:
+            return self[i-1]

@@ -27,14 +27,14 @@ class KAX(nn.Module):
         # ic(f'done in {time.time() - start}')
         # ic('explaining')
         # start = time.time()
-        nles, nle_loss = self.explainer(inputs)
+        nles_tokens, nles, nle_loss = self.explainer(inputs)
         # ic(f'done in {time.time() - start}')
         # fuse explanation and inputs (orthogonal ?)
         # ic('predicting')
         # start = time.time()
         outputs, task_loss = self.predictor(inputs, nles)
         # ic(f'done in {time.time() - start}')
-        return attns, nles, outputs, settings.alpha*nle_loss + (1 - settings.alpha)*task_loss
+        return attns, nles_tokens, nles, outputs, settings.alpha*nle_loss + (1 - settings.alpha)*task_loss
 
 
 class KAXWK(nn.Module):
@@ -44,11 +44,11 @@ class KAXWK(nn.Module):
         self.predictor = Predictor(*args, **kwargs)
 
     def forward(self, inputs):
-        nles, nle_loss = self.explainer(inputs)
+        nles_tokens, nles, nle_loss = self.explainer(inputs)
         # ic(f'done in {time.time() - start}')
         # fuse explanation and inputs (orthogonal ?)
         # ic('predicting')
         # start = time.time()
         outputs, task_loss = self.predictor(inputs, nles)
         # ic(f'done in {time.time() - start}')
-        return None, nles, outputs, settings.alpha*nle_loss + (1 - settings.alpha)*task_loss
+        return None, nles_tokens, nles, outputs, settings.alpha*nle_loss + (1 - settings.alpha)*task_loss
