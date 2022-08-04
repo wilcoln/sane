@@ -17,16 +17,8 @@ from src.utils.nltk import all_grams
 from src.utils.settings import settings
 from src.utils.types import ChunkedList
 
-conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
-concept_embedding = ChunkedList(n=5779, dirpath=osp.join(conceptnet_dir, 'concept_embedding'))
-concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
-
 
 class Conceptnet:
-    nx = None
-    df = None
-    pyg = None
-
     def __init__(self):
         cn_dir = osp.join(settings.data_dir, 'conceptnet')
 
@@ -44,24 +36,30 @@ class Conceptnet:
         self.inv_relation_dict = dict(zip(self.relation_df.index, self.relation_df['name']))
 
         # Networkx object
-        if self.nx is None:
-            gpickle_path = osp.join(cn_dir, 'conceptnet.gpickle')
-            try:
-                self.nx = onx.read_gpickle(gpickle_path)
-            except FileNotFoundError:
-                self.nx = onx.from_pandas_edgelist(
-                    self.df, source='source', target='target', edge_key='relation',
-                    edge_attr='weight', create_using=onx.MultiDiGraph())
-                onx.write_gpickle(self.nx, gpickle_path)
+        gpickle_path = osp.join(cn_dir, 'conceptnet.gpickle')
+        try:
+            self.nx = onx.read_gpickle(gpickle_path)
+        except FileNotFoundError:
+            self.nx = onx.from_pandas_edgelist(
+                self.df, source='source', target='target', edge_key='relation',
+                edge_attr='weight', create_using=onx.MultiDiGraph())
+            onx.write_gpickle(self.nx, gpickle_path)
 
         # PyG object
-        if self.pyg is None:
-            pyg_path = osp.join(cn_dir, 'conceptnet.pyg')
-            try:
-                self.pyg = torch.load(pyg_path)
-            except FileNotFoundError:
-                # See .ignore/cn_to_pyg.py for the implementation of this function.
-                raise Exception('Conceptnet pyg graph not found')
+        pyg_path = osp.join(cn_dir, 'conceptnet.pyg')
+        try:
+            self.pyg = torch.load(pyg_path)
+        except FileNotFoundError:
+            # See .ignore/cn_to_pyg.py for the implementation of this function.
+            raise Exception('Conceptnet pyg graph not found')
+
+        # Concept Embeddings
+        concept_embedding = ChunkedList(n=len(self.concept_df), dirpath=osp.join(cn_dir, 'concept_embedding'))
+        self.concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
+
+        # Relation Embeddings
+        relation_embedding = ChunkedList(n=len(self.relation_df), dirpath=osp.join(cn_dir, 'relation_embedding'))
+        self.relation_embedding = torch.cat(relation_embedding.get_chunks(), dim=0)
 
     @property
     def size(self) -> Tuple[int, int]:
@@ -81,7 +79,7 @@ class Conceptnet:
         nodes = self.neighbors(nodes, radius)
         return self.nx.subgraph(nodes)
 
-    def search(self, query, limit=None) -> List[str]:
+    def search(self, query: str, limit: int = None) -> List[str]:
         ngrams = all_grams(query)
         count = 0
         results = []
