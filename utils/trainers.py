@@ -5,12 +5,11 @@ from abc import ABC
 from datetime import datetime as dt
 
 import pandas as pd
-from icecream import ic
-from torch.utils.data import DataLoader
-from matplotlib import pyplot as plt
 import torch
+from matplotlib import pyplot as plt
 from torch import nn
 from torch.optim import Optimizer
+
 from utils.settings import settings
 
 

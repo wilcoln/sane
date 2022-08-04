@@ -1,9 +1,10 @@
 import torch
-from icecream import ic
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 from torch_geometric.nn import SAGEConv, HeteroConv
+
 from utils.settings import settings
+
 
 class MLP(nn.Module):
     """ Multi-layer perceptron. """
@@ -27,7 +28,7 @@ class MLP(nn.Module):
         )
 
         self.batch_norms = nn.ModuleList(
-            [nn.BatchNorm1d(hidden_channels) for _ in range(num_layers-1)] +
+            [nn.BatchNorm1d(hidden_channels) for _ in range(num_layers - 1)] +
             [nn.BatchNorm1d(out_channels)]
         )
 
@@ -105,12 +106,12 @@ def singles_to_triples(x, edge_index):
 
     return triples
 
+
 def hetero_singles_to_triples(x_dict, edge_index_dict):
     triples = []
     for _, relation, _ in edge_index_dict:
         heads = x_dict['concept'][edge_index_dict['concept', relation, 'concept'][0]]  # (E, D)
         tails = x_dict['concept'][edge_index_dict['concept', relation, 'concept'][1]]  # (E, D)
-
 
         # data['concept', relation, 'concept'].edge_label = torch.hstack((rel, weight))
         # Add triples

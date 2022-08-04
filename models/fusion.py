@@ -1,13 +1,10 @@
-import pandas as pd
-from torch import nn
-from icecream import ic
 import torch
-import os.path as osp
-from utils.embeddings import bart
-from utils.settings import settings
-from utils.nn import HeteroGNN, GNN, singles_to_triples
-from datasets.esnli import conceptnet, concept_embedding
+from torch import nn
 from torch_geometric.utils import subgraph
+
+from datasets.esnli import conceptnet, concept_embedding
+from utils.nn import HeteroGNN, GNN, singles_to_triples
+from utils.settings import settings
 
 
 # class Fuser(nn.Module):
@@ -35,8 +32,9 @@ from torch_geometric.utils import subgraph
 class Fuser(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.k_proj = nn.Linear(2*settings.hidden_dim, settings.hidden_dim)
+        self.k_proj = nn.Linear(2 * settings.hidden_dim, settings.hidden_dim)
         self.s_proj = nn.Linear(settings.sent_dim, settings.hidden_dim)
+
     def forward(self, inputs):
         # Project sentences
         S = self.s_proj(inputs['Sentences_embedding'])

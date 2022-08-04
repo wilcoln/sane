@@ -1,14 +1,13 @@
-import os, random, json, pickle, re
-import numpy as np
+import pandas as pd
 import torch
 import torch.utils.data
-import pandas as pd
 
 
 class ComVEDataset(torch.utils.data.Dataset):
     """
-    A dataset for CQA
+    TODO: Add this dataset
     """
+
     def __init__(self, file_path, preprocess=lambda x: x, test_set=False):
         super().__init__()
         self.preprocess = preprocess

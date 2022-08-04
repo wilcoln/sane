@@ -1,22 +1,22 @@
-import pandas as pd
-
+import math
 import os
 import os.path as osp
 import pickle
 import string
+
+import pandas as pd
 import torch
 from icecream import ic
-from tqdm import tqdm
-import math
-
-from utils.settings import settings
-from utils.embeddings import bart
-import nltk
 from nltk import word_tokenize
 from nltk.corpus import stopwords
-from utils.types import ChunkedList
-import shutil
+from tqdm import tqdm
+
+from utils.embeddings import bart
 from utils.graphs import concept_ids_to_pyg_data, concept_df, prune_conceptnet_df
+from utils.settings import settings
+from utils.types import ChunkedList
+
+
 # nltk.download('punkt')
 # nltk.download('stopwords')
 
@@ -35,7 +35,7 @@ def _read_dataset():
 
 def _reduce_dataset(splits, frac, output_dir):
     for split, split_set in splits.items():
-        split_set = split_set.sample(int(len(split_set)*frac), random_state=0)
+        split_set = split_set.sample(int(len(split_set) * frac), random_state=0)
         # Replace Sentence1 and Sentence2 with Sentences
         split_set['Sentences'] = split_set['Sentence1'] + '. ' + split_set['Sentence2']
         # Drop useless columns
@@ -78,10 +78,13 @@ def _encode(splits, output_dir):
         sentences_embedding_path = osp.join(output_dir, f'{split}_Sentences_embedding')
         try:
             # Load Sentences_embeddings
-            split_set['Sentences_embedding'] = ChunkedList(n=len(split_set['Sentences']), dirpath=sentences_embedding_path)
+            split_set['Sentences_embedding'] = ChunkedList(n=len(split_set['Sentences']),
+                                                           dirpath=sentences_embedding_path)
         except:
             # Create sentence embeddings
-            split_set['Sentences_embedding'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l : bart(l, verbose=True), dirpath=sentences_embedding_path)
+            split_set['Sentences_embedding'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(
+                len(split_set['Sentences']) / settings.chunk_size)).apply(lambda l: bart(l, verbose=True),
+                                                                          dirpath=sentences_embedding_path)
         # Update split_set
         splits[split] = split_set
     return splits
@@ -96,7 +99,9 @@ def _save_splits(splits, output_dir):
         for k, v in split_set.items():
             if not isinstance(v, ChunkedList):
                 k_path = osp.join(output_dir, f'{split}_{k}')
-                ChunkedList(lst=v, num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).to_big(k_path)
+                ChunkedList(lst=v, num_chunks=math.ceil(len(split_set['Sentences']) / settings.chunk_size)).to_big(
+                    k_path)
+
 
 def _remove_qualifier(string):
     string = str(string)
@@ -106,11 +111,13 @@ def _remove_qualifier(string):
 def _tokenize(sentence, ignore_stopwords=False):
     sentence = str(sentence)
     stop = set(stopwords.words('english') + list(string.punctuation)) if ignore_stopwords else []
-    tokens = '|'.join(set(filter(lambda p : p not in stop, word_tokenize(sentence.replace('_', ' ').lower()))))
+    tokens = '|'.join(set(filter(lambda p: p not in stop, word_tokenize(sentence.replace('_', ' ').lower()))))
     return tokens
+
 
 def _unstrip(sentence):
     return ' ' + str(sentence) + ' '
+
 
 def _compute_concept_ids(cn, sentence_len_list):
     sentence_len_list = [(_unstrip(sentence).lower(), len_) for sentence, len_ in sentence_len_list]
@@ -118,6 +125,7 @@ def _compute_concept_ids(cn, sentence_len_list):
         cn['cleaned_name'][cn['cleaned_name'].astype(str).apply(lambda x: x in sentence)].index[:len_].tolist()
         for sentence, len_ in tqdm(sentence_len_list)
     ]
+
 
 def _add_concepts(splits, esnli_output_dir):
     cn = concept_df
@@ -153,7 +161,7 @@ def _add_concepts(splits, esnli_output_dir):
 
     #     with open(vocab_path, 'wb') as f:
     #         pickle.dump(cn['Vocab'], f)
-    
+
     ic('Add Knowledge to Data Points')
     for split, split_set in splits.items():
         concepts_path = os.path.join(esnli_output_dir, f'{split}_concept_ids')
@@ -162,7 +170,10 @@ def _add_concepts(splits, esnli_output_dir):
             split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
         except:
             ic(f'Computing concept ids for {split} split')
-            split_set['concept_ids'] = ChunkedList(lst=list(zip(split_set['Sentences'], split_set['Vocab_len'])), num_chunks=math.ceil(len(split_set['Sentences'])/settings.chunk_size)).apply(lambda l: _compute_concept_ids(cn, l), concepts_path)
+            split_set['concept_ids'] = ChunkedList(lst=list(zip(split_set['Sentences'], split_set['Vocab_len'])),
+                                                   num_chunks=math.ceil(
+                                                       len(split_set['Sentences']) / settings.chunk_size)).apply(
+                lambda l: _compute_concept_ids(cn, l), concepts_path)
 
         # Adding Pyg Data
         pyg_data_path = os.path.join(esnli_output_dir, f'{split}_pyg_data')
@@ -170,11 +181,12 @@ def _add_concepts(splits, esnli_output_dir):
             ic(f'Loading Pyg Data for {split} split')
             split_set['pyg_data'] = ChunkedList(n=len(split_set['Sentences']), dirpath=pyg_data_path)
         except:
-        # Compute pyg Data
+            # Compute pyg Data
             ic(f'Computing Pyg Data for {split} split')
             # Prune conceptnet
             conceptnet_df = prune_conceptnet_df(sum(split_set['concept_ids'].get_chunks(), []))
-            split_set['pyg_data'] = split_set['concept_ids'].apply(lambda l: concept_ids_to_pyg_data(conceptnet_df, l), pyg_data_path)
+            split_set['pyg_data'] = split_set['concept_ids'].apply(lambda l: concept_ids_to_pyg_data(conceptnet_df, l),
+                                                                   pyg_data_path)
 
         # Remove Vocab
         if 'Vocab' in split_set: del split_set['Vocab']
@@ -213,6 +225,4 @@ def preprocess(esnli_frac: float = .01):
     ic('Done')
 
 
-
 preprocess(settings.data_frac)
-

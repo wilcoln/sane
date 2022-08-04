@@ -1,17 +1,14 @@
-import os
-import os.path as osp
-from typing import List
-import pickle
-
 import logging
-from tqdm import tqdm
-import numpy as np
+import math
+import os
+from typing import List
+
 import torch
+from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
 from transformers import BartTokenizer, BartModel
 
 from utils.settings import settings
-from sentence_transformers import SentenceTransformer
-import math
 
 logging.basicConfig(level='INFO')
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
@@ -44,7 +41,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     batch_size = 128
     batches = (sentences[i:i + batch_size] for i in range(0, num_sentences, batch_size))
 
-    batches = tqdm(batches, total=math.ceil(num_sentences/batch_size)) if verbose else batches
+    batches = tqdm(batches, total=math.ceil(num_sentences / batch_size)) if verbose else batches
 
     for i, batch in enumerate(batches):
         encoded_inputs = tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')

@@ -1,8 +1,7 @@
-from icecream import ic
 from torch import nn
-import time
-from models.fusion import Fuser, Encoder
+
 from models.explanation import Explainer, ExplainerWithoutKnowledge
+from models.fusion import Fuser, Encoder
 from models.prediction import Predictor
 from utils.settings import settings
 
@@ -34,7 +33,7 @@ class KAX(nn.Module):
         # start = time.time()
         outputs, task_loss = self.predictor(inputs, nles)
         # ic(f'done in {time.time() - start}')
-        return attns, nles_tokens, nles, outputs, settings.alpha*nle_loss + (1 - settings.alpha)*task_loss
+        return attns, nles_tokens, nles, outputs, settings.alpha * nle_loss + (1 - settings.alpha) * task_loss
 
 
 class KAXWK(nn.Module):
@@ -51,4 +50,4 @@ class KAXWK(nn.Module):
         # start = time.time()
         outputs, task_loss = self.predictor(inputs, nles)
         # ic(f'done in {time.time() - start}')
-        return None, nles_tokens, nles, outputs, settings.alpha*nle_loss + (1 - settings.alpha)*task_loss
+        return None, nles_tokens, nles, outputs, settings.alpha * nle_loss + (1 - settings.alpha) * task_loss

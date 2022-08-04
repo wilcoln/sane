@@ -1,13 +1,12 @@
 from typing import Optional, List, Tuple, Union
 
 import torch
-from transformers import BartConfig, BartModel, BartForConditionalGeneration
 from torch import nn
 from torch.nn import CrossEntropyLoss
+from transformers import BartConfig, BartModel, BartForConditionalGeneration
 from transformers.modeling_outputs import Seq2SeqLMOutput
 from transformers.models.bart.modeling_bart import shift_tokens_right
 from transformers.utils import logging
-from utils.settings import settings
 
 logger = logging.get_logger(__name__)
 
@@ -28,24 +27,24 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         self.lm_head = nn.Linear(self.config.d_model + knowledge_dim, self.model.shared.num_embeddings, bias=False)
 
     def forward(
-        self,
-        input_ids: torch.LongTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        decoder_input_ids: Optional[torch.LongTensor] = None,
-        decoder_attention_mask: Optional[torch.LongTensor] = None,
-        head_mask: Optional[torch.Tensor] = None,
-        decoder_head_mask: Optional[torch.Tensor] = None,
-        cross_attn_head_mask: Optional[torch.Tensor] = None,
-        encoder_outputs: Optional[List[torch.FloatTensor]] = None,
-        past_key_values: Optional[List[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        decoder_inputs_embeds: Optional[torch.FloatTensor] = None,
-        labels: Optional[torch.LongTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        knowledge_embedding=None,
-        return_dict: Optional[bool] = None,
+            self,
+            input_ids: torch.LongTensor = None,
+            attention_mask: Optional[torch.Tensor] = None,
+            decoder_input_ids: Optional[torch.LongTensor] = None,
+            decoder_attention_mask: Optional[torch.LongTensor] = None,
+            head_mask: Optional[torch.Tensor] = None,
+            decoder_head_mask: Optional[torch.Tensor] = None,
+            cross_attn_head_mask: Optional[torch.Tensor] = None,
+            encoder_outputs: Optional[List[torch.FloatTensor]] = None,
+            past_key_values: Optional[List[torch.FloatTensor]] = None,
+            inputs_embeds: Optional[torch.FloatTensor] = None,
+            decoder_inputs_embeds: Optional[torch.FloatTensor] = None,
+            labels: Optional[torch.LongTensor] = None,
+            use_cache: Optional[bool] = None,
+            output_attentions: Optional[bool] = None,
+            output_hidden_states: Optional[bool] = None,
+            knowledge_embedding=None,
+            return_dict: Optional[bool] = None,
     ) -> Union[Tuple, Seq2SeqLMOutput]:
         r"""
         labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -85,7 +84,6 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         )
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, outputs[0].shape[1], 1)
 
-        
         lm_logits = self.lm_head(torch.cat([outputs[0], knowledge_embedding], dim=2)) + self.final_logits_bias
         out_tokens = torch.argmax(lm_logits, dim=2)
 
@@ -124,23 +122,23 @@ class BartForExplanationGenerationWK(BartForConditionalGeneration):
         self.post_init()
 
     def forward(
-        self,
-        input_ids: torch.LongTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        decoder_input_ids: Optional[torch.LongTensor] = None,
-        decoder_attention_mask: Optional[torch.LongTensor] = None,
-        head_mask: Optional[torch.Tensor] = None,
-        decoder_head_mask: Optional[torch.Tensor] = None,
-        cross_attn_head_mask: Optional[torch.Tensor] = None,
-        encoder_outputs: Optional[List[torch.FloatTensor]] = None,
-        past_key_values: Optional[List[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        decoder_inputs_embeds: Optional[torch.FloatTensor] = None,
-        labels: Optional[torch.LongTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
+            self,
+            input_ids: torch.LongTensor = None,
+            attention_mask: Optional[torch.Tensor] = None,
+            decoder_input_ids: Optional[torch.LongTensor] = None,
+            decoder_attention_mask: Optional[torch.LongTensor] = None,
+            head_mask: Optional[torch.Tensor] = None,
+            decoder_head_mask: Optional[torch.Tensor] = None,
+            cross_attn_head_mask: Optional[torch.Tensor] = None,
+            encoder_outputs: Optional[List[torch.FloatTensor]] = None,
+            past_key_values: Optional[List[torch.FloatTensor]] = None,
+            inputs_embeds: Optional[torch.FloatTensor] = None,
+            decoder_inputs_embeds: Optional[torch.FloatTensor] = None,
+            labels: Optional[torch.LongTensor] = None,
+            use_cache: Optional[bool] = None,
+            output_attentions: Optional[bool] = None,
+            output_hidden_states: Optional[bool] = None,
+            return_dict: Optional[bool] = None,
     ) -> Union[Tuple, Seq2SeqLMOutput]:
         r"""
         labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):

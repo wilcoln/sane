@@ -1,20 +1,20 @@
-import torch.utils.data
-import pandas as pd
 import os.path as osp
-from utils.types import ChunkedList
-from tqdm import tqdm
-from utils.settings import settings
 import pickle
+
+import torch.utils.data
 from icecream import ic
-from torch_geometric.data.hetero_data import Data
 from torch.utils.data import Dataset
 from transformers import BartTokenizer
+
+from utils.settings import settings
+from utils.types import ChunkedList
 
 conceptnet_dir = osp.join(settings.data_dir, f'conceptnet')
 concept_embedding = ChunkedList(n=5779, dirpath=osp.join(conceptnet_dir, 'concept_embedding'))
 concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
 conceptnet = torch.load(osp.join(conceptnet_dir, 'conceptnet.pyg'))
 tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+
 
 class ESNLIDataset(Dataset):
     """
@@ -33,7 +33,8 @@ class ESNLIDataset(Dataset):
         esnli_path = osp.join(path, f'esnli_{frac}')
         suffix = '_1' if split == 'train' else ''
         csv_path = osp.join(path, 'esnli', f'esnli_{split}{suffix}.csv')
-        keys = ['Sentences', 'Sentences_embedding', 'Explanation_1', 'Explanation_2', 'Explanation_3', 'gold_label', 'pyg_data']
+        keys = ['Sentences', 'Sentences_embedding', 'Explanation_1', 'Explanation_2', 'Explanation_3', 'gold_label',
+                'pyg_data']
         string_keys = ['Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3']
         self.esnli = dict()
 
@@ -62,4 +63,4 @@ class ESNLIDataset(Dataset):
         try:
             return {k: v[i] for k, v in self.esnli.items()}
         except:
-            return self[i-1]
+            return self[i - 1]

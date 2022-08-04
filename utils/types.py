@@ -1,16 +1,16 @@
-from icecream import ic
-import pickle
-from utils.settings import settings
-import os
 import fnmatch
-from tqdm import tqdm
-from collections.abc import Sequence
+import os
+import pickle
 import shutil
+from collections.abc import Sequence
+
+from tqdm import tqdm
+
 
 class ChunkedList(Sequence):
     def __init__(self, lst=None, num_chunks=None, n=None, dirpath=None):
         self.is_big = bool(dirpath)
-        
+
         if self.is_big:
             self.dirpath = dirpath
             self.chunks = sorted(fnmatch.filter(os.listdir(dirpath), '*.pkl'))
@@ -22,7 +22,7 @@ class ChunkedList(Sequence):
             self.n = len(lst)
             self.k = self.n // (num_chunks if num_chunks > 0 else 1)
             self.chunks = [lst[i:i + self.k] for i in range(0, len(lst), self.k)]
-        
+
     def get_chunk(self, i):
         if self.is_big:
             current_chunk_name = self.chunks[i // self.k]
@@ -31,11 +31,11 @@ class ChunkedList(Sequence):
             else:
                 current_chunk = pickle.load(open(os.path.join(self.dirpath, current_chunk_name), 'rb'))
                 self.last_chunk = current_chunk
-                self.last_chunk_name  = current_chunk_name
+                self.last_chunk_name = current_chunk_name
             return current_chunk
-        
+
         return self.chunks[i // self.k]
-    
+
     def __getitem__(self, i):
         if isinstance(i, int):
             return self.get_chunk(i)[i % self.k]
@@ -55,13 +55,13 @@ class ChunkedList(Sequence):
 
     def __len__(self):
         return self.n
-    
+
     def apply(self, func, dirpath=None):
         # Only can only convert non big to big
         to_big = bool(dirpath)
         if to_big:
             if not os.path.exists(dirpath):
-                    os.mkdir(dirpath)
+                os.mkdir(dirpath)
             try:
                 for i in tqdm(list(range(len(self.chunks)))):
                     chunk = self.get_chunk(i * self.k)
@@ -71,16 +71,16 @@ class ChunkedList(Sequence):
                 shutil.rmtree(dirpath, ignore_errors=True)
                 raise Exception
             return ChunkedList(n=self.n, num_chunks=len(self.chunks), dirpath=dirpath)
-        
+
         self.chunks = [func(chunk) for chunk in self.chunks]
         return self
 
     def to_big(self, dirpath):
-        return self.apply(func=lambda x : x, dirpath=dirpath)
+        return self.apply(func=lambda x: x, dirpath=dirpath)
 
     def get_chunks(self, astype=None):
-        return [self.get_chunk(i * self.k) if astype is None else astype(self.get_chunk(i * self.k)) for i in tqdm(list(range(len(self.chunks))))]
-
+        return [self.get_chunk(i * self.k) if astype is None else astype(self.get_chunk(i * self.k)) for i in
+                tqdm(list(range(len(self.chunks))))]
 
 # k = 100 # chunk size
 # lst = range(10000)
@@ -92,8 +92,8 @@ class ChunkedList(Sequence):
 
 # for i in cl:
 #     print(i)
-    
-    
+
+
 # scl = cl.apply(lambda l: [2*k for k in l], os.path.join(dirpath, 'scl'))
 
 # for i in scl:

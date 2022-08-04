@@ -6,7 +6,7 @@ import torch
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_epochs', help='Number of epochs', type=int, default=5)
 parser.add_argument('--batch_size', help='Batch size', type=int, default=128)
-parser.add_argument('--sent_dim', help='sent_dim', type=int, default=768) # Bart-base d_model = 768
+parser.add_argument('--sent_dim', help='sent_dim', type=int, default=768)  # Bart-base d_model = 768
 parser.add_argument('--chunk_size', help='Chunk size', type=int, default=10000)
 parser.add_argument('--colab', action='store_true', help="whether we are running on google colab", default=False)
 parser.add_argument('--dataset', help='Dataset to use', type=str)
@@ -29,7 +29,7 @@ parser.add_argument('--no_extensions', action='store_true', help="whether to inc
                     default=False)
 parser.add_argument('--num_runs', help='Number of runs', type=int, default=1)
 parser.add_argument('--std', action='store_true', help='Include standard deviation in table output', default=False)
-parser.add_argument('--alpha',  help='Alpha', type=float, default=.4)
+parser.add_argument('--alpha', help='Alpha', type=float, default=.4)
 parser.add_argument('--data_frac', help='Fraction of data to use', type=float, default=.25)
 settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda'))
