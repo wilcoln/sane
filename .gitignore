@@ -115,8 +115,3 @@ results/
 
 # Wilfried's stuff
 .ignore/
-scripts/gpush.sh
-.gd/
-docs/papers/
-nl/
-playground/
