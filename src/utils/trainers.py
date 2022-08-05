@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from torch import nn
 from torch.optim import Optimizer
 
-from utils.settings import settings
+from src.utils.settings import settings
 
 
 def capitalize(underscore_string):

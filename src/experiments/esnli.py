@@ -6,10 +6,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, default_collate
 from tqdm import tqdm
 
-from datasets.esnli import ESNLIDataset, conceptnet
+from src.datasets.esnli import ESNLIDataset, conceptnet
 from models.kax import KAXWK
-from utils.settings import settings
-from utils.trainers import TorchModuleBaseTrainer
+from src.utils.settings import settings
+from src.utils.trainers import TorchModuleBaseTrainer
 
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}

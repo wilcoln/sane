@@ -6,6 +6,7 @@ from torch_geometric.data.storage import (NodeStorage,
                                           EdgeStorage)
 from torch_geometric.typing import NodeType, EdgeType, PairTensor
 from torch_geometric.utils.mask import index_to_mask
+from torch_geometric.utils.num_nodes import maybe_num_nodes
 
 NodeOrEdgeType = Union[NodeType, EdgeType]
 NodeOrEdgeStorage = Union[NodeStorage, EdgeStorage]
@@ -78,7 +79,7 @@ def bipartite_subgraph(
         return edge_index, edge_attr
 
 
-def subgraph(heterodata, subset_dict: Dict[NodeType, Tensor]) -> 'HeteroData':
+def hetero_subgraph(heterodata, subset_dict: Dict[NodeType, Tensor]) -> 'HeteroData':
     r"""Returns the induced subgraph containing the node types and
     corresponding nodes in :obj:`subset_dict`.
 
@@ -156,13 +157,13 @@ def subgraph(heterodata, subset_dict: Dict[NodeType, Tensor]) -> 'HeteroData':
     return data
 
 
-if __name__ == '__main__':
-    from datasets.esnli import conceptnet
-
-    print(conceptnet)
-
-    subset_dict = {
-        'concept': torch.tensor([3, 4, 5, 6, 102, 456]),
-    }
-
-    print(subgraph(conceptnet, subset_dict))
+# if __name__ == '__main__':
+#     from src.datasets.esnli import conceptnet
+#
+#     print(conceptnet)
+#
+#     subset_dict = {
+#         'concept': torch.tensor([3, 4, 5, 6, 102, 456]),
+#     }
+#
+#     print(hetero_subgraph(conceptnet, subset_dict))

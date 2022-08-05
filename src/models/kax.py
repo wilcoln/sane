@@ -1,9 +1,9 @@
 from torch import nn
 
-from models.explanation import Explainer, ExplainerWithoutKnowledge
-from models.fusion import Fuser, Encoder
-from models.prediction import Predictor
-from utils.settings import settings
+from src.models.explanation import Explainer, ExplainerWithoutKnowledge
+from src.models.fusion import Fuser, Encoder
+from src.models.prediction import Predictor
+from src.utils.settings import settings
 
 
 class KAX(nn.Module):
@@ -22,7 +22,7 @@ class KAX(nn.Module):
         # ic(f'done in {time.time() - start}')
         # ic('fusing')
         # start = time.time()
-        attns, inputs = self.fuser(inputs)
+        attn_scores, inputs = self.fuser(inputs)
         # ic(f'done in {time.time() - start}')
         # ic('explaining')
         # start = time.time()
@@ -33,7 +33,7 @@ class KAX(nn.Module):
         # start = time.time()
         outputs, task_loss = self.predictor(inputs, nles)
         # ic(f'done in {time.time() - start}')
-        return attns, nles_tokens, nles, outputs, settings.alpha * nle_loss + (1 - settings.alpha) * task_loss
+        return attn_scores, nles_tokens, nles, outputs, settings.alpha * nle_loss + (1 - settings.alpha) * task_loss
 
 
 class KAXWK(nn.Module):
