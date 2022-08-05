@@ -6,11 +6,11 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, default_collate
 from tqdm import tqdm
 
-from src.conceptnet import conceptnet
 from src.datasets.esnli import ESNLIDataset
 from src.models.kax import KAX
 from src.utils.settings import settings
 from src.utils.trainers import TorchModuleBaseTrainer
+from src.utils.embeddings import tokenize
 
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
@@ -22,8 +22,13 @@ num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_si
 def collate_fn(batch):
     elem = batch[0]
     elem_type = type(elem)
-    return {key: (default_collate([d[key] for d in batch]) if key != 'pyg_data' else [d[key] for d in batch]) for key in
-            elem}
+    def collate(key, batch):
+        if key in {'Sentences', 'Explanation_1'}:
+            return tokenize([d[key] for d in batch])
+        if key in {'concept_ids'}:
+            return [torch.tensor(d[key]) for d in batch]
+        return default_collate([d[key] for d in batch])
+    return {key: collate(key, batch) for key in elem}
 
 
 def get_loaders(split):
@@ -39,7 +44,8 @@ val_loaders = get_loaders('val')
 test_loaders = get_loaders('test')
 
 # Define model
-model = KAX(metadata=conceptnet.metadata()).to(settings.device)
+from src.conceptnet import conceptnet
+model = KAX(metadata=conceptnet.pyg.metadata()).to(settings.device)
 dataset_name = train_loaders[0].dataset.name
 
 # Define loss function and optimizer

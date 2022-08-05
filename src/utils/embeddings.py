@@ -92,7 +92,4 @@ def sbert(sentences: List[str], verbose: bool = False) -> torch.Tensor:
 
 
 def tokenize(sentence_list):
-    return [
-        tokenizer.encode(sentence, max_length=512, truncation=True, padding=True,  return_tensors='pt')
-        for sentence in sentence_list
-    ]
+    return tokenizer(sentence_list, max_length=512, truncation=True, padding=True,  return_tensors='pt')

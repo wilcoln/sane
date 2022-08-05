@@ -29,13 +29,13 @@ class Encoder(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.gnn = GNN(hidden_channels=settings.hidden_dim)  # HeteroGNN(metadata=kwargs['metadata'],
-        self.conceptnet = conceptnet.to_homogeneous()
+        self.conceptnet = conceptnet.pyg.to_homogeneous()
         # hidden_channels=32)
 
     def forward(self, inputs):
         # trainable gnn encoder
-        node_ids_list = [e.x[torch.randperm(e.x.size(0))[:200]] for e in inputs['pyg_data']]
-        subset = torch.unique(torch.cat(node_ids_list, dim=0))
+        # node_ids_list = [e.x[torch.randperm(e.x.size(0))[:200]] for e in inputs['pyg_data']]
+        subset = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
         x = conceptnet.concept_embedding[subset]
         edge_index = subgraph(subset, self.conceptnet.edge_index, relabel_nodes=True)[0]
         x, edge_index = self.gnn(x, edge_index)
@@ -51,8 +51,7 @@ class HeteroEncoder(nn.Module):
     def forward(self, inputs):
         # trainable gnn encoder
         # node_ids_list = [e['concept'].x[torch.randperm(e['concept'].x.size(0))[:200]] for e in inputs['pyg_data']]
-        node_ids_list = [e['concept'].x for e in inputs['pyg_data']]
-        subset = torch.unique(torch.cat(node_ids_list, dim=0))
+        subset = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
         subset_dict = {'concept': subset}
         data = hetero_subgraph(conceptnet, subset_dict)
         data['concept'].x = conceptnet.concept_embedding[subset]

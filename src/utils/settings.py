@@ -19,7 +19,7 @@ parser.add_argument('--results_dir', help='Result directory to use', type=str, d
 parser.add_argument('--no_show', action='store_true', help="Do not show the figure at the end", default=False)
 parser.add_argument('--persistent_workers', action='store_true', help="Whether to make dataloader workers "
                                                                       "persistent", default=False)
-parser.add_argument('--num_workers', help='Number of workers', type=int, default=0)
+parser.add_argument('--num_workers', help='Number of workers', type=int, default=2)
 parser.add_argument('--hidden_dim', help='Hidden Dimension', type=int, default=32)
 parser.add_argument('--num_runs', help='Number of runs', type=int, default=1)
 parser.add_argument('--std', action='store_true', help='Include standard deviation in table output', default=False)

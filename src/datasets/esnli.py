@@ -4,7 +4,6 @@ import pickle
 import torch.utils.data
 from icecream import ic
 from torch.utils.data import Dataset
-from src.utils.embeddings import tokenize
 
 
 class ESNLIDataset(Dataset):
@@ -42,12 +41,6 @@ class ESNLIDataset(Dataset):
         for k in self.esnli:
             if k in string_keys:
                 self.esnli[k] = [str(elt) for elt in self.esnli[k]]
-
-        # Tokenize sentences
-        self.esnli['encoded_sentences'] = tokenize(self.esnli['Sentences'])
-
-        # Tokenize explanations
-        self.esnli['encoded_explanations'] = tokenize(self.esnli['Explanation_1'])
 
     def __len__(self):
         return len(self.esnli['gold_label'])
