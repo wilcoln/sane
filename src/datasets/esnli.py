@@ -24,7 +24,7 @@ class ESNLIDataset(Dataset):
         string_keys = ['Sentences', 'Explanation_1']
 
         self.esnli = {}
-        for k in keys :
+        for k in keys:
             key_path = osp.join(esnli_path, f'{split}_{k}', f'chunk{chunk}.pkl')
             try:
                 self.esnli[k] = pickle.load(open(key_path, 'rb'))

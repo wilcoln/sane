@@ -8,7 +8,7 @@ class Explainer(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.model = BartForExplanationGeneration.from_pretrained("facebook/bart-base")
-        self.model.set_lm_head(knowledge_dim=2 * settings.hidden_dim)
+        self.model.set_lm_head(knowledge_dim=3 * settings.hidden_dim)
 
     def forward(self, inputs):
 

@@ -11,7 +11,6 @@ from src.models.kax import KAX
 from src.settings import settings
 from src.utils.trainers import TorchModuleBaseTrainer
 from src.utils.embeddings import tokenize
-from src.conceptnet import conceptnet
 
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
@@ -46,7 +45,7 @@ val_loaders = get_loaders('val')
 test_loaders = get_loaders('test')
 
 # Define model
-model = KAX(metadata=conceptnet.pyg.metadata()).to(settings.device)
+model = KAX().to(settings.device)
 dataset_name = train_loaders[0].dataset.name
 
 # Define loss function and optimizer

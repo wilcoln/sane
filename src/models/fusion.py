@@ -6,7 +6,7 @@ from src.settings import settings
 class Fuser(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.k_proj = nn.Linear(2 * settings.hidden_dim, settings.hidden_dim)
+        self.k_proj = nn.Linear(3 * settings.hidden_dim, settings.hidden_dim)
         self.s_proj = nn.Linear(settings.sent_dim, settings.hidden_dim)
 
     def forward(self, inputs):

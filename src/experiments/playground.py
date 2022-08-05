@@ -23,7 +23,7 @@ dataloader = DataLoader(ESNLIDataset(path=settings.data_dir, split='test', frac=
                         collate_fn=collate_fn)
 
 # Load model
-model = KAXWK(metadata=conceptnet.metadata()).to(settings.device)
+model = KAXWK().to(settings.device)
 model_path = osp.join(settings.results_dir,
                       'trainers/2022-08-03_20-33-55_636021_dataset=esnli_train_0_model=KAXWK_num_epochs=5/model.pt')
 model.load_state_dict(torch.load(model_path))
