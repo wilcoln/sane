@@ -1,6 +1,7 @@
 from torch import nn
-from src.utils.embeddings import transformer_sentence_pool
+
 from src.settings import settings
+from src.utils.embeddings import transformer_sentence_pool
 from src.utils.transformers import BartForExplanationGeneration, BartForExplanationGenerationWK
 
 
@@ -11,7 +12,6 @@ class Explainer(nn.Module):
         self.model.set_lm_head(knowledge_dim=3 * settings.hidden_dim)
 
     def forward(self, inputs):
-
         # send tensors to gpu
         encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
         encoded_labels = {k: v.to(settings.device) for k, v in inputs['Explanation_1'].items()}

@@ -20,7 +20,8 @@ class ESNLIDataset(Dataset):
 
         # Load pickle file
         esnli_path = osp.join(path, f'esnli_{frac}')
-        keys = ['Sentences', 'Sentences_embedding', 'concept_ids', 'gold_label', 'Explanation_1'] # 'Explanation_2', 'Explanation_3', 'gold_label',
+        keys = ['Sentences', 'Sentences_embedding', 'concept_ids', 'gold_label',
+                'Explanation_1']  # 'Explanation_2', 'Explanation_3', 'gold_label',
         string_keys = ['Sentences', 'Explanation_1']
 
         self.esnli = {}

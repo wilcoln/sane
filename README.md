@@ -3,15 +3,18 @@
 Oxford MSc in Advanced Computer Science Project
 
 ## Todos:
-- Implement various knowledge representation methods 
-List of required experiments:
+
+- Implement various knowledge representation methods
+  List of required experiments:
+
 1. Report Accuracy on Test Set
+
 - Grid search for hyperparameters.
-  - Knowledge Dimension
-  - learning rate
-  - dropout
-  - batch size
-  - knowledge representation
+    - Knowledge Dimension
+    - learning rate
+    - dropout
+    - batch size
+    - knowledge representation
 - Combine explanations and input for prediction ?
 - what embedding to use ? avg bart, sent_trans, bert cls token ?
 - alpha for combining explanation loss with prediction loss
@@ -25,9 +28,10 @@ List of required experiments:
 6. Use different knowledge representations
 
 7. Next task:
-Read EMNLP paper
+   Read EMNLP paper
 
 ## Done:
+
 - Choose best model using validation set.
 - Save model at each epoch
 - Give better name to results directory.

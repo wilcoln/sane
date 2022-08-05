@@ -2,11 +2,11 @@ import os.path as osp
 
 import torch
 from icecream import ic
+from models.kax import KAXWK
 from torch.utils.data import DataLoader, default_collate
 from tqdm import tqdm
 
-from src.datasets.esnli import ESNLIDataset, conceptnet, tokenizer
-from models.kax import KAXWK
+from src.datasets.esnli import ESNLIDataset, tokenizer
 from src.settings import settings
 
 

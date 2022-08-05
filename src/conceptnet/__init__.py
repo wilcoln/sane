@@ -51,7 +51,6 @@ class Conceptnet:
         try:
             self.pyg = torch.load(pyg_path)
         except FileNotFoundError:
-            # See .ignore/cn_to_pyg.py for the implementation of this function.
             self.pyg = self.nx2pyg()
             torch.save(self.pyg, pyg_path)
 

@@ -6,10 +6,10 @@ import pandas as pd
 from icecream import ic
 from tqdm import tqdm
 
-from src.utils.embeddings import bart
-from src.settings import settings
-from src.utils.types import ChunkedList
 from src.conceptnet import conceptnet as cn
+from src.settings import settings
+from src.utils.embeddings import bart
+from src.utils.types import ChunkedList
 
 
 def read_dataset():
@@ -99,7 +99,7 @@ def add_concepts(splits, esnli_output_dir):
         except FileNotFoundError:
             ic(f'Computing concept ids for {split} split')
             split_set['concept_ids'] = ChunkedList(lst=split_set['Sentences'], num_chunks=math.ceil(
-                                                       len(split_set['Sentences']) / settings.chunk_size)).apply(
+                len(split_set['Sentences']) / settings.chunk_size)).apply(
                 lambda l: compute_concept_ids(l), concepts_path)
         # Update split_set
         splits[split] = split_set

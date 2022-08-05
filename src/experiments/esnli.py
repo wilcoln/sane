@@ -9,8 +9,8 @@ from tqdm import tqdm
 from src.datasets.esnli import ESNLIDataset
 from src.models.kax import KAX
 from src.settings import settings
-from src.utils.trainers import TorchModuleBaseTrainer
 from src.utils.embeddings import tokenize
+from src.utils.trainers import TorchModuleBaseTrainer
 
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}

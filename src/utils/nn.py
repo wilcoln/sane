@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch import nn, Tensor
 from torch_geometric.nn import GeneralConv
 from torch_geometric.typing import OptPairTensor, Adj, Size
+
 from src.settings import settings
 
 

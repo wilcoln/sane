@@ -1,8 +1,8 @@
 from torch import nn
 
+from src.models.encoder import Encoder
 from src.models.explanation import Explainer, ExplainerWithoutKnowledge
 from src.models.fusion import Fuser
-from src.models.encoder import Encoder
 from src.models.prediction import Predictor
 from src.settings import settings
 

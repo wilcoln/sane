@@ -35,7 +35,6 @@ TRANSFORMER_SENTENCE_POOL = {
     'cls': transformer_cls_pool
 }
 
-
 transformer_sentence_pool = TRANSFORMER_SENTENCE_POOL[settings.sentence_pool]
 
 
@@ -92,4 +91,4 @@ def sbert(sentences: List[str], verbose: bool = False) -> torch.Tensor:
 
 
 def tokenize(sentence_list):
-    return tokenizer(sentence_list, max_length=512, truncation=True, padding=True,  return_tensors='pt')
+    return tokenizer(sentence_list, max_length=512, truncation=True, padding=True, return_tensors='pt')
