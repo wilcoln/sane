@@ -5,7 +5,7 @@ from src.utils.torch_geometric import hetero_subgraph
 
 from src.conceptnet import conceptnet
 from src.utils.nn import HeteroGNN, GNN, singles_to_triples
-from src.utils.settings import settings
+from src.settings import settings
 
 
 class Fuser(nn.Module):

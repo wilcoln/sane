@@ -3,7 +3,7 @@ import os.path as osp
 
 import pandas as pd
 
-from src.utils.settings import settings
+from src.settings import settings
 
 
 def clean_conceptnet():

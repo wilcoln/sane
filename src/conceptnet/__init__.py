@@ -14,7 +14,7 @@ import pandas as pd
 import torch
 
 from src.utils.nltk import all_grams
-from src.utils.settings import settings
+from src.settings import settings
 from src.utils.types import ChunkedList
 
 

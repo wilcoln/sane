@@ -1,6 +1,6 @@
 from torch import nn
 from src.utils.embeddings import transformer_sentence_pool
-from src.utils.settings import settings
+from src.settings import settings
 from src.utils.transformers import BartForExplanationGeneration, BartForExplanationGenerationWK
 
 

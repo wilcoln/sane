@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from src.datasets.esnli import ESNLIDataset
 from src.models.kax import KAX
-from src.utils.settings import settings
+from src.settings import settings
 from src.utils.trainers import TorchModuleBaseTrainer
 from src.utils.embeddings import tokenize
 

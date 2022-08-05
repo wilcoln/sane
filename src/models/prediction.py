@@ -1,6 +1,6 @@
 # import torch
 from torch import nn
-from src.utils.settings import settings
+from src.settings import settings
 
 
 class Predictor(nn.Module):
