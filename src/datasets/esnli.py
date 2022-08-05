@@ -15,21 +15,16 @@ class ESNLIDataset(Dataset):
         assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
         assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
 
-        # TODO: remove this hack
-        if frac == .25:
-            chunk = 14 if chunk == 6 else chunk
-
         super().__init__()
         self.name = f'ESNLI_{frac}'
 
         # Load pickle file
         esnli_path = osp.join(path, f'esnli_{frac}')
-        keys = ['Sentences', 'Sentences_embedding', 'Explanation_1', 'Explanation_2', 'Explanation_3', 'gold_label',
-                'concept_ids']
-        string_keys = ['Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3']
+        keys = ['Sentences', 'Sentences_embedding', 'concept_ids', 'gold_label', 'Explanation_1'] # 'Explanation_2', 'Explanation_3', 'gold_label',
+        string_keys = ['Sentences', 'Explanation_1']
 
         self.esnli = {}
-        for k in keys:
+        for k in keys :
             key_path = osp.join(esnli_path, f'{split}_{k}', f'chunk{chunk}.pkl')
             try:
                 self.esnli[k] = pickle.load(open(key_path, 'rb'))
