@@ -5,7 +5,6 @@ import torch.nn.functional as F
 from torch import nn, Tensor
 from torch_geometric.nn import GeneralConv
 from torch_geometric.typing import OptPairTensor, Adj, Size
-
 from src.settings import settings
 
 
@@ -53,8 +52,9 @@ class MLP(nn.Module):
 class ConceptNetConv(GeneralConv):
     def forward(self, x: Union[Tensor, OptPairTensor], edge_index: Adj,
                 edge_attr: Tensor = None, size: Size = None) -> Tuple[Tensor, Tensor]:
-        out = super().forward(x, edge_index, edge_attr, size)
-        return out, self.lin_edge(edge_attr)
+        x_out = super().forward(x, edge_index, edge_attr, size)
+        edge_out = self.lin_edge(edge_attr)
+        return x_out, edge_out
 
 
 class GNN(nn.Module):
@@ -62,12 +62,13 @@ class GNN(nn.Module):
         super().__init__()
         out_channels = out_channels if out_channels is not None else hidden_channels
 
-        self.conv1 = GeneralConv((-1, -1), hidden_channels, in_edge_channels=hidden_channels)
-        self.conv2 = GeneralConv((-1, -1), out_channels, in_edge_channels=out_channels)
+        self.conv1 = ConceptNetConv((-1, -1), hidden_channels, in_edge_channels=settings.sent_dim).to(settings.device)
+        self.conv2 = ConceptNetConv((-1, -1), out_channels, in_edge_channels=hidden_channels).to(settings.device)
 
     def forward(self, x, edge_index, edge_attr):
         x, edge_index, edge_attr = x.to(settings.device), edge_index.to(settings.device), edge_attr.to(settings.device)
-        x, edge_attr = self.conv1(x, edge_index, edge_attr).relu()
+        x, edge_attr = self.conv1(x, edge_index, edge_attr)
+        x, edge_attr = F.relu(x), F.relu(edge_attr)
         x, edge_attr = self.conv2(x, edge_index, edge_attr)
         return x, edge_index, edge_attr
 

@@ -110,9 +110,9 @@ class Conceptnet:
         x = torch.Tensor(list(self.concept_dict.values()))
         edge_index = torch.tensor(list(_nx.edges(keys=False)), dtype=torch.long).t().contiguous().view(2, -1)
         edge_attr = torch.tensor([
-            torch.hstack((data['weight'], self.relation_embedding[self.relation_dict[key]]))
+            [self.relation_dict[key], data['weight']]
             for u, v, key, data in _nx.edges(keys=True, data=True)
-        ], dtype=torch.float)
+        ], dtype=torch.float).view()
 
         return Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
