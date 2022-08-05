@@ -46,7 +46,7 @@ class Conceptnet:
             onx.write_gpickle(self.nx, gpickle_path)
 
         # PyG object
-        pyg_path = osp.join(cn_dir, 'conceptnet.pyg')
+        pyg_path = osp.join(cn_dir, 'conceptnet2.pyg')
         try:
             self.pyg = torch.load(pyg_path)
         except FileNotFoundError:
