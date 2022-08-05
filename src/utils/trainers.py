@@ -57,7 +57,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         self.dataset_name = dataset_name
         self.results = []
 
-    def prepare_save(self):
+    def save_params_and_prepare_to_save_results(self):
         # Create dictionary with all the parameters
         self.folder_name_dict = {
             'id': settings.exp_id,
@@ -83,6 +83,9 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         # Create results folder
         os.makedirs(self.results_path)
 
+        with open(osp.join(self.results_path, 'params.json'), 'w') as f:
+            json.dump(self.params_dict, f)
+
     def save_results(self):
         # Plot results
         df = pd.DataFrame(self.results)  # create dataframe
@@ -97,18 +100,14 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             plt.savefig(osp.join(self.results_path, f'{col}.png'))
             plt.close()
 
-        with open(osp.join(self.results_path, 'params.json'), 'w') as f:
-            json.dump(self.params_dict, f)
-
         with open(osp.join(self.results_path, 'results.json'), 'w') as f:
             json.dump(self.results, f)
 
         torch.save(self.best_model_state_dict, osp.join(self.results_path, 'model.pt'))
 
-        # Print path to the results directory
-        print(f'Results saved to {self.results_path}')
+    def run(self, val_metric='acc'):
+        self.save_params_and_prepare_to_save_results()
 
-    def run(self, return_best_epoch_only=True, val_metric='acc'):
         for epoch in range(1, self.num_epochs + 1):
             print(f'Epoch {epoch}')
             # Train, eval & test
@@ -130,6 +129,9 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             # Save epoch results to list
             self.results.append(epoch_results)
 
+            # Save results to file
+            self.save_results()
+
             # print epoch and results
             if epoch % (self.num_epochs // min(self.num_epochs, self.num_prints)) == 0:
                 self.print_epoch(epoch)
@@ -138,15 +140,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         print(f'*** BEST ***')
         self.print_epoch(self.best_epoch)
 
-        # Save results to file
-        self.save_results()
-
-        # Return best epoch results i.e. the one w/ the highest validation metric value
-        if return_best_epoch_only:
-            return self.results[self.best_epoch - 1]
-        else:
-            # Return best epoch & all epoch results
-            return self.best_epoch, self.results
+        # Print path to the results directory
+        print(f'Results saved to {self.results_path}')
 
     def print_epoch(self, epoch):
         epoch_results_str = ', '.join([f'{capitalize(k)}: {v:.4f}' for k, v in self.results[epoch - 1].items() if not
