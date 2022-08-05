@@ -20,6 +20,7 @@ List of required experiments:
 - what embedding to use ? avg bart, sent_trans, bert cls token ?
 - alpha for combining explanation loss with prediction loss
 - Selective attention on batched knowledge
+- add parameter for result dir naming
 
 2. Human evaluation of explanations
 

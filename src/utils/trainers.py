@@ -45,6 +45,11 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
                  **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.results_path = None
+        self.params_dict = None
+        self.folder_name_dict = None
+        self.best_epoch = 0
+        self.best_model_state_dict = None
         self.model = model
         self.optimizer = optimizer
         self.num_epochs = num_epochs
@@ -52,30 +57,33 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         self.dataset_name = dataset_name
         self.results = []
 
-    def save_results(self):
+    def prepare_save(self):
         # Create dictionary with all the parameters
-        folder_name_dict = {
+        self.folder_name_dict = {
+            'id': settings.exp_id,
             'dataset': self.dataset_name,
             'model': self.model.name if hasattr(self.model, 'name') else self.model.__class__.__name__,
             'num_epochs': self.num_epochs,
         }
 
-        params_dict = {
+        self.params_dict = {
             'dataset': self.dataset_name,
             'model': str(self.model),
             'optimizer': str(self.optimizer),
             'num_epochs': self.num_epochs,
             'device': settings.device.type,
+            'description': settings.exp_desc,
         }
 
-        # Create a timestamped and args-explicit named for the results folder name
+        # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
-        folder_name = '_'.join([date] + [f'{k}={v}' for k, v in folder_name_dict.items()])
-        results_path = osp.join(settings.results_dir, 'trainers', folder_name)
+        folder_name = '_'.join([date] + [f'{k}={v}' for k, v in self.folder_name_dict.items() if v is not None])
+        self.results_path = osp.join(settings.results_dir, 'trainers', folder_name)
 
         # Create results folder
-        os.makedirs(results_path)
+        os.makedirs(self.results_path)
 
+    def save_results(self):
         # Plot results
         df = pd.DataFrame(self.results)  # create dataframe
         df.index += 1  # shift index by 1, because epochs start at 1
@@ -86,19 +94,19 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             plt.xlabel('Epoch')
             # plt.ylabel(col_name)
 
-            plt.savefig(osp.join(results_path, f'{col}.png'))
+            plt.savefig(osp.join(self.results_path, f'{col}.png'))
             plt.close()
 
-        with open(osp.join(results_path, 'params.json'), 'w') as f:
-            json.dump(params_dict, f)
+        with open(osp.join(self.results_path, 'params.json'), 'w') as f:
+            json.dump(self.params_dict, f)
 
-        with open(osp.join(results_path, 'results.json'), 'w') as f:
+        with open(osp.join(self.results_path, 'results.json'), 'w') as f:
             json.dump(self.results, f)
 
-        torch.save(self.model.state_dict(), osp.join(results_path, 'model.pt'))
+        torch.save(self.best_model_state_dict, osp.join(self.results_path, 'model.pt'))
 
         # Print path to the results directory
-        print(f'Results saved to {results_path}')
+        print(f'Results saved to {self.results_path}')
 
     def run(self, return_best_epoch_only=True, val_metric='acc'):
         for epoch in range(1, self.num_epochs + 1):
@@ -111,36 +119,37 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             # Save epoch results
             epoch_results = {**train_results, **eval_results, **test_results}
 
+            # Save best model epoch
+            if not self.best_epoch or epoch_results[val_metric] > self.results[self.best_epoch - 1][val_metric]:
+                self.best_epoch = epoch
+                self.best_model_state_dict = self.model.state_dict()
+
             # Clean epoch results
             epoch_results = {k: v for k, v in epoch_results.items() if v is not None}
-
-            # print epoch and results
-            if epoch % (self.num_epochs // min(self.num_epochs, self.num_prints)) == 0:
-                self.print_epoch_with_results(epoch, epoch_results)
 
             # Save epoch results to list
             self.results.append(epoch_results)
 
+            # print epoch and results
+            if epoch % (self.num_epochs // min(self.num_epochs, self.num_prints)) == 0:
+                self.print_epoch(epoch)
+
         # Print best epoch and results
-        best_epoch, best_results = self.get_best_epoch_with_results(val_metric)
         print(f'*** BEST ***')
-        self.print_epoch_with_results(best_epoch, best_results)
+        self.print_epoch(self.best_epoch)
 
         # Save results to file
         self.save_results()
 
         # Return best epoch results i.e. the one w/ the highest validation metric value
         if return_best_epoch_only:
-            return best_results
+            return self.results[self.best_epoch - 1]
         else:
-            # Return best & all epoch results
-            return best_results, self.results
+            # Return best epoch & all epoch results
+            return self.best_epoch, self.results
 
-    @staticmethod
-    def print_epoch_with_results(epoch, epoch_results):
-        epoch_results_str = ', '.join([f'{capitalize(k)}: {v:.4f}' for k, v in epoch_results.items()])
+    def print_epoch(self, epoch):
+        epoch_results_str = ', '.join([f'{capitalize(k)}: {v:.4f}' for k, v in self.results[epoch - 1].items() if not
+        k.endswith(
+            '_time')])
         print(f'Epoch: {epoch:02d}, {epoch_results_str}')
-
-    def get_best_epoch_with_results(self, val_metric):
-        best_epoch_results = max(self.results, key=lambda x: x.get(f'val_{val_metric}', 0))
-        return self.results.index(best_epoch_results) + 1, best_epoch_results
