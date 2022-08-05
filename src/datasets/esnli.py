@@ -34,10 +34,10 @@ class ESNLIDataset(Dataset):
             key_path = osp.join(esnli_path, f'{split}_{k}', f'chunk{chunk}.pkl')
             try:
                 self.esnli[k] = pickle.load(open(key_path, 'rb'))
+                if isinstance(self.esnli[k], torch.Tensor):
+                    self.esnli[k] = self.esnli[k]
             except Exception as e:
                 ic(e, key_path)
-            if isinstance(self.esnli[k], torch.Tensor):
-                self.esnli[k] = self.esnli[k]
 
         for k in self.esnli:
             if k in string_keys:
