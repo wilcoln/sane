@@ -89,3 +89,10 @@ def sbert(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     # Compute embedding for both lists
     return model.encode(sentences, convert_to_tensor=True, batch_size=settings.batch_size, device=str(
         settings.device), show_progress_bar=verbose)
+
+
+def tokenize(sentence_list):
+    return [
+        tokenizer.encode(sentence, max_length=512, truncation=True, padding=True,  return_tensors='pt')
+        for sentence in sentence_list
+    ]
