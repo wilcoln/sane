@@ -19,6 +19,7 @@ List of required experiments:
 - Combine explanations and input for prediction ?
 - what embedding to use ? avg bart, sent_trans, bert cls token ?
 - alpha for combining explanation loss with prediction loss
+- Selective attention on batched knowledge
 
 2. Human evaluation of explanations
 

@@ -27,7 +27,7 @@ def collate_fn(batch):
         if key in {'Sentences', 'Explanation_1'}:
             return tokenize([d[key] for d in batch])
         if key in {'concept_ids'}:
-            return [torch.tensor(d[key]) for d in batch]
+            return [torch.LongTensor(d[key]) for d in batch]
         return default_collate([d[key] for d in batch])
 
     return {key: collate(key) for key in elem}
