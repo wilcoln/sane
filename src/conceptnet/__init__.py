@@ -28,13 +28,13 @@ class Conceptnet:
         self.df = pd.read_csv(csv_path)
         for column in {'source', 'target', 'relation'}:
             self.df[column] = self.df[column].astype('str')
-        self.concept_df, self.relation_df = self.decompose_df(self.df)
+        concept_df, relation_df = self.decompose_df(self.df)
 
         # Dictionary objects
-        self.concept_dict = dict(zip(self.concept_df['name'], self.concept_df.index))
-        self.relation_dict = dict(zip(self.relation_df['name'], self.relation_df.index))
-        self.inv_concept_dict = dict(zip(self.concept_df.index, self.concept_df['name']))
-        self.inv_relation_dict = dict(zip(self.relation_df.index, self.relation_df['name']))
+        self.concept_dict = dict(zip(concept_df['name'], concept_df.index))
+        self.relation_dict = dict(zip(relation_df['name'], relation_df.index))
+
+        del concept_df, relation_df
 
         # Networkx object
         gpickle_path = osp.join(cn_dir, 'conceptnet.gpickle')
@@ -55,11 +55,11 @@ class Conceptnet:
             torch.save(self.pyg, pyg_path)
 
         # Concept Embeddings
-        concept_embedding = ChunkedList(n=len(self.concept_df), dirpath=osp.join(cn_dir, 'concept_embedding'))
+        concept_embedding = ChunkedList(n=len(self.concept_dict), dirpath=osp.join(cn_dir, 'concept_embedding'))
         self.concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
 
         # Relation Embeddings
-        relation_embedding = ChunkedList(n=len(self.relation_df), dirpath=osp.join(cn_dir, 'relation_embedding'))
+        relation_embedding = ChunkedList(n=len(self.relation_dict), dirpath=osp.join(cn_dir, 'relation_embedding'))
         self.relation_embedding = torch.cat(relation_embedding.get_chunks(), dim=0)
 
     @property
