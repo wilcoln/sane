@@ -119,7 +119,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             epoch_results = {**train_results, **eval_results, **test_results}
 
             # Save best model epoch
-            if not self.best_epoch or epoch_results[val_metric] > self.results[self.best_epoch - 1][val_metric]:
+            val_metric_key = f'val_{val_metric}'
+            if not self.best_epoch or epoch_results[val_metric_key] > self.results[self.best_epoch - 1][val_metric_key]:
                 self.best_epoch = epoch
                 self.best_model_state_dict = self.model.state_dict()
 

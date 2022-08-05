@@ -15,7 +15,11 @@ class Encoder(nn.Module):
 
     def forward(self, inputs):
         # trainable gnn encoder
-        subset = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
+        concept_ids_list = [
+            concept_ids[torch.randperm(concept_ids.shape[0])[:settings.max_concepts_per_sent]]
+            for concept_ids in inputs['concept_ids']
+        ]
+        subset = torch.unique(torch.cat(concept_ids_list, dim=0))
         edge_index, edge_attr = subgraph(subset, conceptnet.pyg.edge_index, conceptnet.pyg.edge_attr,
                                          relabel_nodes=True)
         edge_relation, edge_weight = edge_attr[:, 0].long(), edge_attr[:, 1]

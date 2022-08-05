@@ -29,5 +29,6 @@ parser.add_argument('--std', action='store_true', help='Include standard deviati
 parser.add_argument('--alpha', help='Alpha', type=float, default=.4)
 parser.add_argument('--data_frac', help='Fraction of data to use', type=float, default=.25)
 parser.add_argument('--sentence_pool', help='Transformer Sentence Pool', type=str, default='mean')
+parser.add_argument('--max_concepts_per_sent', help='Max number of concept per sentence', type=int, default=256)
 settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda'))
