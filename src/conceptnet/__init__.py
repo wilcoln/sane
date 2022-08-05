@@ -12,9 +12,10 @@ from typing import Tuple, List
 import networkx as onx
 import pandas as pd
 import torch
+from torch_geometric.data import Data
 
-from src.utils.nltk import all_grams
 from src.settings import settings
+from src.utils.nltk import all_grams
 from src.utils.types import ChunkedList
 
 
@@ -51,7 +52,8 @@ class Conceptnet:
             self.pyg = torch.load(pyg_path)
         except FileNotFoundError:
             # See .ignore/cn_to_pyg.py for the implementation of this function.
-            raise Exception('Conceptnet pyg graph not found')
+            self.pyg = self.nx2pyg()
+            torch.save(self.pyg, pyg_path)
 
         # Concept Embeddings
         concept_embedding = ChunkedList(n=len(self.concept_df), dirpath=osp.join(cn_dir, 'concept_embedding'))
@@ -101,6 +103,18 @@ class Conceptnet:
         concept_df = pd.concat([source_df, target_df], ignore_index=True).drop_duplicates().reset_index()
         relation_df = df[['relation']].rename(columns={'relation': 'name'}).drop_duplicates().reset_index()
         return concept_df, relation_df
+
+    def nx2pyg(self):
+        _nx = onx.relabel_nodes(self.nx, self.concept_dict)
+
+        x = torch.Tensor(list(self.concept_dict.values()))
+        edge_index = torch.tensor(list(_nx.edges(keys=False)), dtype=torch.long).t().contiguous().view(2, -1)
+        edge_attr = torch.tensor([
+            torch.hstack((data['weight'], self.relation_embedding[self.relation_dict[key]]))
+            for u, v, key, data in _nx.edges(keys=True, data=True)
+        ], dtype=torch.float)
+
+        return Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
 
 # Singleton object

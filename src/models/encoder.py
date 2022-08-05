@@ -27,6 +27,6 @@ if __name__ == '__main__':
     encoder = Encoder()
     inputs = {'Sentences_embedding': torch.randn(10, settings.sent_dim),
               'Knowledge_embedding': torch.randn(10, settings.hidden_dim),
-              'concept_ids': torch.tensor([[1, 2, 3], [4, 5, 6]])}
+              'concept_ids': [torch.tensor([1, 2, 3]), torch.tensor([4, 5, 6])]}
     out = encoder(inputs)
     ic(out)
