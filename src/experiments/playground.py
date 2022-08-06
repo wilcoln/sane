@@ -1,10 +1,11 @@
+import os.path as osp
+
 import torch
 from icecream import ic
-import os.path as osp
-from src.datasets.esnli import get_loader
-from src.models.kax import KAX
 from tqdm import tqdm
 
+from src.datasets.esnli import get_loader
+from src.models.kax import KAX
 from src.settings import settings
 from src.utils.embeddings import tokenizer
 

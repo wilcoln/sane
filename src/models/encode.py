@@ -33,7 +33,7 @@ class Encoder(nn.Module):
 if __name__ == '__main__':
     encoder = Encoder()
     batch = {'Sentences_embedding': torch.randn(2, settings.sent_dim),
-              'concept_ids': [torch.tensor([0, 1, 2, 3, 10, 11, 1005]),
-                              torch.tensor([0, 1, 3, 4, 5, 6, 1001, 1002, 1003])]}
+             'concept_ids': [torch.tensor([0, 1, 2, 3, 10, 11, 1005]),
+                             torch.tensor([0, 1, 3, 4, 5, 6, 1001, 1002, 1003])]}
     out = encoder(batch)
     ic(out)

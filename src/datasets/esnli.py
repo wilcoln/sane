@@ -1,12 +1,13 @@
+import math
 import os.path as osp
 import pickle
 
-import math
 import torch.utils.data
 from icecream import ic
 from torch.utils.data import Dataset, default_collate, DataLoader, ConcatDataset
-from src.utils.embeddings import tokenize
+
 from src.settings import settings
+from src.utils.embeddings import tokenize
 
 
 class ESNLIDataset(Dataset):
@@ -54,6 +55,7 @@ og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
 new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_sizes.items()}
 num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
+
 def collate_fn(batch):
     elem = batch[0]
 
@@ -66,6 +68,7 @@ def collate_fn(batch):
 
     return {key: collate(key) for key in elem}
 
+
 def get_loader(split):
     datasets = [
         ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk)
@@ -76,4 +79,3 @@ def get_loader(split):
                       batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,
                       collate_fn=collate_fn)
-

@@ -40,4 +40,3 @@ parser.add_argument('--num_workers', help='Number of workers', type=int, default
 parser.add_argument('--show_mem_info', action='store_true', help='Whether to show memory usage', default=False)
 settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda'))
-

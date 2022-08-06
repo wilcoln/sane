@@ -16,7 +16,7 @@ class PredictorOutput:
 class Predictor(nn.Module):
     def __init__(self):
         super().__init__()
-        in_channels = settings.sent_dim if settings.nle_pred else 2*settings.sent_dim
+        in_channels = settings.sent_dim if settings.nle_pred else 2 * settings.sent_dim
         self.lin = nn.Linear(in_channels, 3)
         self.loss_fn = nn.CrossEntropyLoss()
 
