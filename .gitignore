@@ -115,3 +115,4 @@ results/
 
 # Wilfried's stuff
 .ignore/
+slurm-*
