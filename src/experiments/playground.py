@@ -3,6 +3,7 @@ import os.path as osp
 import pandas as pd
 import torch
 from tqdm import tqdm
+from icecream import ic
 
 from src.datasets.esnli import get_loader
 from src.models.kax import KAX
@@ -31,10 +32,11 @@ for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
     nles_tokens = model.explainer.model.generate(**encoded_inputs, **encoded_knowledge, do_sample=False, max_length=30)
     sentences.extend(tokenizer.batch_decode(encoded_inputs['input_ids'], skip_special_tokens=True))
     explanations.extend(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
-    gold_labels.extend(inputs['gold_labels'].tolist())
-    predictions.extend(pred.tolist())
+    gold_labels.extend(inputs['gold_label'].tolist())
+    predictions.extend(pred.logits.max(1)[1].tolist())
 
 # Create dataframe with results
 results = {'sentence': sentences, 'gold_label': gold_labels, 'prediction': predictions, 'explanation': explanations}
 results = pd.DataFrame(results)
 results.to_csv(osp.join(results_path, 'test_results.csv'), index=False)
+ic(results)
