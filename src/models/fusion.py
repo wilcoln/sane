@@ -12,7 +12,7 @@ class Fuser(nn.Module):
 
     def forward(self, inputs):
         # Project sentences
-        S = self.s_proj(inputs['Sentences_embedding'])
+        S = self.s_proj(inputs['Sentences_embedding'].to(settings.device))
         K = self.k_proj(inputs['Knowledge_embedding'])
         V = inputs['Knowledge_embedding']
         align_scores = S @ K.T

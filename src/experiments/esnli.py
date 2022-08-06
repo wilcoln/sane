@@ -10,7 +10,8 @@ from src.datasets.esnli import ESNLIDataset
 from src.models.kax import KAX
 from src.settings import settings
 from src.utils.embeddings import tokenize
-from src.utils.trainers import TorchModuleBaseTrainer
+from src.utils.trainers import TorchModuleBaseTrainer, sizeof_fmt
+from icecream import ic
 
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
@@ -83,10 +84,6 @@ class KAXTrainer(TorchModuleBaseTrainer):
         pbar.set_description(description[split])
         start = time.time()
         for i, inputs in pbar:
-            for k in inputs:
-                if isinstance(inputs[k], torch.Tensor):
-                    inputs[k] = inputs[k].to(settings.device)
-
             if train:
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
@@ -97,7 +94,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
             if train:
                 # Show memory usage
                 if settings.show_mem_info:
-                    torch.cuda.mem_get_info(device=settings.device)
+                    ic(sizeof_fmt(torch.cuda.memory_allocated()))
 
                 # backward pass + optimization step
                 loss.backward()
@@ -109,7 +106,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
             # Update Accuracy
             _, predicted = outputs.max(1)
             total += inputs['gold_label'].size(0)
-            correct += predicted.eq(inputs['gold_label']).sum().item()
+            correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
 
         split_time = time.time() - start
         current_loss /= len(dataloader)
