@@ -31,5 +31,6 @@ parser.add_argument('--data_frac', help='Fraction of data to use', type=float, d
 parser.add_argument('--sentence_pool', help='Transformer Sentence Pool', type=str, default='mean')
 parser.add_argument('--max_concepts_per_sent', help='Max number of concept per sentence', type=int, default=200)
 parser.add_argument('--nle_pred', action='store_true', help='Prediction based on NLE only', default=False)
+parser.add_argument('--show_mem_info', action='store_true', help='Whether to show memory usage', default=False)
 settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda'))

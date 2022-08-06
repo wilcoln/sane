@@ -92,9 +92,13 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 self.optimizer.zero_grad()
 
             # forward pass & compute loss
-            attns, nles_tokens, nles, outputs, loss = self.model(inputs)
+            _, _, _, outputs, loss = self.model(inputs)
 
             if train:
+                # Show memory usage
+                if settings.show_mem_info:
+                    torch.cuda.mem_get_info(device=settings.device)
+
                 # backward pass + optimization step
                 loss.backward()
                 self.optimizer.step()
