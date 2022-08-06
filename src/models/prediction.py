@@ -20,9 +20,7 @@ class Predictor(nn.Module):
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, inputs, nle):
-        ic(nle.fused_state.shape, nle.encoder_attention_mask.shape)
-        nle_embed = transformer_mean_pool(nle.fused_state, nle.encoder_attention_mask)
-
+        nle_embed = transformer_mean_pool(nle.last_hidden_state, nle.attention_mask)
         sent_embed = inputs['Sentences_embedding'].to(settings.device)
         input_pred = nle_embed if settings.nle_pred else torch.cat([sent_embed, nle_embed], dim=1)
         logits = self.lin(input_pred)

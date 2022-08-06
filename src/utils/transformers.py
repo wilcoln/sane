@@ -14,7 +14,8 @@ logger = logging.get_logger(__name__)
 
 @dataclass
 class ExplainerOutput(Seq2SeqLMOutput):
-    fused_state: Optional[List[torch.Tensor]] = None
+    last_hidden_state: Optional[torch.Tensor] = None
+    attention_mask: Optional[torch.Tensor] = None
 
 
 class BartForExplanationGeneration(BartForConditionalGeneration):
@@ -92,8 +93,8 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         )
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, outputs[0].shape[1], 1)
 
-        fused_state = self.fusion_head(torch.cat([outputs.last_hidden_state, knowledge_embedding], dim=2))
-        lm_logits = self.lm_head(fused_state)
+        last_hidden_state = self.fusion_head(torch.cat([outputs.last_hidden_state, knowledge_embedding], dim=2))
+        lm_logits = self.lm_head(last_hidden_state)
         lm_logits += self.final_logits_bias
 
         masked_lm_loss = None
@@ -108,7 +109,8 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         return ExplainerOutput(
             loss=masked_lm_loss,
             logits=lm_logits,
-            fused_state=fused_state,
+            attention_mask=attention_mask,
+            last_hidden_state=last_hidden_state,
             past_key_values=outputs.past_key_values,
             decoder_hidden_states=outputs.decoder_hidden_states,
             decoder_attentions=outputs.decoder_attentions,
