@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Tuple, Union
+from typing import Optional, List, Tuple, Union, Dict, Any
 
 import torch
 from torch import nn
@@ -92,8 +92,8 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
             return_dict=return_dict,
         )
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, outputs[0].shape[1], 1)
-
-        last_hidden_state = self.fusion_head(torch.cat([outputs.last_hidden_state, knowledge_embedding], dim=2))
+        n = outputs.last_hidden_state.shape[0]//knowledge_embedding.shape[0]
+        last_hidden_state = self.fusion_head(torch.cat([outputs.last_hidden_state, knowledge_embedding.repeat(n, 1, 1)], dim=2))
         lm_logits = self.lm_head(last_hidden_state)
         lm_logits += self.final_logits_bias
 
@@ -118,3 +118,32 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
             encoder_hidden_states=outputs.encoder_hidden_states,
             encoder_attentions=outputs.encoder_attentions,
         )
+
+    def _prepare_encoder_decoder_kwargs_for_generation(
+        self, inputs_tensor: torch.Tensor, model_kwargs, model_input_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        # !! Copied from GenerationMixin
+        # 1. get encoder
+        encoder = self.get_encoder()
+
+        # 2. prepare encoder args and encoder kwargs from model kwargs
+        irrelevant_prefix = ["decoder_", "cross_attn", "use_cache"]
+        encoder_kwargs = {
+            argument: value
+            for argument, value in model_kwargs.items()
+            if not any(argument.startswith(p) for p in irrelevant_prefix)
+        }
+
+        # 3. make sure that encoder returns `ModelOutput`
+        model_input_name = model_input_name if model_input_name is not None else self.main_input_name
+        encoder_kwargs["return_dict"] = True
+        encoder_kwargs[model_input_name] = inputs_tensor
+
+        # !! Custom Code starts here
+        # Prevents knowledge_embedding from being sent to the encoder
+        model_kwargs["encoder_outputs"]: ModelOutput = encoder(**{k:v for k, v in encoder_kwargs.items() if k != 'knowledge_embedding'})
+
+        return model_kwargs
+
+    def prepare_inputs_for_generation(self, *args, **kwargs):
+        return {**super().prepare_inputs_for_generation(*args, **kwargs), **{'knowledge_embedding': kwargs['knowledge_embedding']}}

@@ -1,7 +1,7 @@
 import torch
 from icecream import ic
 import os.path as osp
-from src.experiments.esnli import get_loader
+from src.datasets.esnli import get_loader
 from src.models.kax import KAX
 from tqdm import tqdm
 
@@ -13,7 +13,7 @@ dataloader = get_loader('test')
 
 # Load model
 model = KAX().to(settings.device)
-results_path = ''  # Insert path to model
+results_path = 'results/trainers/2022-08-06_14-15-44_659230_dataset=ESNLI_model=KAX_num_epochs=5_batch_size=128_lr=0.0001_sent_dim=768_hidden_dim=32_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4'
 model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
 model.eval()
 
@@ -27,8 +27,8 @@ for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
     explanations.append(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
 
 # Save explanations to text file
-with open(osp.join(results_path, 'explanations.txt'), 'w') as f:
-    for explanation in explanations:
-        f.write(explanation + '\n')
+# with open(osp.join(results_path, 'explanations.txt'), 'w') as f:
+#     for explanation in explanations:
+#         f.write(explanation + '\n')
 
 ic(explanations)
