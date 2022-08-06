@@ -53,12 +53,12 @@ model = KAX().to(settings.device)
 dataset_name = 'ESNLI'
 
 # Define loss function and optimizer
-optimizer = optim.Adam(model.parameters(), lr=1e-4)
+optimizer = optim.Adam(model.parameters(), lr=settings.lr)
 
 
 class KAXTrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, num_epochs, dataset_name, train_loader, val_loader, test_loader):
-        super().__init__(model, optimizer, num_epochs, dataset_name)
+    def __init__(self, model, optimizer, dataset_name, train_loader, val_loader, test_loader):
+        super().__init__(model, optimizer, dataset_name)
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
@@ -128,4 +128,4 @@ class KAXTrainer(TorchModuleBaseTrainer):
         return self.evaluate(self.test_loader, 'test')
 
 
-KAXTrainer(model, optimizer, settings.num_epochs, dataset_name, train_loader, val_loader, test_loader).run()
+KAXTrainer(model, optimizer, dataset_name, train_loader, val_loader, test_loader).run()

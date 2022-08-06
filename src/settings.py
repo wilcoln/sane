@@ -4,33 +4,42 @@ import os.path as osp
 import torch
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--num_epochs', help='Number of epochs', type=int, default=5)
-parser.add_argument('--batch_size', help='Batch size', type=int, default=128)
-parser.add_argument('--sent_dim', help='sent_dim', type=int, default=768)  # Bart-base d_model = 768
+
+# Experiment settings
+_exp_settings = [
+    ('exp_id', 'Experiment ID', str, None),
+    ('exp_desc', 'Experiment description', str, None),
+    ('num_epochs', 'Number of epochs', int, 5),
+    ('batch_size', 'Batch size', int, 128),
+    ('lr', 'Learning rate', float, 1e-4),
+    ('sent_dim', 'Sentence dimension', int, 768),  # Bart-base d_model = 768
+    ('hidden_dim', 'Hidden dimension', int, 32),
+    ('nle_pred', 'Predict with NLE only', bool, False),
+    ('max_concepts_per_sent', 'Max concepts per sentence', int, 200),
+    ('sentence_pool', 'Sentence pool', str, 'mean'),
+    ('data_frac', 'Data fraction', float, 1.0),
+    ('alpha', 'NLE loss weight in total loss', float, 0.4),
+
+]
+for name, desc, type_, default in _exp_settings:
+    if type_ is bool:
+        parser.add_argument(f'--{name}', action='store_true', help=desc, default=default)
+    else:
+        parser.add_argument(f'--{name}', type=type_, help=desc, default=default)
+
+exp_setting = [s[0] for s in _exp_settings]
+
+# General settings
 parser.add_argument('--chunk_size', help='Chunk size', type=int, default=10000)
-parser.add_argument('--dataset', help='Dataset to use', type=str)
-parser.add_argument('--ignore_datasets', nargs='*', help='Datasets to ignore', type=str)
 _data_dir = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data')
 parser.add_argument('--data_dir', help='Data dir', type=str, default=_data_dir)
 _cache_dir = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'cache')
 parser.add_argument('--cache_dir', help='Data dir', type=str, default=_cache_dir)
 _results_dir = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'results')
 parser.add_argument('--results_dir', help='Result directory to use', type=str, default=_results_dir)
-parser.add_argument('--device', help='Device to use', type=str, default='cuda')
-parser.add_argument('--exp_id', help='Experiment id to use', type=str)
-parser.add_argument('--exp_desc', help='Description of the experiment', type=str)
-parser.add_argument('--no_show', action='store_true', help="Do not show the figure at the end", default=False)
-parser.add_argument('--persistent_workers', action='store_true', help="Whether to make dataloader workers "
-                                                                      "persistent", default=False)
+parser.add_argument('--persistent_workers', action='store_true', default=False)
 parser.add_argument('--num_workers', help='Number of workers', type=int, default=2)
-parser.add_argument('--hidden_dim', help='Hidden Dimension', type=int, default=32)
-parser.add_argument('--num_runs', help='Number of runs', type=int, default=1)
-parser.add_argument('--std', action='store_true', help='Include standard deviation in table output', default=False)
-parser.add_argument('--alpha', help='Alpha', type=float, default=.4)
-parser.add_argument('--data_frac', help='Fraction of data to use', type=float, default=.25)
-parser.add_argument('--sentence_pool', help='Transformer Sentence Pool', type=str, default='mean')
-parser.add_argument('--max_concepts_per_sent', help='Max number of concept per sentence', type=int, default=200)
-parser.add_argument('--nle_pred', action='store_true', help='Prediction based on NLE only', default=False)
 parser.add_argument('--show_mem_info', action='store_true', help='Whether to show memory usage', default=False)
 settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda'))
+

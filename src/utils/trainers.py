@@ -38,7 +38,6 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
     def __init__(self,
                  model: nn.Module,
                  optimizer: Optimizer,
-                 num_epochs: int,
                  dataset_name: str = None,
                  num_prints: int = 10,
                  *args,
@@ -46,34 +45,22 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         super().__init__(*args, **kwargs)
 
         self.results_path = None
-        self.params_dict = None
         self.folder_name_dict = None
         self.best_epoch = 0
         self.best_model_state_dict = None
         self.model = model
         self.optimizer = optimizer
-        self.num_epochs = num_epochs
         self.num_prints = num_prints
         self.dataset_name = dataset_name
         self.results = []
 
     def save_params_and_prepare_to_save_results(self):
         # Create dictionary with all the parameters
-        self.folder_name_dict = {
-            'id': settings.exp_id,
+        params_dict = {
             'dataset': self.dataset_name,
-            'model': self.model.name if hasattr(self.model, 'name') else self.model.__class__.__name__,
-            'num_epochs': self.num_epochs,
+            'model': self.model.__class__.__name__,
         }
-
-        self.params_dict = {
-            'dataset': self.dataset_name,
-            'model': str(self.model),
-            'optimizer': str(self.optimizer),
-            'num_epochs': self.num_epochs,
-            'device': settings.device.type,
-            'description': settings.exp_desc,
-        }
+        params_dict.update({k: v for k, v in vars(settings).items() if k in settings.exp_settings[0] and v})
 
         # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
@@ -84,7 +71,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         os.makedirs(self.results_path)
 
         with open(osp.join(self.results_path, 'params.json'), 'w') as f:
-            json.dump(self.params_dict, f)
+            json.dump(params_dict, f)
 
     def save_results(self):
         # Plot results
@@ -108,7 +95,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
     def run(self, val_metric='acc'):
         self.save_params_and_prepare_to_save_results()
 
-        for epoch in range(1, self.num_epochs + 1):
+        for epoch in range(1, settings.num_epochs + 1):
             print(f'Epoch {epoch}')
             # Train, eval & test
             train_results = self.train()
@@ -134,7 +121,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             self.save_results()
 
             # print epoch and results
-            if epoch % (self.num_epochs // min(self.num_epochs, self.num_prints)) == 0:
+            if epoch % (settings.num_epochs // min(settings.num_epochs, self.num_prints)) == 0:
                 self.print_epoch(epoch)
 
         # Print best epoch and results
@@ -150,9 +137,10 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             '_time')])
         print(f'Epoch: {epoch:02d}, {epoch_results_str}')
 
-def sizeof_fmt(num, suffix="B"):
-    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
-            return f"{num:3.1f}{unit}{suffix}"
+            return f'{num:3.1f}{unit}{suffix}'
         num /= 1024.0
-    return f"{num:.1f}Yi{suffix}"
+    return f'{num:.1f}Yi{suffix}'
