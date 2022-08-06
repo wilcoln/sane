@@ -32,36 +32,37 @@ def collate_fn(batch):
     return {key: collate(key) for key in elem}
 
 
-def get_loaders(split):
+def get_loader(split):
     datasets = [ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk)
                 for chunk in range(num_chunks[split])]
 
-    return [DataLoader(ConcatDataset(datasets), batch_size=settings.batch_size, shuffle=False,
-                       num_workers=settings.num_workers,
-                       collate_fn=collate_fn)]
+    return DataLoader(ConcatDataset(datasets),
+                      batch_size=settings.batch_size, shuffle=False,
+                      num_workers=settings.num_workers,
+                      collate_fn=collate_fn)
 
 
 # Create Loaders
-train_loaders = get_loaders('train')
-val_loaders = get_loaders('val')
-test_loaders = get_loaders('test')
+train_loader = get_loader('train')
+val_loader = get_loader('val')
+test_loader = get_loader('test')
 
 # Define model
 model = KAX().to(settings.device)
-dataset_name = train_loaders[0].dataset.name
+dataset_name = train_loader[0].dataset.name
 
 # Define loss function and optimizer
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 
 class KAXTrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, num_epochs, dataset_name, train_loaders, val_loaders, test_loaders):
+    def __init__(self, model, optimizer, num_epochs, dataset_name, train_loader, val_loader, test_loader):
         super().__init__(model, optimizer, num_epochs, dataset_name)
-        self.train_loaders = train_loaders
-        self.val_loaders = val_loaders
-        self.test_loaders = test_loaders
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.test_loader = test_loader
 
-    def evaluate(self, dataloaders, split):
+    def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
         assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
 
@@ -76,39 +77,38 @@ class KAXTrainer(TorchModuleBaseTrainer):
         correct = 0
         total = 0
 
-        pbar = tqdm(dataloaders, total=num_chunks[split])
+        # Iterate over the DataLoader for training data
+        pbar = tqdm(enumerate(dataloader, 0), total=len(dataloader))
         description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
         pbar.set_description(description[split])
         start = time.time()
-        for dataloader in pbar:
-            # Iterate over the DataLoader for training data
-            for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
-                for k in inputs:
-                    if isinstance(inputs[k], torch.Tensor):
-                        inputs[k] = inputs[k].to(settings.device)
+        for i, inputs in pbar:
+            for k in inputs:
+                if isinstance(inputs[k], torch.Tensor):
+                    inputs[k] = inputs[k].to(settings.device)
 
-                if train:
-                    # zero the parameter gradients
-                    self.optimizer.zero_grad()
+            if train:
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
 
-                # forward pass & compute loss
-                attns, nles_tokens, nles, outputs, loss = self.model(inputs)
+            # forward pass & compute loss
+            attns, nles_tokens, nles, outputs, loss = self.model(inputs)
 
-                if train:
-                    # backward pass + optimization step
-                    loss.backward()
-                    self.optimizer.step()
+            if train:
+                # backward pass + optimization step
+                loss.backward()
+                self.optimizer.step()
 
-                # Update Loss
-                current_loss += loss.item()
+            # Update Loss
+            current_loss += loss.item()
 
-                # Update Accuracy
-                _, predicted = outputs.max(1)
-                total += inputs['gold_label'].size(0)
-                correct += predicted.eq(inputs['gold_label']).sum().item()
+            # Update Accuracy
+            _, predicted = outputs.max(1)
+            total += inputs['gold_label'].size(0)
+            correct += predicted.eq(inputs['gold_label']).sum().item()
 
         split_time = time.time() - start
-        current_loss /= sum(len(dl) for dl in dataloaders)  # (math.ceil(new_sizes[split]/settings.batch_size))
+        current_loss /= len(dataloader)
         current_acc = 100. * correct / total
 
         return {
@@ -118,13 +118,13 @@ class KAXTrainer(TorchModuleBaseTrainer):
         }
 
     def train(self) -> dict:
-        return self.evaluate(self.train_loaders, 'train')
+        return self.evaluate(self.train_loader, 'train')
 
     def eval(self) -> dict:
-        return self.evaluate(self.val_loaders, 'val')
+        return self.evaluate(self.val_loader, 'val')
 
     def test(self) -> dict:
-        return self.evaluate(self.test_loaders, 'test')
+        return self.evaluate(self.test_loader, 'test')
 
 
-KAXTrainer(model, optimizer, settings.num_epochs, dataset_name, train_loaders, val_loaders, test_loaders).run()
+KAXTrainer(model, optimizer, settings.num_epochs, dataset_name, train_loader, val_loader, test_loader).run()
