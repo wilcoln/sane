@@ -7,12 +7,12 @@ from src.models.prediction import Predictor
 
 
 class KAX(nn.Module):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__()
-        self.encoder = Encoder(*args, **kwargs)
-        self.fuser = Fuser(*args, **kwargs)
-        self.explainer = Explainer(*args, **kwargs)
-        self.predictor = Predictor(*args, **kwargs)
+        self.encoder = Encoder()
+        self.fuser = Fuser()
+        self.explainer = Explainer()
+        self.predictor = Predictor()
 
     def forward(self, inputs):
         knwl = self.encoder(inputs)

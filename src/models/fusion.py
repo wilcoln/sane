@@ -13,7 +13,7 @@ class FuserOutput:
 
 
 class Fuser(nn.Module):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__()
         self.k_proj = nn.Linear(3 * settings.hidden_dim, settings.hidden_dim)
         self.s_proj = nn.Linear(settings.sent_dim, settings.hidden_dim)

@@ -9,7 +9,7 @@ from src.utils.nn import GNN, singles_to_triples
 
 
 class Encoder(nn.Module):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__()
         self.gnn = GNN(hidden_channels=settings.hidden_dim)
 
@@ -32,8 +32,8 @@ class Encoder(nn.Module):
 
 if __name__ == '__main__':
     encoder = Encoder()
-    inputs = {'Sentences_embedding': torch.randn(2, settings.sent_dim),
+    batch = {'Sentences_embedding': torch.randn(2, settings.sent_dim),
               'concept_ids': [torch.tensor([0, 1, 2, 3, 10, 11, 1005]),
                               torch.tensor([0, 1, 3, 4, 5, 6, 1001, 1002, 1003])]}
-    out = encoder(inputs)
+    out = encoder(batch)
     ic(out)

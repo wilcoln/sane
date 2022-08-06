@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
 import torch
-from torch import nn
 from icecream import ic
+from torch import nn
 from src.settings import settings
-from utils.transformer_cls_pool
+from src.utils.embeddings import transformer_mean_pool
 
 
 @dataclass
@@ -14,15 +14,15 @@ class PredictorOutput:
 
 
 class Predictor(nn.Module):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__()
-        in_channels = settings.nle_dim if settings.nle_pred else settings.nle_dim + settings.sent_dim
-        self.lin = nn.Linear(in_channels, 3)
+        self.lin = nn.Linear(settings.hidden_dim, 3)
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, inputs, nle):
-        nle_embed = utils.transformer_cls_pool(nle.logits)
-        ic(nle_embed.shape)
+        ic(nle.fused_state.shape, nle.encoder_attention_mask.shape)
+        nle_embed = transformer_mean_pool(nle.fused_state, nle.encoder_attention_mask)
+
         sent_embed = inputs['Sentences_embedding'].to(settings.device)
         input_pred = nle_embed if settings.nle_pred else torch.cat([sent_embed, nle_embed], dim=1)
         logits = self.lin(input_pred)

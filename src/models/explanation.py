@@ -5,10 +5,10 @@ from src.utils.transformers import BartForExplanationGeneration
 
 
 class Explainer(nn.Module):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__()
         self.model = BartForExplanationGeneration.from_pretrained("facebook/bart-base")
-        self.model.set_lm_head(knowledge_dim=3 * settings.hidden_dim)
+        self.model.set_fusion_head(knowledge_dim=3 * settings.hidden_dim)
 
     def forward(self, inputs, knowledge=None):
         # send tensors to gpu

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Optional, List, Tuple, Union
 
 import torch
@@ -11,20 +12,27 @@ from transformers.utils import logging
 logger = logging.get_logger(__name__)
 
 
+@dataclass
+class ExplainerOutput(Seq2SeqLMOutput):
+    fused_state: Optional[List[torch.Tensor]] = None
+
+
 class BartForExplanationGeneration(BartForConditionalGeneration):
     base_model_prefix = "model"
     _keys_to_ignore_on_load_missing = [r"final_logits_bias", r"lm_head.weight"]
 
     def __init__(self, config: BartConfig):
         super().__init__(config)
+        self.fusion_head = None
         self.model = BartModel(config)
         self.register_buffer("final_logits_bias", torch.zeros((1, self.model.shared.num_embeddings)))
+        self.lm_head = nn.Linear(self.config.d_model, self.model.shared.num_embeddings, bias=False)
 
         # Initialize weights and apply final processing
         self.post_init()
 
-    def set_lm_head(self, knowledge_dim: int):
-        self.lm_head = nn.Linear(self.config.d_model + knowledge_dim, self.model.shared.num_embeddings, bias=False)
+    def set_fusion_head(self, knowledge_dim: int):
+        self.fusion_head = nn.Linear(self.config.d.model + knowledge_dim, self.config.d_model)
 
     def forward(
             self,
@@ -84,7 +92,8 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         )
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, outputs[0].shape[1], 1)
 
-        lm_logits = self.lm_head(torch.cat([outputs.last_hidden_state, knowledge_embedding], dim=2))
+        fused_state = self.fusion_head(torch.cat([outputs.last_hidden_state, knowledge_embedding], dim=2))
+        lm_logits = self.lm_head(fused_state)
         lm_logits += self.final_logits_bias
 
         masked_lm_loss = None
@@ -96,9 +105,10 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
             output = (lm_logits,) + outputs[1:]
             return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
 
-        return Seq2SeqLMOutput(
+        return ExplainerOutput(
             loss=masked_lm_loss,
             logits=lm_logits,
+            fused_state=fused_state,
             past_key_values=outputs.past_key_values,
             decoder_hidden_states=outputs.decoder_hidden_states,
             decoder_attentions=outputs.decoder_attentions,
