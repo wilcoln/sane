@@ -3,7 +3,9 @@ import pickle
 
 import torch.utils.data
 from icecream import ic
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, default_collate
+
+from src.utils.embeddings import tokenize
 
 
 class ESNLIDataset(Dataset):
@@ -43,3 +45,17 @@ class ESNLIDataset(Dataset):
 
     def __getitem__(self, i):
         return {k: v[i] for k, v in self.esnli.items()}
+
+
+def collate_fn(batch):
+    elem = batch[0]
+
+    def collate(key):
+        if key in {'Sentences', 'Explanation_1'}:
+            return tokenize([d[key] for d in batch])
+        if key in {'concept_ids'}:
+            return [torch.LongTensor(d[key]) for d in batch]
+        return default_collate([d[key] for d in batch])
+
+    return {key: collate(key) for key in elem}
+

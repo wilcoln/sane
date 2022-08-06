@@ -1,42 +1,34 @@
-import os.path as osp
-
 import torch
 from icecream import ic
-from models.kax import KAXWK
-from torch.utils.data import DataLoader, default_collate
+import os.path as osp
+from src.experiments.esnli import get_loader
+from src.models.kax import KAX
 from tqdm import tqdm
 
-from src.datasets.esnli import ESNLIDataset, tokenizer
 from src.settings import settings
+from src.utils.embeddings import tokenizer
 
-
-def collate_fn(batch):
-    elem = batch[0]
-    elem_type = type(elem)
-    return {key: (default_collate([d[key] for d in batch]) if key != 'pyg_data' else [d[key] for d in batch]) for key in
-            elem}
-
-
-# Load test set
-dataloader = DataLoader(ESNLIDataset(path=settings.data_dir, split='test', frac=.25, chunk=0),
-                        batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers,
-                        collate_fn=collate_fn)
+# Get test dataloader
+dataloader = get_loader('test')
 
 # Load model
-model = KAXWK().to(settings.device)
-model_path = osp.join(settings.results_dir,
-                      'trainers/2022-08-03_20-33-55_636021_dataset=esnli_train_0_model=KAXWK_num_epochs=5/model.pt')
-model.load_state_dict(torch.load(model_path))
+model = KAX().to(settings.device)
+results_path = ''  # Insert path to model
+model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
 model.eval()
 
+explanations = []
 # Run model on test set
 for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
-    for k in inputs:
-        if isinstance(inputs[k], torch.Tensor):
-            inputs[k] = inputs[k].to(settings.device)
+    att_knwl, _, _ = model(inputs)
+    encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
+    encoded_knowledge = {'knowledge_embedding': att_knwl.knowledge}
+    nles_tokens = model.explainer.model.generate(**encoded_inputs, **encoded_knowledge, do_sample=False, max_length=30)
+    explanations.append(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
 
-    # forward pass & compute loss
-    attns, nles, outputs, loss = model(inputs)
-    # display explanations
-    nles_tokens = torch.argmax(nles['logits'], dim=2)
-    ic(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
+# Save explanations to text file
+with open(osp.join(results_path, 'explanations.txt'), 'w') as f:
+    for explanation in explanations:
+        f.write(explanation + '\n')
+
+ic(explanations)

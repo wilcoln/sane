@@ -51,8 +51,9 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
             use_cache: Optional[bool] = None,
             output_attentions: Optional[bool] = None,
             output_hidden_states: Optional[bool] = None,
-            knowledge_embedding=None,
             return_dict: Optional[bool] = None,
+            *,
+            knowledge_embedding=None,
     ) -> Union[Tuple, Seq2SeqLMOutput]:
         r"""
         labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
