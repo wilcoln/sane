@@ -49,7 +49,7 @@ test_loader = get_loader('test')
 
 # Define model
 model = KAX().to(settings.device)
-dataset_name = train_loader[0].dataset.name
+dataset_name = 'ESNLI'
 
 # Define loss function and optimizer
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
