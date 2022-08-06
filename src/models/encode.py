@@ -27,8 +27,7 @@ class Encoder(nn.Module):
         x = conceptnet.concept_embedding[subset]
         edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
         x, edge_index, edge_attr = self.gnn(x, edge_index, edge_attr)
-        inputs['Knowledge_embedding'] = singles_to_triples(x, edge_index, edge_attr)
-        return inputs
+        return singles_to_triples(x, edge_index, edge_attr)
 
 
 if __name__ == '__main__':
