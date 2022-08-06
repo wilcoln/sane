@@ -6,7 +6,7 @@ import torch
 parser = argparse.ArgumentParser()
 
 # Experiment settings
-_exp_settings = [
+exp_settings = [
     ('exp_id', 'Experiment ID', str, None),
     ('exp_desc', 'Experiment description', str, None),
     ('num_epochs', 'Number of epochs', int, 5),
@@ -21,13 +21,11 @@ _exp_settings = [
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
 
 ]
-for name, desc, type_, default in _exp_settings:
+for name, desc, type_, default in exp_settings:
     if type_ is bool:
         parser.add_argument(f'--{name}', action='store_true', help=desc, default=default)
     else:
         parser.add_argument(f'--{name}', type=type_, help=desc, default=default)
-
-exp_setting = [s[0] for s in _exp_settings]
 
 # General settings
 parser.add_argument('--chunk_size', help='Chunk size', type=int, default=10000)
