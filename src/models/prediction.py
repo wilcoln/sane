@@ -1,7 +1,15 @@
+from dataclasses import dataclass
+
 import torch
 from torch import nn
-
+from icecream import ic
 from src.settings import settings
+
+
+@dataclass
+class PredictorOutput:
+    loss: torch.Tensor
+    logits: torch.Tensor
 
 
 class Predictor(nn.Module):
@@ -11,9 +19,12 @@ class Predictor(nn.Module):
         self.lin = nn.Linear(in_channels, 3)
         self.loss_fn = nn.CrossEntropyLoss()
 
-    def forward(self, inputs, nles):
-        embeddings = nles if settings.nle_pred else torch.cat([inputs['Sentences_embedding'].to(settings.device), nles], dim=1)
-        outputs = self.lin(embeddings)
-        loss = self.loss_fn(outputs, inputs['gold_label'].to(settings.device))
+    def forward(self, inputs, nle):
+        nle_embed = nle.logits
+        ic(nle_embed.shape)
+        sent_embed = inputs['Sentences_embedding'].to(settings.device)
+        input_pred = nle_embed if settings.nle_pred else torch.cat([sent_embed, nle_embed], dim=1)
+        logits = self.lin(input_pred)
+        loss = self.loss_fn(logits, inputs['gold_label'].to(settings.device))
 
-        return outputs, loss
+        return PredictorOutput(logits=logits, loss=loss)

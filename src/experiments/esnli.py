@@ -10,8 +10,7 @@ from src.datasets.esnli import ESNLIDataset
 from src.models.kax import KAX
 from src.settings import settings
 from src.utils.embeddings import tokenize
-from src.utils.trainers import TorchModuleBaseTrainer, sizeof_fmt
-from icecream import ic
+from src.utils.trainers import TorchModuleBaseTrainer
 
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
@@ -89,13 +88,12 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 self.optimizer.zero_grad()
 
             # forward pass & compute loss
-            _, _, _, outputs, loss = self.model(inputs)
+            att_knwl, nle, pred = self.model(inputs)
+
+            # Compute loss
+            loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
 
             if train:
-                # Show memory usage
-                if settings.show_mem_info:
-                    ic(sizeof_fmt(torch.cuda.memory_allocated()))
-
                 # backward pass + optimization step
                 loss.backward()
                 self.optimizer.step()
@@ -104,7 +102,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
             current_loss += loss.item()
 
             # Update Accuracy
-            _, predicted = outputs.max(1)
+            _, predicted = pred.logits.max(1)
             total += inputs['gold_label'].size(0)
             correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
 

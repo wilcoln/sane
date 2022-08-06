@@ -36,6 +36,7 @@ for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
             inputs[k] = inputs[k].to(settings.device)
 
     # forward pass & compute loss
-    attns, nles_tokens, nles, outputs, loss = model(inputs)
+    attns, nles, outputs, loss = model(inputs)
     # display explanations
+    nles_tokens = torch.argmax(nles['logits'], dim=2)
     ic(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
