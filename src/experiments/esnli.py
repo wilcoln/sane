@@ -3,7 +3,7 @@ import time
 
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader, default_collate
+from torch.utils.data import DataLoader, default_collate, ConcatDataset
 from tqdm import tqdm
 
 from src.datasets.esnli import ESNLIDataset
@@ -33,10 +33,12 @@ def collate_fn(batch):
 
 
 def get_loaders(split):
-    return [DataLoader(ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk),
-                       batch_size=settings.batch_size, shuffle=False, num_workers=settings.num_workers,
-                       collate_fn=collate_fn)
-            for chunk in range(num_chunks[split])]
+    datasets = [ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk)
+                for chunk in range(num_chunks[split])]
+
+    return [DataLoader(ConcatDataset(datasets), batch_size=settings.batch_size, shuffle=False,
+                       num_workers=settings.num_workers,
+                       collate_fn=collate_fn)]
 
 
 # Create Loaders
