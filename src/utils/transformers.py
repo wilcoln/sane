@@ -15,7 +15,6 @@ logger = logging.get_logger(__name__)
 @dataclass
 class ExplainerOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
-    attention_mask: Optional[torch.Tensor] = None
 
 
 class BartForExplanationGeneration(BartForConditionalGeneration):
@@ -33,7 +32,7 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         self.post_init()
 
     def set_fusion_head(self, knowledge_dim: int):
-        self.fusion_head = nn.Linear(self.config.d.model + knowledge_dim, self.config.d_model)
+        self.fusion_head = nn.Linear(self.config.d_model + knowledge_dim, self.config.d_model)
 
     def forward(
             self,
@@ -109,7 +108,6 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         return ExplainerOutput(
             loss=masked_lm_loss,
             logits=lm_logits,
-            attention_mask=attention_mask,
             last_hidden_state=last_hidden_state,
             past_key_values=outputs.past_key_values,
             decoder_hidden_states=outputs.decoder_hidden_states,

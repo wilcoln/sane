@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import torch
-from icecream import ic
 from torch import nn
 from src.settings import settings
 from src.utils.embeddings import transformer_mean_pool
@@ -16,11 +15,12 @@ class PredictorOutput:
 class Predictor(nn.Module):
     def __init__(self):
         super().__init__()
-        self.lin = nn.Linear(settings.hidden_dim, 3)
+        in_channels = settings.sent_dim if settings.nle_pred else 2*settings.sent_dim
+        self.lin = nn.Linear(in_channels, 3)
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, inputs, nle):
-        nle_embed = transformer_mean_pool(nle.last_hidden_state, nle.attention_mask)
+        nle_embed = transformer_mean_pool(nle.last_hidden_state)
         sent_embed = inputs['Sentences_embedding'].to(settings.device)
         input_pred = nle_embed if settings.nle_pred else torch.cat([sent_embed, nle_embed], dim=1)
         logits = self.lin(input_pred)
