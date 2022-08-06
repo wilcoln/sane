@@ -1,7 +1,7 @@
 import os.path as osp
 
+import pandas as pd
 import torch
-from icecream import ic
 from tqdm import tqdm
 
 from src.datasets.esnli import get_loader
@@ -18,18 +18,23 @@ results_path = 'results/trainers/2022-08-06_14-15-44_659230_dataset=ESNLI_model=
 model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
 model.eval()
 
+sentences = []
+gold_labels = []
+predictions = []
 explanations = []
+
 # Run model on test set
 for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
-    att_knwl, _, _ = model(inputs)
+    att_knwl, _, pred = model(inputs)
     encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
     encoded_knowledge = {'knowledge_embedding': att_knwl.knowledge}
     nles_tokens = model.explainer.model.generate(**encoded_inputs, **encoded_knowledge, do_sample=False, max_length=30)
-    explanations.append(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
+    sentences.extend(tokenizer.batch_decode(encoded_inputs['input_ids'], skip_special_tokens=True))
+    explanations.extend(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
+    gold_labels.extend(inputs['gold_labels'].tolist())
+    predictions.extend(pred.tolist())
 
-# Save explanations to text file
-# with open(osp.join(results_path, 'explanations.txt'), 'w') as f:
-#     for explanation in explanations:
-#         f.write(explanation + '\n')
-
-ic(explanations)
+# Create dataframe with results
+results = {'sentence': sentences, 'gold_label': gold_labels, 'prediction': predictions, 'explanation': explanations}
+results = pd.DataFrame(results)
+results.to_csv(osp.join(results_path, 'test_results.csv'), index=False)
