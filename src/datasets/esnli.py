@@ -9,6 +9,7 @@ from torch.utils.data import Dataset, default_collate, DataLoader, ConcatDataset
 from src.settings import settings
 from src.utils.embeddings import tokenize
 
+string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
 
 class ESNLIDataset(Dataset):
     """
@@ -24,9 +25,9 @@ class ESNLIDataset(Dataset):
 
         # Load pickle file
         esnli_path = osp.join(path, f'esnli_{frac}')
-        keys = ['Sentences', 'Sentences_embedding', 'concept_ids', 'gold_label',
-                'Explanation_1']  # 'Explanation_2', 'Explanation_3', 'gold_label',
-        string_keys = ['Sentences', 'Explanation_1']
+        keys = ['Sentences', 'Sentences_embedding', 'concept_ids', 'gold_label', 'Explanation_1']
+        if split in {'val', 'test'}:
+            keys += ['Explanation_2', 'Explanation_3']
 
         self.esnli = {}
         for k in keys:
@@ -60,7 +61,7 @@ def collate_fn(batch):
     elem = batch[0]
 
     def collate(key):
-        if key in {'Sentences', 'Explanation_1'}:
+        if key in string_keys:
             return tokenize([d[key] for d in batch])
         if key in {'concept_ids'}:
             return [torch.LongTensor(d[key]) for d in batch]
