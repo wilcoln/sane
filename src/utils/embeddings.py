@@ -13,7 +13,7 @@ from src.settings import settings
 logging.basicConfig(level='INFO')
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 
-model = BartModel.from_pretrained("facebook/bart-base")
+_model = None
 tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
 
 
@@ -51,6 +51,9 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
 
     # ic | encoded_input.keys(): dict_keys(['input_ids', 'attention_mask'])
     # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
+    if _model is None:
+        _model = BartModel.from_pretrained("facebook/bart-base")
+
     sentences = [str(sent) for sent in sentences]
     num_sentences = len(sentences)
     batch_size = 128
@@ -60,7 +63,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
 
     for i, batch in enumerate(batches):
         encoded_inputs = tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')
-        model_outputs = model(**encoded_inputs)
+        model_outputs = _model(**encoded_inputs)
         encoded_batch = transformer_sentence_pool(model_outputs['last_hidden_state'], encoded_inputs['attention_mask'])
 
         if i == 0:

@@ -35,6 +35,9 @@ class Conceptnet:
         # Dictionary objects
         self.concept_dict = dict(zip(concept_df['name'], concept_df.index))
         self.relation_dict = dict(zip(relation_df['name'], relation_df.index))
+        self.inv_concept_dict = {v: k for k, v in self.concept_dict.items()}
+        self.inv_relation_dict = {v: k for k, v in self.relation_dict.items()}
+
 
         del concept_df, relation_df
 
@@ -94,25 +97,7 @@ class Conceptnet:
                 break
         return results
 
-    def nodes2ids(self, nodes: list) -> list:
-        return [self.concept_dict[node] for node in nodes]
-    
-    def ids2nodes(self, ids: list) -> list:
-        if self.inv_concept_dict is None:
-            self.inv_concept_dict = {v: k for k, v in self.relation_dict.items()}
-        return [self.concept_dict[rid] for rid in ids]
-    
-    def ids2relations(self, ids: list) -> list:
-        if self.inv_relation_dict is None:
-            self.inv_relation_dict = {v: k for k, v in self.relation_dict.items()}
-        return [self.inv_relation_dict[nid] for nid in ids]
-
     def ids2triples(self, ids: list) -> list:
-        if self.inv_concept_dict is None:
-            self.inv_concept_dict = {v: k for k, v in self.relation_dict.items()}
-        if self.inv_relation_dict is None:
-            self.inv_relation_dict = {v: k for k, v in self.relation_dict.items()}
-
         return [
             (self.inv_concept_dict[hid], self.inv_relation_dict[rid], self.inv_concept_dict[tid])
             for hid, rid, tid in ids

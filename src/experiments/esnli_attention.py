@@ -10,6 +10,8 @@ from src.conceptnet import conceptnet
 from src.datasets.esnli import get_loader
 from src.models.kax import KAX
 from src.settings import settings
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Get test dataloader
 dataloader = get_loader('test')
@@ -20,8 +22,9 @@ results_path = 'results/trainers/2022-08-06_14-15-44_659230_dataset=ESNLI_model=
 model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
 model.eval()
 
+attentions = []
 topk_triples = []
-topk = 5
+topk = 20
 
 # Run model on test set
 for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
@@ -34,7 +37,12 @@ for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
     topk_triple_ids = knwl.id[indices]
     top_k_raw_triples = [conceptnet.ids2triples(ids.tolist()) for ids in topk_triple_ids]
     topk_triples.extend((top_k_raw_triples, topk_attentions.tolist()))
+    attentions.append(fused_knwl.attentions)
+    break
+
 
 # Save attention maps
-ic(topk_triples[:10])
+img_path = osp.join(results_path, 'attention.png')
+plt.imsave(img_path, attentions[0].cpu().detach().numpy(), cmap='hot')
+# ic(topk_triples[:10])
 
