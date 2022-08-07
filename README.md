@@ -27,6 +27,8 @@ Oxford MSc in Advanced Computer Science Project
 - Selective attention on batched knowledge
 - Read EMNLP paper
 - Complexity discussion like in the "Attention is All you need" paper
+# Ideas
+- Random sampling of the kg around anchor nodes instead of just random sampling the kg
 
 ## Done:
 
