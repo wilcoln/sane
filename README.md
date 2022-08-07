@@ -3,9 +3,9 @@
 Oxford MSc in Advanced Computer Science Project
 
 ## Todos:
-5. Attention maps reporting (as a heatmap)st of required experiments: (1h)
-3. Automatic evaluation of explanations (1h)
-4. Evaluation of faithfulness of explanations (1h)
+7. Evaluation of faithfulness of explanations (1h)
+   1. Feature importance agreement
+   2. Robustness equivalence
 
 
 2. Human evaluation of explanations
@@ -35,3 +35,5 @@ Oxford MSc in Advanced Computer Science Project
 - Give better name to results directory.
 - Implement conceptnet api
 - add parameter for result dir naming
+5. Attention maps reporting (as a heatmap)st of required experiments: (1h)
+6. Automatic evaluation of explanations (1h)
