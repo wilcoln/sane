@@ -185,7 +185,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 self.optimizer.zero_grad()
 
             # forward pass & compute loss
-            att_knwl, nle, pred = self.model(inputs)
+            knwl, fused_knwl, nle, pred = self.model(inputs)
 
             # Compute loss
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
