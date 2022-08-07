@@ -21,6 +21,8 @@ from src.utils.types import ChunkedList
 
 class Conceptnet:
     def __init__(self):
+        self.inv_relation_dict = None
+        self.inv_concept_dict = None
         cn_dir = osp.join(settings.data_dir, 'conceptnet')
 
         # Dataframe objects
@@ -94,6 +96,27 @@ class Conceptnet:
 
     def nodes2ids(self, nodes: list) -> list:
         return [self.concept_dict[node] for node in nodes]
+    
+    def ids2nodes(self, ids: list) -> list:
+        if self.inv_concept_dict is None:
+            self.inv_concept_dict = {v: k for k, v in self.relation_dict.items()}
+        return [self.concept_dict[rid] for rid in ids]
+    
+    def ids2relations(self, ids: list) -> list:
+        if self.inv_relation_dict is None:
+            self.inv_relation_dict = {v: k for k, v in self.relation_dict.items()}
+        return [self.inv_relation_dict[nid] for nid in ids]
+
+    def ids2triples(self, ids: list) -> list:
+        if self.inv_concept_dict is None:
+            self.inv_concept_dict = {v: k for k, v in self.relation_dict.items()}
+        if self.inv_relation_dict is None:
+            self.inv_relation_dict = {v: k for k, v in self.relation_dict.items()}
+
+        return [
+            (self.inv_concept_dict[hid], self.inv_relation_dict[rid], self.inv_concept_dict[tid])
+            for hid, rid, tid in ids
+        ]
 
     @staticmethod
     def decompose_df(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:

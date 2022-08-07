@@ -9,7 +9,7 @@ from src.settings import settings
 @dataclass
 class FuserOutput:
     attentions: torch.Tensor
-    knowledge: torch.Tensor
+    fused: torch.Tensor
 
 
 class Fuser(nn.Module):
@@ -20,9 +20,9 @@ class Fuser(nn.Module):
 
     def forward(self, inputs, knowledge):
         # Project sentences
-        S = self.s_proj(inputs['Sentences_embedding'].to(settings.device))
-        K = self.k_proj(knowledge)
-        align_scores = S @ K.T
-        attentions = torch.softmax(align_scores, dim=0)
-        knowledge = attentions @ knowledge
-        return FuserOutput(attentions=attentions, knowledge=knowledge)
+        S = self.s_proj(inputs['Sentences_embedding'].to(settings.device))  # (batch_size, hidden_dim)
+        K = self.k_proj(knowledge)  # (knowledge_size, hidden_dim)
+        align_scores = S @ K.T  # (batch_size, knowledge_size)
+        attentions = torch.softmax(align_scores, dim=0)  # (batch_size, knowledge_size)
+        knowledge = attentions @ knowledge  # (batch_size, hidden_dim)
+        return FuserOutput(attentions=attentions, fused=knowledge)

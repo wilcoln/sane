@@ -16,7 +16,7 @@ class KAX(nn.Module):
 
     def forward(self, inputs):
         knwl = self.encoder(inputs)
-        att_knwl = self.fuser(inputs, knwl)
-        nle = self.explainer(inputs, att_knwl.knowledge)
+        fused_knwl = self.fuser(inputs, knwl.encoded)
+        nle = self.explainer(inputs, fused_knwl.fused)
         pred = self.predictor(inputs, nle)
-        return att_knwl, nle, pred
+        return knwl, fused_knwl, nle, pred

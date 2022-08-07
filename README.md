@@ -3,12 +3,18 @@
 Oxford MSc in Advanced Computer Science Project
 
 ## Todos:
+5. Attention maps reporting (as a heatmap)st of required experiments: (1h)
+3. Automatic evaluation of explanations (1h)
+4. Evaluation of faithfulness of explanations (1h)
 
+
+2. Human evaluation of explanations
+6. Use different knowledge representations
+- Get the generated explanations by rexc on the test set from Bodhi - asked
+- Compare outputs on an overlapping sample of size 50
+- Read the e-vil paper for human evaluation
+- Tell why the model is better e.g. hallucinate less, 
 - Implement various knowledge representation methods
-  List of required experiments:
-
-1. Report Accuracy on Test Set
-
 - Grid search for hyperparameters.
     - Knowledge Dimension
     - learning rate
@@ -19,16 +25,8 @@ Oxford MSc in Advanced Computer Science Project
 - what embedding to use ? avg bart, sent_trans, bert cls token ?
 - alpha for combining explanation loss with prediction loss
 - Selective attention on batched knowledge
-
-2. Human evaluation of explanations
-
-3. Automatic evaluation of explanations
-4. Evaluation of faithfulness of explanations
-5. Attention maps reporting (as a heatmap)
-6. Use different knowledge representations
-
-7. Next task:
-   Read EMNLP paper
+- Read EMNLP paper
+- Complexity discussion like in the "Attention is All you need" paper
 
 ## Done:
 
