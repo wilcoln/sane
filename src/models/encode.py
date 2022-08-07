@@ -12,8 +12,8 @@ from src.utils.nn import GNN, singles_to_triples
 
 @dataclass
 class EncoderOutput:
-    id: torch.Tensor
     encoded: torch.Tensor
+    id: torch.Tensor = None
 
 
 class Encoder(nn.Module):
@@ -32,17 +32,20 @@ class Encoder(nn.Module):
                                          relabel_nodes=True)
         edge_relation, edge_weight = edge_attr[:, 0].long(), edge_attr[:, 1]
 
-        # triples
-        x = subset.view(-1, 1)
-        edge_attr = edge_relation.view(-1, 1)
-        raw_triples = singles_to_triples(x, edge_index, edge_attr)
         # Encode triples
         x = conceptnet.concept_embedding[subset]
         edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
         x, edge_index, edge_attr = self.gnn(x, edge_index, edge_attr)
         encoded_triples = singles_to_triples(x, edge_index, edge_attr)
 
-        return EncoderOutput(id=raw_triples, encoded=encoded_triples)
+        if self.training:
+            return EncoderOutput(encoded=encoded_triples)
+        else:
+            # Return triple ids too
+            x = subset.view(-1, 1)
+            edge_attr = edge_relation.view(-1, 1)
+            triple_ids = singles_to_triples(x, edge_index, edge_attr)
+            return EncoderOutput(encoded=encoded_triples, id=triple_ids)
 
 
 if __name__ == '__main__':
