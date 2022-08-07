@@ -97,7 +97,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         torch.save(self.best_model_state_dict, osp.join(self.results_path, 'model.pt'))
 
     def run(self, val_metric='acc'):
-        self.save_params_and_prepare_to_save_results()
+        if not settings.no_save:
+            self.save_params_and_prepare_to_save_results()
 
         for epoch in range(1, settings.num_epochs + 1):
             print(f'Epoch {epoch}')
@@ -122,7 +123,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             self.results.append(epoch_results)
 
             # Save results to file
-            self.save_results()
+            if not settings.no_save:
+                self.save_results()
 
             # print epoch and results
             if epoch % (settings.num_epochs // min(settings.num_epochs, self.num_prints)) == 0:
