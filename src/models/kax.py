@@ -1,9 +1,11 @@
+import torch
 from torch import nn
 
 from src.models.encode import Encoder
 from src.models.explanation import Explainer
 from src.models.fusion import Fuser
 from src.models.prediction import Predictor
+torch.manual_seed(0)
 
 
 class KAX(nn.Module):
