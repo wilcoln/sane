@@ -53,7 +53,7 @@ class ESNLIDataset(Dataset):
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
 new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_sizes.items()}
-num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
+_num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
 
 def collate_fn(batch):
@@ -69,10 +69,10 @@ def collate_fn(batch):
     return {key: collate(key) for key in elem}
 
 
-def get_loader(split):
+def get_loader(split, num_chunks=None):
     datasets = [
         ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk)
-        for chunk in range(num_chunks[split])
+        for chunk in range(_num_chunks[split] if num_chunks is None else num_chunks) 
     ]
 
     return DataLoader(ConcatDataset(datasets),
