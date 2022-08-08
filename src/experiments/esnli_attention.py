@@ -38,7 +38,8 @@ triples = [' '.join(t) for t in triples]
 # topk_triples.extend((top_k_raw_triples, topk_attentions.tolist()))
 
 # Save attention maps
-np_attention = fused_knwl.attentions.cpu().detach().numpy()
-df = pd.DataFrame(np_attention, index=sentences, columns=triples)
-csv_path =  osp.join(results_path, 'attention.csv')
-df.to_csv(csv_path)
+for i in range(settings.num_attn_heads):
+    np_attention = fused_knwl.attentions.cpu().detach().numpy()
+    df = pd.DataFrame(np_attention, index=sentences, columns=triples)
+    csv_path = osp.join(results_path, f'attention{i+1}.csv')
+    df.to_csv(csv_path)
