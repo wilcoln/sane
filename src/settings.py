@@ -19,6 +19,7 @@ exp_settings = [
     ('sentence_pool', 'Sentence pool', str, 'mean'),
     ('data_frac', 'Data fraction', float, 1.0),
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
+    ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
 
 ]
 for name, desc, type_, default in exp_settings:
