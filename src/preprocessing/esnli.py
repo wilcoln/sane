@@ -30,6 +30,7 @@ def reduce_dataset(splits, frac):
         split_set = split_set.sample(int(len(split_set) * frac), random_state=0)
         # Replace Sentence1 and Sentence2 with Sentences
         split_set['Sentences'] = split_set['Sentence1'] + '. ' + split_set['Sentence2']
+        split_set['Sentences'] = split_set['Sentences'].str.replace('..', '.')
         # Drop useless columns
         useless_columns = [
             'pairID', 'WorkerId',
@@ -83,8 +84,8 @@ def save_splits(splits, output_dir):
 
 
 def compute_concept_ids(sentence_list):
-    return [
-        cn.nodes2ids(cn.subgraph(cn.search(sentence), radius=1).nodes)
+    concepts = [
+        cn.subgraph(cn.search(sentence), radius=1).nodes
         for sentence in tqdm(sentence_list)
     ]
 

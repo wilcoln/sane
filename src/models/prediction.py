@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from src.settings import settings
-from src.utils.embeddings import transformer_mean_pool
+from src.utils.embeddings import transformer_sentence_pool
 
 
 @dataclass
@@ -21,7 +21,7 @@ class Predictor(nn.Module):
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, inputs, nle):
-        nle_embed = transformer_mean_pool(nle.last_hidden_state)
+        nle_embed = transformer_sentence_pool(nle.last_hidden_state)
         sent_embed = inputs['Sentences_embedding'].to(settings.device)
         input_pred = nle_embed if settings.nle_pred else torch.cat([sent_embed, nle_embed], dim=1)
         logits = self.lin(input_pred)

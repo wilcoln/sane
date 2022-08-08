@@ -16,4 +16,5 @@
 #SBATCH --mail-user=wilfried.bounsi@cs.ox.ac.uk
 
 # run the application
-python src/experiments/esnli_train.py --data_frac=.05 --nle_pred --batch_size=128
+input_dir=''
+python src/experiments/esnli_output.py --data_frac=.05 --nle_pred --input_dir=$input_dir

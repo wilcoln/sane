@@ -7,7 +7,8 @@ Requirements:
 - Get the embedding of concepts
 """
 import os.path as osp
-from typing import Tuple, List
+import random
+from typing import Tuple, List, Union
 
 import networkx as onx
 import pandas as pd
@@ -102,6 +103,21 @@ class Conceptnet:
             (self.inv_concept_dict[hid], self.inv_relation_dict[rid], self.inv_concept_dict[tid])
             for hid, rid, tid in ids
         ]
+
+    def nodes2ids(self, nodes: list) -> list:
+        return [self.concept_dict[node] for node in nodes]
+
+    def sample_neighbors(self, concept: Union[str, int], sample_size: int = 10) -> List[str]:
+        if isinstance(concept, int):
+            concept = self.inv_concept_dict[concept]
+            neighbors = self.nodes2ids(self.nx.neighbors(concept))
+        else:
+            neighbors = self.nx.neighbors(concept)
+
+        if sample_size < len(neighbors):
+            return random.sample(neighbors, sample_size)
+        else:
+            return neighbors
 
     @staticmethod
     def decompose_df(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:

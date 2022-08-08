@@ -26,11 +26,11 @@ explanations = []
 # Run model on test set
 for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
     # Run model
-    knwl, fused_knwl, _, pred = model(inputs)
+    knwl, att_knwl, _, pred = model(inputs)
 
     # Get predictions and explanations
     encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
-    encoded_knowledge = {'knowledge_embedding': fused_knwl.fused}
+    encoded_knowledge = {'knowledge_embedding': att_knwl.attended}
     nles_tokens = model.explainer.model.generate(**encoded_inputs, **encoded_knowledge, do_sample=False, max_length=30)
     sentences.extend(tokenizer.batch_decode(encoded_inputs['input_ids'], skip_special_tokens=True))
     explanations.extend(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))

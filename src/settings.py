@@ -10,10 +10,10 @@ exp_settings = [
     ('exp_id', 'Experiment ID', str, None),
     ('exp_desc', 'Experiment description', str, None),
     ('num_epochs', 'Number of epochs', int, 5),
-    ('batch_size', 'Batch size', int, 128),
+    ('batch_size', 'Batch size', int, 64),
     ('lr', 'Learning rate', float, 1e-4),
     ('sent_dim', 'Sentence dimension', int, 768),  # Bart-base d_model = 768
-    ('hidden_dim', 'Hidden dimension', int, 32),
+    ('hidden_dim', 'Hidden dimension', int, 64),
     ('nle_pred', 'Predict with NLE only', bool, False),
     ('max_concepts_per_sent', 'Max concepts per sentence', int, 200),
     ('sentence_pool', 'Sentence pool', str, 'mean'),

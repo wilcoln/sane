@@ -185,7 +185,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 self.optimizer.zero_grad()
 
             # forward pass & compute loss
-            knwl, fused_knwl, nle, pred = self.model(inputs)
+            knwl, att_knwl, nle, pred = self.model(inputs)
 
             # Compute loss
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
@@ -199,7 +199,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
             current_loss += loss.item()
 
             # Update Accuracy
-            _, predicted = pred.logits.max(1)
+            predicted = pred.logits.argmax(1)
             total += inputs['gold_label'].size(0)
             correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
 

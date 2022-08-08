@@ -24,14 +24,14 @@ model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
 model.eval()
 
 # run model
-knwl, fused_knwl, _, pred = model(inputs)
+knwl, att_knwl, _, pred = model(inputs)
 triples = conceptnet.ids2triples(knwl.id.tolist())
 sentences = tokenizer.batch_decode(inputs['Sentences']['input_ids'].to(settings.device), skip_special_tokens=True)
 triples = [' '.join(t) for t in triples]
 
 # Get top k triples and their attention weightstopk_triples = []
 # topk = 20
-# topk_attentions, indices = torch.topk(fused_knwl.attentions, topk, sorted=False)
+# topk_attentions, indices = torch.topk(att_knwl.attentions, topk, sorted=False)
 # topk_attentions = F.softmax(topk_attentions)  # re-normalize
 # topk_triple_ids = knwl.id[indices]
 # top_k_raw_triples = [conceptnet.ids2triples(ids.tolist()) for ids in topk_triple_ids]
@@ -39,7 +39,7 @@ triples = [' '.join(t) for t in triples]
 
 # Save attention maps
 for i in range(settings.num_attn_heads):
-    np_attention = fused_knwl.attentions.cpu().detach().numpy()
+    np_attention = att_knwl.attentions.cpu().detach().numpy()
     df = pd.DataFrame(np_attention, index=sentences, columns=triples)
     csv_path = osp.join(results_path, f'attention{i+1}.csv')
     df.to_csv(csv_path)
