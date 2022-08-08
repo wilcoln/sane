@@ -18,4 +18,5 @@
 # run the application
 JOB_ID=`basename "$0"`
 echo 'Running Experiment '.$JOB_ID.' ...'
-python src/experiments/esnli_train.py --data_frac=1.0 --nle_pred --batch_size=80
+# python src/experiments/esnli_train.py --data_frac=1.0 --nle_pred --batch_size=80
+python src/experiments/esnli_train.py --data_frac=.05 --nle_pred --batch_size=128
