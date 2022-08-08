@@ -27,7 +27,7 @@ def transformer_mean_pool(token_embeddings, attention_mask=None):
     return sum_embeddings / sum_mask
 
 
-def transformer_cls_pool(token_embeddings):
+def transformer_cls_pool(token_embeddings, *args, **kwargs):
     return token_embeddings[:, 0, :]
 
 
@@ -35,8 +35,6 @@ TRANSFORMER_SENTENCE_POOL = {
     'mean': transformer_mean_pool,
     'cls': transformer_cls_pool
 }
-
-transformer_sentence_pool = TRANSFORMER_SENTENCE_POOL[settings.sentence_pool]
 
 
 def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
@@ -66,7 +64,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     for i, batch in enumerate(batches):
         encoded_inputs = tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')
         model_outputs = bart_model(**encoded_inputs)
-        encoded_batch = transformer_sentence_pool(model_outputs['last_hidden_state'], encoded_inputs['attention_mask'])
+        encoded_batch = TRANSFORMER_SENTENCE_POOL[settings.sentence_pool](model_outputs['last_hidden_state'], encoded_inputs['attention_mask'])
 
         if i == 0:
             encoded_batches = encoded_batch
