@@ -2,16 +2,11 @@ import os.path as osp
 
 import pandas as pd
 import torch
-import torch.nn.functional as F
-from icecream import ic
-from tqdm import tqdm
 
 from src.conceptnet import conceptnet
 from src.datasets.esnli import get_loader
 from src.models.kax import KAX
 from src.settings import settings
-import matplotlib.pyplot as plt
-import numpy as np
 from src.utils.embeddings import tokenizer
 
 # Get test dataloader
@@ -41,5 +36,5 @@ triples = [' '.join(t) for t in triples]
 for i in range(settings.num_attn_heads):
     np_attention = att_knwl.attentions.cpu().detach().numpy()
     df = pd.DataFrame(np_attention, index=sentences, columns=triples)
-    csv_path = osp.join(results_path, f'attention{i+1}.csv')
+    csv_path = osp.join(results_path, f'attention{i + 1}.csv')
     df.to_csv(csv_path)

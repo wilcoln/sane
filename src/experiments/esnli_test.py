@@ -1,4 +1,5 @@
 import os.path as osp
+import time
 
 import pandas as pd
 import torch
@@ -9,7 +10,6 @@ from src.models.kax import KAX
 from src.settings import settings
 from src.utils.embeddings import tokenizer
 from src.utils.format import fmt_stats_dict
-import time
 
 # Get test dataloader
 dataloader = get_loader('test')
@@ -59,7 +59,6 @@ for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
     explanations.extend(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
     gold_labels.extend(inputs['gold_label'].tolist())
     predictions.extend(pred.logits.argmax(1).tolist())
-
 
 test_loss /= len(dataloader)
 test_acc = 100. * correct / total
