@@ -47,9 +47,6 @@ class ESNLIDataset(Dataset):
             if k in string_keys:
                 self.esnli[k] = [str(elt) for elt in self.esnli[k]]
 
-        # Add id
-        self.esnli['id'] = list(range(len(self.esnli['gold_label'])))
-
     def __len__(self):
         return len(self.esnli['gold_label'])
 
@@ -63,9 +60,6 @@ og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
 new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_sizes.items()}
 _num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
-
-collate_cache = {}
-
 def collate_fn(batch):
     elem = batch[0]
 
@@ -77,34 +71,28 @@ def collate_fn(batch):
     # Preliminaries
     inputs = {key: collate_key(key) for key in elem}
 
-    # Curate subknowledge using semantic search
+    # Tokenize strings
+    for key in (set(elem) & string_keys):
+        inputs[key] = tokenize([d[key] for d in batch])
 
-    batch_key = tuple(set(inputs['id'].tolist()))
-    if batch_key not in collate_cache:
-        ic('build subgraph')
-        ic(len(collate_cache))
-        concept_ids = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
-        top_concepts_indices = semantic_search(
+    # Curate subknowledge using semantic search
+    concept_ids = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
+    top_concepts_indices = semantic_search(
             queries=inputs['Sentences_embedding'],
             values=conceptnet.concept_embedding[concept_ids],
             top_k=settings.max_concepts_per_sent,
         )
 
-        concept_ids = concept_ids[top_concepts_indices]
-        concept_ids = torch.unique(concept_ids.squeeze())
+    concept_ids = concept_ids[top_concepts_indices]
+    concept_ids = torch.unique(concept_ids.squeeze())
 
-        collate_cache[batch_key] = concept_ids, *subgraph(
+    # Finalize batch
+    inputs['concept_ids'], inputs['edge_index'], inputs['edge_attr'] = concept_ids, *subgraph(
             subset=concept_ids, 
             edge_index=conceptnet.pyg.edge_index,
             edge_attr=conceptnet.pyg.edge_attr,
             relabel_nodes=True
         )
-
-    # Finalize batch
-    inputs['concept_ids'], inputs['edge_index'], inputs['edge_attr'] = collate_cache[batch_key]
-
-    for key in (set(elem) & string_keys):
-        inputs[key] = tokenize([d[key] for d in batch])
 
     return inputs
 
@@ -115,12 +103,7 @@ def get_loader(split, num_chunks=None):
         for chunk in range(_num_chunks[split] if num_chunks is None else num_chunks)
     ]
 
-    dataloader = DataLoader(ConcatDataset(datasets),
+    return DataLoader(ConcatDataset(datasets),
                       batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,
                       collate_fn=collate_fn)
-
-    for _ in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
-        pass
-    
-    return dataloader
