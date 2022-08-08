@@ -7,7 +7,7 @@ from src.settings import settings
 from bert_score import score
 
 
-results_path = 'results/trainers/2022-08-07_00-06-16_306263_dataset=ESNLI_model=KAX_num_epochs=5_batch_size=80_lr=0.0001_sent_dim=768_hidden_dim=32_nle_pred=True_max_concepts_per_sent=200_sentence_pool=mean_data_frac=1.0_alpha=0.4'
+results_path = settings.input_dir
 
 # Load test results
 test_results_df = pd.read_csv(osp.join(results_path, 'test_results.csv'))
@@ -30,5 +30,5 @@ bert_score_result = f'{hashname}: P={P.mean().item():.6f} R={R.mean().item():.6f
 print(bert_score_result)
 
 # Save bert score result
-with open(osp.join(results_path, 'bert_score.txt'), 'w') as f:
+with open(osp.join(results_path, f'bert_score{settings.out_suffix}.txt'), 'w') as f:
     f.write(bert_score_result)

@@ -9,6 +9,7 @@ from src.models.kax import KAX
 from src.settings import settings
 from src.utils.embeddings import tokenizer
 from src.utils.format import fmt_stats_dict
+import time
 
 # Get test dataloader
 dataloader = get_loader('test')
@@ -38,6 +39,9 @@ for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
     # Run model
     knwl, att_knwl, nle, pred = model(inputs)
 
+    # Compute loss
+    loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
+
     # Update Loss
     test_loss += loss.item()
 
@@ -49,7 +53,7 @@ for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
 
     # Get predictions and explanations
     encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
-    encoded_knowledge = {'knowledge_embedding': att_knwl.attended}
+    encoded_knowledge = {'knowledge_embedding': att_knwl.output}
     nles_tokens = model.explainer.model.generate(**encoded_inputs, **encoded_knowledge, do_sample=False, max_length=30)
     sentences.extend(tokenizer.batch_decode(encoded_inputs['input_ids'], skip_special_tokens=True))
     explanations.extend(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
@@ -67,4 +71,4 @@ print(fmt_stats_dict(stats_dict))
 # Save results
 results = {'sentence': sentences, 'gold_label': gold_labels, 'prediction': predictions, 'explanation': explanations}
 results = pd.DataFrame(results)
-results.to_csv(osp.join(results_path, 'test_results.csv'), index=False)
+results.to_csv(osp.join(results_path, f'test_results{settings.out_suffix}.csv'), index=False)
