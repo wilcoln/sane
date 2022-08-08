@@ -10,7 +10,7 @@ from bert_score import score
 results_path = settings.input_dir
 
 # Load test results
-test_results_df = pd.read_csv(osp.join(results_path, 'test_results.csv'))
+test_results_df = pd.read_csv(osp.join(results_path, f'test_results{settings.in_suffix}.csv'))
 
 # Load test dataset (to access gold explanations)
 test_dataset = ESNLIDataset(path=settings.data_dir, split='test', frac=settings.data_frac, chunk=0)
