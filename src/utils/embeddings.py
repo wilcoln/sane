@@ -4,7 +4,6 @@ import os
 from typing import List
 
 import torch
-from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 from transformers import BartTokenizer, BartModel
 
@@ -36,6 +35,8 @@ TRANSFORMER_SENTENCE_POOL = {
     'cls': transformer_cls_pool
 }
 
+transformer_sentence_pool = TRANSFORMER_SENTENCE_POOL[settings.sentence_pool]
+
 
 def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     """Compute bart embeddings for texts.
@@ -44,11 +45,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
         verbose: Whether to show progress bar
     Returns:
         embeddings: embeddings for each node
-
     """
-
-    # ic | encoded_input.keys(): dict_keys(['input_ids', 'attention_mask'])
-    # ic | model_output.keys(): odict_keys(['last_hidden_state', 'past_key_values', 'encoder_last_hidden_state'])
     global bart_model
 
     if bart_model is None:
@@ -64,7 +61,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     for i, batch in enumerate(batches):
         encoded_inputs = tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')
         model_outputs = bart_model(**encoded_inputs)
-        encoded_batch = TRANSFORMER_SENTENCE_POOL[settings.sentence_pool](model_outputs['last_hidden_state'], encoded_inputs['attention_mask'])
+        encoded_batch = transformer_sentence_pool(model_outputs['last_hidden_state'], encoded_inputs['attention_mask'])
 
         if i == 0:
             encoded_batches = encoded_batch
@@ -72,26 +69,6 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
             encoded_batches = torch.cat([encoded_batches, encoded_batch], dim=0)
 
     return encoded_batches.detach()
-
-
-def sbert(sentences: List[str], verbose: bool = False) -> torch.Tensor:
-    """Compute sbert embeddings for nodes of a knowledge graph
-    Args:
-        sentences: text to use for each node
-        verbose: Whether to show progress bar
-    Returns:
-        A map nodes and their embeddings
-    """
-
-    if not verbose:
-        # Disable logger
-        from sentence_transformers.SentenceTransformer import logger
-        logger.disabled = True
-
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-    # Compute embedding for both lists
-    return model.encode(sentences, convert_to_tensor=True, batch_size=settings.batch_size, device=str(
-        settings.device), show_progress_bar=verbose)
 
 
 def tokenize(sentence_list):

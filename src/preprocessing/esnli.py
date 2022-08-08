@@ -84,8 +84,8 @@ def save_splits(splits, output_dir):
 
 
 def compute_concept_ids(sentence_list):
-    concepts = [
-        cn.subgraph(cn.search(sentence), radius=1).nodes
+    return [
+        cn.nodes2ids(cn.subgraph(cn.search(sentence), radius=1).nodes)
         for sentence in tqdm(sentence_list)
     ]
 

@@ -39,9 +39,6 @@ class Conceptnet:
         self.inv_concept_dict = {v: k for k, v in self.concept_dict.items()}
         self.inv_relation_dict = {v: k for k, v in self.relation_dict.items()}
 
-
-        del concept_df, relation_df
-
         # Networkx object
         gpickle_path = osp.join(cn_dir, 'conceptnet.gpickle')
         try:

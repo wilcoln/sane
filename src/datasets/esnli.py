@@ -5,11 +5,15 @@ import pickle
 import torch.utils.data
 from icecream import ic
 from torch.utils.data import Dataset, default_collate, DataLoader, ConcatDataset
+from torch_geometric.utils import subgraph
 
+from src.conceptnet import conceptnet
 from src.settings import settings
 from src.utils.embeddings import tokenize
+from src.utils.semantic_search import semantic_search
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
+
 
 class ESNLIDataset(Dataset):
     """
@@ -61,19 +65,33 @@ def collate_fn(batch):
     elem = batch[0]
 
     def collate(key):
-        if key in string_keys:
-            return tokenize([d[key] for d in batch])
         if key in {'concept_ids'}:
-            return [torch.LongTensor(d[key]) for d in batch]
+            concept_ids_list = [torch.LongTensor(d[key]) for d in batch]
+            return torch.unique(torch.cat(concept_ids_list, dim=0))
         return default_collate([d[key] for d in batch])
 
-    return {key: collate(key) for key in elem}
+    out = {key: collate(key) for key in elem}
+    concept_embeddings = conceptnet.concept_embedding[out['concept_ids']]
+    sentence_embeddings = out['Sentences_embedding']
+    top_concepts_indices = semantic_search(sentence_embeddings, concept_embeddings,
+                                           top_k=settings.max_concepts_per_sent)
+    out['concept_ids'] = out['concept_ids'][top_concepts_indices]
+    out['edge_index'], out['edge_attr'] = subgraph(out['concept_ids'], conceptnet.pyg.edge_index,
+                                                   conceptnet.pyg.edge_attr,
+                                                   relabel_nodes=True)
+
+    for key in string_keys:
+        out[f'{key}_raw'] = out[key]
+        out[key] = tokenize([d[key] for d in batch])
+
+    ic(out)
+    return out
 
 
 def get_loader(split, num_chunks=None):
     datasets = [
         ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk)
-        for chunk in range(_num_chunks[split] if num_chunks is None else num_chunks) 
+        for chunk in range(_num_chunks[split] if num_chunks is None else num_chunks)
     ]
 
     return DataLoader(ConcatDataset(datasets),
