@@ -1,15 +1,15 @@
 import torch.optim as optim
 
 from src.datasets.esnli import get_loader
-from src.models.kax import KAX
+from src.models.sane import SANE
 from src.settings import settings
-from src.utils.trainers import KAXTrainer
+from src.utils.trainers import SANETrainer
 
 # Create model
-model = KAX().to(settings.device)
+model = SANE().to(settings.device)
 
 # Train Model
-KAXTrainer(
+SANETrainer(
     model=model,
     optimizer=optim.Adam(model.parameters(), lr=settings.lr),
     dataset_name='ESNLI',

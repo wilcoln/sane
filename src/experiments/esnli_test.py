@@ -6,7 +6,7 @@ import torch
 from tqdm import tqdm
 
 from src.datasets.esnli import get_loader
-from src.models.kax import KAX
+from src.models.sane import SANE
 from src.settings import settings
 from src.utils.embeddings import tokenizer
 from src.utils.format import fmt_stats_dict
@@ -15,7 +15,7 @@ from src.utils.format import fmt_stats_dict
 dataloader = get_loader('test')
 
 # Load model
-model = KAX().to(settings.device)
+model = SANE().to(settings.device)
 results_path = settings.input_dir
 model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
 model.eval()

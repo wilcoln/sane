@@ -140,7 +140,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         print(f'Epoch: {epoch:02d}, {epoch_results_str}')
 
 
-class KAXTrainer(TorchModuleBaseTrainer):
+class SANETrainer(TorchModuleBaseTrainer):
     def __init__(self, model, optimizer, dataset_name, train_loader, val_loader, test_loader=None):
         super().__init__(model, optimizer, dataset_name)
         self.train_loader = train_loader

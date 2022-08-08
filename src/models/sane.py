@@ -9,7 +9,7 @@ from src.models.prediction import Predictor
 torch.manual_seed(0)
 
 
-class KAX(nn.Module):
+class SANE(nn.Module):
     def __init__(self):
         super().__init__()
         self.encoder = Encoder()

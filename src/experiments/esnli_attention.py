@@ -5,7 +5,7 @@ import torch
 
 from src.conceptnet import conceptnet
 from src.datasets.esnli import get_loader
-from src.models.kax import KAX
+from src.models.sane import SANE
 from src.settings import settings
 from src.utils.embeddings import tokenizer
 
@@ -13,7 +13,7 @@ from src.utils.embeddings import tokenizer
 inputs = next(iter(get_loader('test', num_chunks=1)))
 
 # Load model
-model = KAX().to(settings.device)
+model = SANE().to(settings.device)
 results_path = 'results/trainers/2022-08-06_14-15-44_659230_dataset=ESNLI_model=KAX_num_epochs=5_batch_size=128_lr=0.0001_sent_dim=768_hidden_dim=32_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4'
 model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
 model.eval()
