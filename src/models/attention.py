@@ -17,7 +17,7 @@ class Attention(nn.Module):
     def __init__(self):
         super().__init__()
 
-        assert settings.hidden_dim % settings.num_attn_heads == 0, 'Hidden dimension must be divisible by num attention heads'
+        assert settings.hidden_dim % settings.num_attn_heads == 0, 'Hidden dim must be divisible by num attention heads'
         self.hidden_dim = settings.hidden_dim // settings.num_attn_heads
         self.k_proj_list = nn.ModuleList([
             nn.Linear(settings.sent_dim, self.hidden_dim)
@@ -50,7 +50,8 @@ class Attention(nn.Module):
             attention_output_list.append(attention_output)  # (batch_size, hidden_dim)
 
         # (num_heads, batch_size, knowledge_size), (batch_size, hidden_dim)
-        weights, output = torch.cat(attention_weights_list, dim=0), self.final_proj(torch.cat(attention_output_list, dim=1))
+        weights, output = torch.cat(attention_weights_list, dim=0), self.final_proj(
+            torch.cat(attention_output_list, dim=1))
 
         if self.training:
             # Return just the attention output during training

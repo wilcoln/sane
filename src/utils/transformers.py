@@ -93,7 +93,7 @@ class BartForExplanationGeneration(BartForConditionalGeneration):
         )
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, outputs[0].shape[1], 1)
         n = outputs.last_hidden_state.shape[0] // knowledge_embedding.shape[0]
-        
+
         last_hidden_state = torch.cat([outputs.last_hidden_state, knowledge_embedding.repeat(n, 1, 1)], dim=2)
         last_hidden_state = self.fusion_head(last_hidden_state)
         lm_logits = self.lm_head(last_hidden_state)
