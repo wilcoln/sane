@@ -101,6 +101,9 @@ class Conceptnet:
             for hid, rid, tid in ids
         ]
 
+    def ids2nodes(self, ids: list) -> list:
+        return [self.inv_concept_dict[nid] for nid in ids]
+
     def nodes2ids(self, nodes: list) -> list:
         return [self.concept_dict[node] for node in nodes]
 

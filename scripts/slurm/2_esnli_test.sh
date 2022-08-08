@@ -17,4 +17,4 @@
 
 # run the application
 input_dir=''
-python src/experiments/esnli_output.py --data_frac=.05 --nle_pred --input_dir=$input_dir
+python src/experiments/esnli_test.py --data_frac=.05 --nle_pred --input_dir=$input_dir

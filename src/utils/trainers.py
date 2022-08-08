@@ -11,12 +11,8 @@ from matplotlib import pyplot as plt
 from torch import nn
 from torch.optim import Optimizer
 from tqdm import tqdm
-
+from src.utils.format import fmt_stats_dict, capitalize
 from src.settings import settings, exp_settings
-
-
-def capitalize(underscore_string):
-    return ' '.join(w.capitalize() for w in underscore_string.split('_'))
 
 
 class BaseTrainer:
@@ -138,22 +134,12 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         print(f'Results saved to {self.results_path}')
 
     def print_epoch(self, epoch):
-        epoch_results_str = ', '.join([f'{capitalize(k)}: {v:.4f}' for k, v in self.results[epoch - 1].items() if not
-        k.endswith(
-            '_time')])
+        stats_dict = self.results[epoch - 1]
+        epoch_results_str = fmt_stats_dict(stats_dict)
         print(f'Epoch: {epoch:02d}, {epoch_results_str}')
 
-
-def sizeof_fmt(num, suffix='B'):
-    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return f'{num:3.1f}{unit}{suffix}'
-        num /= 1024.0
-    return f'{num:.1f}Yi{suffix}'
-
-
 class KAXTrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, dataset_name, train_loader, val_loader, test_loader):
+    def __init__(self, model, optimizer, dataset_name, train_loader, val_loader, test_loader=None):
         super().__init__(model, optimizer, dataset_name)
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -161,14 +147,20 @@ class KAXTrainer(TorchModuleBaseTrainer):
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
+
+        description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
+        if dataloader is None:
+            print(f'Skipping {description[split]}')
+            return {}
+
         assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
 
         train = split == 'train'
 
         self.model.train() if train else self.model.eval()
 
-        # Set current loss value
-        current_loss = 0.0
+        # Set split loss value
+        split_loss = 0.0
 
         # Reset values for accuracy computation
         correct = 0
@@ -176,7 +168,6 @@ class KAXTrainer(TorchModuleBaseTrainer):
 
         # Iterate over the DataLoader for training data
         pbar = tqdm(enumerate(dataloader, 0), total=len(dataloader))
-        description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
         pbar.set_description(description[split])
         start = time.time()
         for i, inputs in pbar:
@@ -196,7 +187,7 @@ class KAXTrainer(TorchModuleBaseTrainer):
                 self.optimizer.step()
 
             # Update Loss
-            current_loss += loss.item()
+            split_loss += loss.item()
 
             # Update Accuracy
             predicted = pred.logits.argmax(1)
@@ -204,12 +195,12 @@ class KAXTrainer(TorchModuleBaseTrainer):
             correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
 
         split_time = time.time() - start
-        current_loss /= len(dataloader)
-        current_acc = 100. * correct / total
+        split_loss /= len(dataloader)
+        split_acc = 100. * correct / total
 
         return {
-            f'{split}_acc': current_acc,
-            f'{split}_loss': current_loss,
+            f'{split}_acc': split_acc,
+            f'{split}_loss': split_loss,
             f'{split}_time': split_time,
         }
 

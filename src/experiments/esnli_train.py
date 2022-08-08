@@ -15,5 +15,5 @@ KAXTrainer(
     dataset_name='ESNLI',
     train_loader=get_loader('train'),
     val_loader=get_loader('val'),
-    test_loader=get_loader('test'),
+    test_loader=get_loader('test') if settings.monitor_test else None,
 ).run()

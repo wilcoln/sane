@@ -4,6 +4,7 @@ import pickle
 
 import torch.utils.data
 from icecream import ic
+from tqdm import tqdm
 from torch.utils.data import Dataset, default_collate, DataLoader, ConcatDataset
 from torch_geometric.utils import subgraph
 
@@ -13,7 +14,6 @@ from src.utils.embeddings import tokenize
 from src.utils.semantic_search import semantic_search
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
-
 
 class ESNLIDataset(Dataset):
     """
@@ -47,6 +47,9 @@ class ESNLIDataset(Dataset):
             if k in string_keys:
                 self.esnli[k] = [str(elt) for elt in self.esnli[k]]
 
+        # Add id
+        self.esnli['id'] = list(range(len(self.esnli['gold_label'])))
+
     def __len__(self):
         return len(self.esnli['gold_label'])
 
@@ -61,31 +64,49 @@ new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_s
 _num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
 
+collate_cache = {}
+
 def collate_fn(batch):
     elem = batch[0]
 
-    def collate(key):
-        if key in {'concept_ids'}:
-            concept_ids_list = [torch.LongTensor(d[key]) for d in batch]
-            return torch.unique(torch.cat(concept_ids_list, dim=0))
+    def collate_key(key):
+        if key == 'concept_ids':
+            return [torch.LongTensor(d[key]) for d in batch]
         return default_collate([d[key] for d in batch])
+        
+    # Preliminaries
+    inputs = {key: collate_key(key) for key in elem}
 
-    out = {key: collate(key) for key in elem}
-    concept_embeddings = conceptnet.concept_embedding[out['concept_ids']]
-    sentence_embeddings = out['Sentences_embedding']
-    top_concepts_indices = semantic_search(sentence_embeddings, concept_embeddings,
-                                           top_k=settings.max_concepts_per_sent)
-    out['concept_ids'] = out['concept_ids'][top_concepts_indices]
-    out['edge_index'], out['edge_attr'] = subgraph(out['concept_ids'], conceptnet.pyg.edge_index,
-                                                   conceptnet.pyg.edge_attr,
-                                                   relabel_nodes=True)
+    # Curate subknowledge using semantic search
 
-    for key in string_keys:
-        out[f'{key}_raw'] = out[key]
-        out[key] = tokenize([d[key] for d in batch])
+    batch_key = tuple(set(inputs['id'].tolist()))
+    if batch_key not in collate_cache:
+        ic('build subgraph')
+        ic(len(collate_cache))
+        concept_ids = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
+        top_concepts_indices = semantic_search(
+            queries=inputs['Sentences_embedding'],
+            values=conceptnet.concept_embedding[concept_ids],
+            top_k=settings.max_concepts_per_sent,
+        )
 
-    ic(out)
-    return out
+        concept_ids = concept_ids[top_concepts_indices]
+        concept_ids = torch.unique(concept_ids.squeeze())
+
+        collate_cache[batch_key] = concept_ids, *subgraph(
+            subset=concept_ids, 
+            edge_index=conceptnet.pyg.edge_index,
+            edge_attr=conceptnet.pyg.edge_attr,
+            relabel_nodes=True
+        )
+
+    # Finalize batch
+    inputs['concept_ids'], inputs['edge_index'], inputs['edge_attr'] = collate_cache[batch_key]
+
+    for key in (set(elem) & string_keys):
+        inputs[key] = tokenize([d[key] for d in batch])
+
+    return inputs
 
 
 def get_loader(split, num_chunks=None):
@@ -94,7 +115,12 @@ def get_loader(split, num_chunks=None):
         for chunk in range(_num_chunks[split] if num_chunks is None else num_chunks)
     ]
 
-    return DataLoader(ConcatDataset(datasets),
+    dataloader = DataLoader(ConcatDataset(datasets),
                       batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,
                       collate_fn=collate_fn)
+
+    for _ in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
+        pass
+    
+    return dataloader
