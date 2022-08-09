@@ -53,7 +53,6 @@ def test(model, results_path, dataloader):
         gold_labels.extend(inputs['gold_label'].tolist())
         predictions.extend(pred.logits.argmax(1).tolist())
 
-
     test_loss /= len(dataloader)
     test_acc = 100. * correct / total
     stats_dict = {'test_acc': test_acc, f'test_loss': test_loss, f'test_time': test_time}
@@ -66,12 +65,13 @@ def test(model, results_path, dataloader):
     results = pd.DataFrame(results)
     results.to_csv(osp.join(results_path, f'test_results{settings.out_suffix}.csv'), index=False)
 
+
 if __name__ == '__main__':
     # Get test dataloader
     dataloader = get_loader('test')
 
     # Load model
-    model = KAX().to(settings.device)
+    model = SANE().to(settings.device)
     results_path = settings.input_dir
     model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
     model.eval()

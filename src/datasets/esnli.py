@@ -9,8 +9,9 @@ from torch_geometric.utils import subgraph
 
 from src.conceptnet import conceptnet
 from src.settings import settings
-from src.utils.embeddings import tokenize
+from src.utils.embeddings import tokenize, bart
 from src.utils.semantic_search import semantic_search
+from src.preprocessing.esnli import compute_concept_ids
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
 
@@ -20,28 +21,35 @@ class ESNLIDataset(Dataset):
     A dataset for ESNLI
     """
 
-    def __init__(self, path: str, split: str = 'train', frac=1.0, chunk=0):
-        assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
-        assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
+    def __init__(self, path: str = None, split: str = 'train', frac=1.0, chunk=0, data_dict=None):
+        if data_dict:
+            self.esnli = data_dict
+            # encode sentences
+            self.esnli['Sentences_embedding'] = bart(self.esnli['Sentences'])
+            self.esnli['concept_ids'] = compute_concept_ids(self.esnli['Sentences'])
+        else:
+            assert path is not None
+            assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
+            assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
 
-        super().__init__()
-        self.name = f'ESNLI_{frac}'
+            super().__init__()
+            self.name = f'ESNLI_{frac}'
 
-        # Load pickle file
-        esnli_path = osp.join(path, f'esnli_{frac}')
-        keys = ['Sentences', 'Sentences_embedding', 'concept_ids', 'gold_label', 'Explanation_1']
-        if split in {'val', 'test'}:
-            keys += ['Explanation_2', 'Explanation_3']
+            # Load pickle file
+            esnli_path = osp.join(path, f'esnli_{frac}')
+            keys = ['Sentences', 'Sentences_embedding', 'concept_ids', 'gold_label', 'Explanation_1']
+            if split in {'val', 'test'}:
+                keys += ['Explanation_2', 'Explanation_3']
 
-        self.esnli = {}
-        for k in keys:
-            key_path = osp.join(esnli_path, f'{split}_{k}', f'chunk{chunk}.pkl')
-            try:
-                self.esnli[k] = pickle.load(open(key_path, 'rb'))
-                if isinstance(self.esnli[k], torch.Tensor):
-                    self.esnli[k] = self.esnli[k]
-            except Exception as e:
-                ic(e, key_path)
+            self.esnli = {}
+            for k in keys:
+                key_path = osp.join(esnli_path, f'{split}_{k}', f'chunk{chunk}.pkl')
+                try:
+                    self.esnli[k] = pickle.load(open(key_path, 'rb'))
+                    if isinstance(self.esnli[k], torch.Tensor):
+                        self.esnli[k] = self.esnli[k]
+                except Exception as e:
+                    ic(e, key_path)
 
         for k in self.esnli:
             if k in string_keys:
@@ -76,7 +84,7 @@ def collate_fn(batch):
     for key in (set(elem) & string_keys):
         inputs[key] = tokenize([d[key] for d in batch])
 
-    # Curate subknowledge using semantic search
+    # Curate sub-knowledge using semantic search
     concept_ids = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
     top_concepts_indices = semantic_search(
         queries=inputs['Sentences_embedding'],
