@@ -40,9 +40,9 @@ ic('Create Dataset')
 dataset = ESNLIDataset(data_dict=esnli_input_dict)
 ic('Create dataloader')
 dataloader = DataLoader(dataset,
-                      batch_size=settings.batch_size, shuffle=False,
-                      num_workers=settings.num_workers,
-                      collate_fn=collate_fn)
+                        batch_size=settings.batch_size, shuffle=False,
+                        num_workers=settings.num_workers,
+                        collate_fn=collate_fn)
 
 # dataloader = get_loader('test')
 

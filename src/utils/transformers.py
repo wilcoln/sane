@@ -17,7 +17,7 @@ class ExplainerOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
 
 
-class BartForExplanationGeneration(BartForConditionalGeneration):
+class BartForKnowledgeAwareConditionalGeneration(BartForConditionalGeneration):
     base_model_prefix = "model"
     _keys_to_ignore_on_load_missing = [r"final_logits_bias", r"lm_head.weight"]
 

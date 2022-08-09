@@ -1,12 +1,13 @@
 import torch.optim as optim
 
 from src.datasets.esnli import get_loader
-from src.models.sane import SANE
+from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
 from src.utils.trainers import SANETrainer
 
 # Create model
-model = SANE().to(settings.device)
+model = SANENoKnowledge() if settings.no_knowledge else SANE()
+model = model.to(settings.device)
 
 # Train Model
 SANETrainer(

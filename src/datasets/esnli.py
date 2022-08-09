@@ -55,6 +55,9 @@ class ESNLIDataset(Dataset):
             if k in string_keys:
                 self.esnli[k] = [str(elt) for elt in self.esnli[k]]
 
+        if settings.no_knowledge:
+            del self.esnli['concept_ids']
+
     def __len__(self):
         return len(self.esnli['gold_label'])
 
@@ -71,37 +74,37 @@ num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_si
 
 def collate_fn(batch):
     elem = batch[0]
-
-    def collate_key(key):
-        if key == 'concept_ids':
-            return [torch.LongTensor(d[key]) for d in batch]
-        return default_collate([d[key] for d in batch])
+    concept_ids_key = 'concept_ids'
 
     # Preliminaries
-    inputs = {key: collate_key(key) for key in elem}
+    inputs = {key: default_collate([d[key] for d in batch]) for key in elem if key != concept_ids_key}
 
     # Tokenize strings
     for key in (set(elem) & string_keys):
         inputs[key] = tokenize([d[key] for d in batch])
 
-    # Curate sub-knowledge using semantic search
-    concept_ids = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
-    top_concepts_indices = semantic_search(
-        queries=inputs['Sentences_embedding'],
-        values=conceptnet.concept_embedding[concept_ids],
-        top_k=settings.max_concepts_per_sent,
-    )
+    if not settings.no_knowledge:
+        # Convert concept_ids to tensor
+        concept_ids = [torch.LongTensor(d[concept_ids_key]) for d in batch]
+        # Curate sub-knowledge using semantic search
+        concept_ids = torch.unique(torch.cat(concept_ids, dim=0))
+        top_concepts_indices = semantic_search(
+            queries=inputs['Sentences_embedding'],
+            values=conceptnet.concept_embedding[concept_ids],
+            top_k=settings.max_concepts_per_sent,
+        )
 
-    concept_ids = concept_ids[top_concepts_indices]
-    concept_ids = torch.unique(concept_ids.squeeze())
+        concept_ids = concept_ids[top_concepts_indices]
+        concept_ids = torch.unique(concept_ids.squeeze())
 
-    # Finalize batch
-    inputs['concept_ids'], inputs['edge_index'], inputs['edge_attr'] = concept_ids, *subgraph(
-        subset=concept_ids,
-        edge_index=conceptnet.pyg.edge_index,
-        edge_attr=conceptnet.pyg.edge_attr,
-        relabel_nodes=True
-    )
+        # Finalize batch
+        inputs[concept_ids_key] = concept_ids
+        inputs['edge_index'], inputs['edge_attr'] = subgraph(
+            subset=concept_ids,
+            edge_index=conceptnet.pyg.edge_index,
+            edge_attr=conceptnet.pyg.edge_attr,
+            relabel_nodes=True
+        )
 
     return inputs
 

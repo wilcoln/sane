@@ -10,7 +10,7 @@ from src.utils.nn import GNN, singles_to_triples
 
 @dataclass
 class EncoderOutput:
-    embed: torch.Tensor  # encoded knowledge (knowledge_size, sent_dim)
+    output: torch.Tensor  # encoded knowledge (knowledge_size, sent_dim)
     id: torch.Tensor = None  # id of the knowledge (knowledge_size, 3)
 
 
@@ -31,10 +31,10 @@ class Encoder(nn.Module):
         encoded_triples = singles_to_triples(x, edge_index, edge_attr)
 
         if self.training:
-            return EncoderOutput(embed=encoded_triples)
+            return EncoderOutput(output=encoded_triples)
         else:
             # Return triple ids too
             x = nodes.view(-1, 1)
             edge_attr = edge_relation.view(-1, 1)
             triple_ids = singles_to_triples(x, edge_index, edge_attr)
-            return EncoderOutput(embed=encoded_triples, id=triple_ids)
+            return EncoderOutput(output=encoded_triples, id=triple_ids)
