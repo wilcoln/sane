@@ -30,8 +30,8 @@ def test(model, results_path, dataloader):
         # start batch time
         batch_start = time.time()
         # Run model
-        out = model(inputs)
-        pred, nle = out[:2]
+        outputs = model(inputs)
+        pred, nle = outputs[:2]
         att_knwl = None if settings.no_knowledge else out[2]
 
         # Compute loss

@@ -40,7 +40,7 @@
 # python src/experiments/esnli_train.py --data_frac=.05 --frozen
 # python src/experiments/esnli_train.py --data_frac=.05 --no_knowledge
 
-python src/experiments/esnli_train.py --data_frac=.05 
+python src/experiments/esnli_train.py --data_frac=.05
 # python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=1.0
 # python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=.8
 # python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=.5
