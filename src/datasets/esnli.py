@@ -26,7 +26,8 @@ class ESNLIDataset(Dataset):
             self.esnli = data_dict
             # encode sentences
             self.esnli['Sentences_embedding'] = bart(self.esnli['Sentences'])
-            self.esnli['concept_ids'] = compute_concept_ids(self.esnli['Sentences'])
+            if not settings.no_knowledge:
+                self.esnli['concept_ids'] = compute_concept_ids(self.esnli['Sentences'])
         else:
             assert path is not None
             assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
@@ -37,7 +38,11 @@ class ESNLIDataset(Dataset):
 
             # Load pickle file
             esnli_path = osp.join(path, f'esnli_{frac}')
-            keys = ['Sentences', 'Sentences_embedding', 'concept_ids', 'gold_label', 'Explanation_1']
+            keys = ['Sentences', 'Sentences_embedding', 'gold_label', 'Explanation_1']
+
+            if not settings.no_knowledge:
+                keys += ['concept_ids']
+            
             if split in {'val', 'test'}:
                 keys += ['Explanation_2', 'Explanation_3']
 
@@ -54,9 +59,6 @@ class ESNLIDataset(Dataset):
         for k in self.esnli:
             if k in string_keys:
                 self.esnli[k] = [str(elt) for elt in self.esnli[k]]
-
-        if settings.no_knowledge:
-            del self.esnli['concept_ids']
 
     def __len__(self):
         return len(self.esnli['gold_label'])

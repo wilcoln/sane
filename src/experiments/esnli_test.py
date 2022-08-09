@@ -59,14 +59,17 @@ def test(model, results_path, dataloader):
     test_loss /= len(dataloader)
     test_acc = 100. * correct / total
     stats_dict = {'test_acc': test_acc, f'test_loss': test_loss, f'test_time': test_time}
+    test_stats = fmt_stats_dict(stats_dict)
 
     # Print stats
-    print(fmt_stats_dict(stats_dict))
+    print(test_stats)
 
     # Save results
     results = {'sentence': sentences, 'gold_label': gold_labels, 'prediction': predictions, 'explanation': explanations}
     results = pd.DataFrame(results)
     results.to_csv(osp.join(results_path, f'test_results{settings.out_suffix}.csv'), index=False)
+    with open(osp.join(results_path, f'test_stats{settings.out_suffix}.txt'), 'w') as f:
+        f.write(test_stats)
 
 
 if __name__ == '__main__':

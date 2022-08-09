@@ -6,14 +6,15 @@ from torch.utils.data import DataLoader
 
 from src.datasets.esnli import ESNLIDataset, collate_fn
 from src.experiments.esnli_test import test
-from src.models.sane import SANE
+from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
 
 esnli_input_dict = {
     'Sentences': [
-        'Wilfried is a student at the University of Basel.. He is a very good student.',
+        'Wilfried is a student at the University of Basel.. He is from Cameroon',
         'John is a professional football player.. He plays basketball for a living.',
-        'SANE is a research project at the University of Basel.. It is a project to explain machine learning models.',
+        'SANE is a research project at the University of Basel.. It is a project on AI explanability',
+        'SANE beats state-of-the-art performance on ESNLI dataset by a large margin.. SANE must be bugged',
         'Github Copilot is an automated pair programming tool.. It is sentient',
         'A dog is running through long grass in a park-like setting.. A dog runs after a squirrel.',
         'A fireman searching for something using a flashlight.. A fireman is in the dark.',
@@ -21,15 +22,17 @@ esnli_input_dict = {
     'gold_label': [
         2,
         0,
+        0,
         2,
-        1,
+        0,
         2,
         1,
     ],
     'Explanation_1': [
-        "We don't know whether Wilfried is a good student",
+        "We don't know whether Wilfried is from Cameroon",
         'John cannot be a professional football player and plays basketball for a living',
         'Not all research projects are about explaining machine learning models',
+        "Just because SANE beats sota performance doesn't mean it is bugged",
         'An automated tool cannot be sentient',
         'The dog is not necessarily running after a squirrel',
         "he needs a flashlight because he's in the dark",
@@ -48,12 +51,13 @@ dataloader = DataLoader(dataset,
 
 # Load model
 ic('Load Model')
-input_dir = 'results/trainers/2022-08-08_22-41-59_516527_dataset=ESNLI_model=KAX_num_epochs=5_batch_size=128_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=2'
-model = SANE().to(settings.device)
+input_dir = settings.input_dir
+model = SANENoKnowledge() if settings.no_knowledge else SANE()
+model = model.to(settings.device)
 model.load_state_dict(torch.load(osp.join(input_dir, 'model.pt')))
 model.eval()
 
-results_path = settings.results_dir
+results_path = osp.join(settings.results_dir, 'custom')
 
 # test model
 ic('Test')
