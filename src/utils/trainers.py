@@ -38,7 +38,6 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
                  model: nn.Module,
                  optimizer: Optimizer,
                  dataset_name: str = None,
-                 num_prints: int = 10,
                  *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,7 +48,6 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         self.best_model_state_dict = None
         self.model = model
         self.optimizer = optimizer
-        self.num_prints = num_prints
         self.dataset_name = dataset_name
         self.results = []
 
@@ -124,7 +122,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
                 self.save_results()
 
             # print epoch and results
-            if epoch % (settings.num_epochs // min(settings.num_epochs, self.num_prints)) == 0:
+            if epoch % (settings.num_epochs // min(settings.num_epochs, settings.num_prints)) == 0:
                 self.print_epoch(epoch)
 
         # Print best epoch and results

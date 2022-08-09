@@ -31,8 +31,8 @@
 
 # Curently running ...
 
-# python src/experiments/esnli_train.py --data_frac=1.0 --batch_size=100
-# python src/experiments/esnli_train.py --data_frac=1.0 --nle_pred --batch_size=100
+# python src/experiments/esnli_train.py --data_frac=1.0 --batch_size=80
+# python src/experiments/esnli_train.py --data_frac=1.0 --nle_pred --batch_size=80
 
 # python src/experiments/esnli_train.py --data_frac=1.0 --batch_size=100 --num_attn_heads=2
 # python src/experiments/esnli_train.py --data_frac=1.0 --batch_size=100 --nle_pred --num_attn_heads=2

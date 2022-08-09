@@ -116,3 +116,11 @@ def get_loader(split, num_chunks=None):
                       batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,
                       collate_fn=collate_fn)
+
+def get_sanity_check_loader():
+    dataset = ESNLIDataset(path=settings.data_dir, split='train')
+    dataset = torch.utils.data.Subset(dataset, list(range(10)))
+    return DataLoader(dataset,
+                      batch_size=settings.batch_size, shuffle=False,
+                      num_workers=settings.num_workers,
+                      collate_fn=collate_fn)
