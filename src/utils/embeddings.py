@@ -73,3 +73,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
 
 def tokenize(sentence_list):
     return tokenizer(sentence_list, max_length=512, truncation=True, padding=True, return_tensors='pt')
+
+
+def corrupt(tensor, noise_prop):
+    return (1 - noise_prop) * tensor + torch.rand_like(tensor) * noise_prop
