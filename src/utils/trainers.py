@@ -11,8 +11,9 @@ from matplotlib import pyplot as plt
 from torch import nn
 from torch.optim import Optimizer
 from tqdm import tqdm
-from src.utils.format import fmt_stats_dict, capitalize
+
 from src.settings import settings, exp_settings
+from src.utils.format import fmt_stats_dict, capitalize
 
 
 class BaseTrainer:
@@ -138,7 +139,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         epoch_results_str = fmt_stats_dict(stats_dict)
         print(f'Epoch: {epoch:02d}, {epoch_results_str}')
 
-class KAXTrainer(TorchModuleBaseTrainer):
+
+class SANETrainer(TorchModuleBaseTrainer):
     def __init__(self, model, optimizer, dataset_name, train_loader, val_loader, test_loader=None):
         super().__init__(model, optimizer, dataset_name)
         self.train_loader = train_loader

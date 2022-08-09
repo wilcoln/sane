@@ -1,15 +1,15 @@
 import os.path as osp
+import time
 
 import pandas as pd
 import torch
 from tqdm import tqdm
 
 from src.datasets.esnli import get_loader
-from src.models.kax import KAX
+from src.models.sane import SANE
 from src.settings import settings
 from src.utils.embeddings import tokenizer
 from src.utils.format import fmt_stats_dict
-import time
 
 
 def test(model, results_path, dataloader):

@@ -4,7 +4,6 @@ import pickle
 
 import torch.utils.data
 from icecream import ic
-from tqdm import tqdm
 from torch.utils.data import Dataset, default_collate, DataLoader, ConcatDataset
 from torch_geometric.utils import subgraph
 
@@ -14,6 +13,7 @@ from src.utils.embeddings import tokenize
 from src.utils.semantic_search import semantic_search
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
+
 
 class ESNLIDataset(Dataset):
     """
@@ -60,6 +60,7 @@ og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
 new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_sizes.items()}
 _num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
+
 def collate_fn(batch):
     elem = batch[0]
 
@@ -67,7 +68,7 @@ def collate_fn(batch):
         if key == 'concept_ids':
             return [torch.LongTensor(d[key]) for d in batch]
         return default_collate([d[key] for d in batch])
-        
+
     # Preliminaries
     inputs = {key: collate_key(key) for key in elem}
 
@@ -78,21 +79,21 @@ def collate_fn(batch):
     # Curate subknowledge using semantic search
     concept_ids = torch.unique(torch.cat(inputs['concept_ids'], dim=0))
     top_concepts_indices = semantic_search(
-            queries=inputs['Sentences_embedding'],
-            values=conceptnet.concept_embedding[concept_ids],
-            top_k=settings.max_concepts_per_sent,
-        )
+        queries=inputs['Sentences_embedding'],
+        values=conceptnet.concept_embedding[concept_ids],
+        top_k=settings.max_concepts_per_sent,
+    )
 
     concept_ids = concept_ids[top_concepts_indices]
     concept_ids = torch.unique(concept_ids.squeeze())
 
     # Finalize batch
     inputs['concept_ids'], inputs['edge_index'], inputs['edge_attr'] = concept_ids, *subgraph(
-            subset=concept_ids, 
-            edge_index=conceptnet.pyg.edge_index,
-            edge_attr=conceptnet.pyg.edge_attr,
-            relabel_nodes=True
-        )
+        subset=concept_ids,
+        edge_index=conceptnet.pyg.edge_index,
+        edge_attr=conceptnet.pyg.edge_attr,
+        relabel_nodes=True
+    )
 
     return inputs
 

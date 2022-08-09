@@ -1,14 +1,12 @@
-import torch
 from torch import nn
 
-from src.models.knowledge import Encoder
-from src.models.explanation import Explainer
 from src.models.attention import Attention
+from src.models.explanation import Explainer
+from src.models.knowledge import Encoder
 from src.models.prediction import Predictor
-torch.manual_seed(0)
 
 
-class KAX(nn.Module):
+class SANE(nn.Module):
     def __init__(self):
         super().__init__()
         self.encoder = Encoder()
