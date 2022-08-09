@@ -1,11 +1,3 @@
-"""
-Requirements:
-- Given a text, return a list of candidate concepts.
-- Given a text, return a list of candidate relation types.
-- Given a sentence, get it's associated subknowledge graph of up to k hops, i.e. all concepts appearing in the sentence.
-- Be able to merge subgraphs.
-- Get the embedding of concepts
-"""
 import os.path as osp
 import random
 from typing import Tuple, List, Union
@@ -22,8 +14,7 @@ from src.utils.types import ChunkedList
 
 class Conceptnet:
     def __init__(self):
-        self.inv_relation_dict = None
-        self.inv_concept_dict = None
+        print('Loading Conceptnet...')
         cn_dir = osp.join(settings.data_dir, 'conceptnet')
 
         # Dataframe objects
@@ -50,7 +41,7 @@ class Conceptnet:
             onx.write_gpickle(self.nx, gpickle_path)
 
         # PyG object
-        pyg_path = osp.join(cn_dir, 'conceptnet2.pyg')
+        pyg_path = osp.join(cn_dir, 'conceptnet.pyg')
         try:
             self.pyg = torch.load(pyg_path)
         except FileNotFoundError:
@@ -141,4 +132,4 @@ class Conceptnet:
 
 
 # Singleton object
-conceptnet = Conceptnet()
+conceptnet = None if settings.no_knowledge else Conceptnet()

@@ -8,6 +8,8 @@ def get_sentences(split):
     return set(datapoint['Sentences'] for datapoint in split_set[split])
 
 
-overlap = set.intersection(*tuple(get_sentences(split) for split in splits))
+sets = tuple(get_sentences(split) for split in splits)
+print(f'Set lengths : {[len(s) for s in sets]}')
+overlap = set.intersection(*sets)
 assert len(overlap) == 0, f'Datasets overlap is {len(overlap)}'
 print('Passed !')
