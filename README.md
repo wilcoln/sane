@@ -3,14 +3,16 @@
 Oxford MSc in Advanced Computer Science Project
 
 ## Todos:
+1. Debug The model
+   - Right now NoKnowledge is better, we need to beat it
+   - We need to see performance improvement over noisy knowledge
 
-7. Evaluation of faithfulness of explanations (1h)
+2. Evaluation of faithfulness of explanations (1h)
     1. Feature importance agreement
     2. Robustness equivalence
-
-
-2. Human evaluation of explanations
-6. Use different knowledge representations
+3. Human evaluation of explanations
+###
+4. Use different knowledge representations
 
 - Get the generated explanations by rexc on the test set from Bodhi - asked
 - Compare outputs on an overlapping sample of size 50
