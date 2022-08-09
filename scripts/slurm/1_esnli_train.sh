@@ -25,7 +25,7 @@
 # python src/experiments/esnli_train.py --data_frac=.05 --num_attn_heads=2
 # python src/experiments/esnli_train.py --data_frac=.05 --nle_pred --num_attn_heads=2
 
-# python src/experiments/esnli_train.py --data_frac=.05
+python src/experiments/esnli_train.py --data_frac=.05
 # python src/experiments/esnli_train.py --data_frac=.05 --nle_pred
 
 

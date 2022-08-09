@@ -115,7 +115,7 @@ def get_dataset(split: str):
 
 
 def get_loader(split, dataset=None):
-    dataset = get_dataset(settings.data_dir, split) if dataset is None else dataset
+    dataset = get_dataset(split) if dataset is None else dataset
     return DataLoader(dataset,
                       batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,

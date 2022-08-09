@@ -122,8 +122,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
                 self.save_results()
 
             # print epoch and results
-            if epoch % (settings.num_epochs // min(settings.num_epochs, settings.num_prints)) == 0:
-                self.print_epoch(epoch)
+            self.print_epoch(epoch)
 
         # Print best epoch and results
         print(f'*** BEST ***')
@@ -155,7 +154,8 @@ class SANETrainer(TorchModuleBaseTrainer):
 
         assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
 
-        train = split == 'train'
+        
+        train = split == 'train' and (not settings.frozen)
 
         self.model.train() if train else self.model.eval()
 

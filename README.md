@@ -23,8 +23,7 @@ Oxford MSc in Advanced Computer Science Project
     - dropout
     - batch size
     - knowledge representation
-- Combine explanations and input for prediction ?
-- what embedding to use ? avg bart, sent_trans, bert cls token ?
+
 - alpha for combining explanation loss with prediction loss
 - Selective attention on batched knowledge
 - Read EMNLP paper
@@ -41,8 +40,8 @@ Oxford MSc in Advanced Computer Science Project
 - Give better name to results directory.
 - Implement conceptnet api
 - add parameter for result dir naming
-
+- what embedding to use ? avg bart, sent_trans, bert cls token 
 5. Attention maps reporting (as a heatmap)st of required experiments: (1h)
 6. Automatic evaluation of explanations (1h)
-
 - Tried using cls token, very poor !, token mean performs ok, almost on par with sentence transformer
+- Combine explanations and input for prediction ?
