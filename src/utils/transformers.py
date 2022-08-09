@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Optional, List, Tuple, Union, Dict, Any
 
 import torch
-from icecream import ic
 from torch import nn
 from torch.nn import CrossEntropyLoss
 from transformers import BartConfig, BartForConditionalGeneration as BaseBartForConditionalGeneration
@@ -202,7 +201,6 @@ class BartForConditionalGeneration(BaseBartForConditionalGeneration):
             return_dict=return_dict,
         )
 
-        ic(outputs)
         lm_logits = self.lm_head(outputs.last_hidden_state) + self.final_logits_bias
 
         masked_lm_loss = None
