@@ -14,7 +14,7 @@ logger = logging.get_logger(__name__)
 
 
 @dataclass
-class ExplainerOutput(Seq2SeqLMOutput):
+class BartOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
 
 
@@ -100,7 +100,7 @@ class BartForKnowledgeAwareConditionalGeneration(BaseBartForConditionalGeneratio
             output = (lm_logits,) + outputs[1:]
             return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
 
-        return ExplainerOutput(
+        return BartOutput(
             loss=masked_lm_loss,
             logits=lm_logits,
             last_hidden_state=last_hidden_state,
@@ -214,7 +214,7 @@ class BartForConditionalGeneration(BaseBartForConditionalGeneration):
             output = (lm_logits,) + outputs[1:]
             return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
 
-        return ExplainerOutput(
+        return BartOutput(
             loss=masked_lm_loss,
             logits=lm_logits,
             last_hidden_state=outputs.last_hidden_state,
