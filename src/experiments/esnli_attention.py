@@ -10,7 +10,7 @@ from src.settings import settings
 from src.utils.embeddings import tokenizer
 
 # Get test dataloader
-inputs = next(iter(get_loader('test', num_chunks=1)))
+inputs = next(iter(get_loader('test')))
 
 # Load model
 model = SANE().to(settings.device)

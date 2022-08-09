@@ -1,12 +1,13 @@
+import os.path as osp
+
 import torch
+from icecream import ic
 from torch.utils.data import DataLoader
 
-from src.datasets.esnli import ESNLIDataset, collate_fn, get_loader
+from src.datasets.esnli import ESNLIDataset, collate_fn
 from src.experiments.esnli_test import test
 from src.models.sane import SANE
 from src.settings import settings
-import os.path as osp
-from icecream import ic
 
 esnli_input_dict = {
     'Sentences': [

@@ -8,10 +8,10 @@ from torch.utils.data import Dataset, default_collate, DataLoader, ConcatDataset
 from torch_geometric.utils import subgraph
 
 from src.conceptnet import conceptnet
+from src.preprocessing.esnli import compute_concept_ids
 from src.settings import settings
 from src.utils.embeddings import tokenize, bart
 from src.utils.semantic_search import semantic_search
-from src.preprocessing.esnli import compute_concept_ids
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
 
@@ -66,7 +66,7 @@ class ESNLIDataset(Dataset):
 # Load dataset splits
 og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
 new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_sizes.items()}
-_num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
+num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
 
 def collate_fn(batch):
@@ -106,16 +106,21 @@ def collate_fn(batch):
     return inputs
 
 
-def get_loader(split, num_chunks=None):
+def get_dataset(split: str):
     datasets = [
         ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk)
-        for chunk in range(_num_chunks[split] if num_chunks is None else num_chunks)
+        for chunk in range(num_chunks[split])
     ]
+    return ConcatDataset(datasets)
 
-    return DataLoader(ConcatDataset(datasets),
+
+def get_loader(split, dataset=None):
+    dataset = get_dataset(settings.data_dir, split) if dataset is None else dataset
+    return DataLoader(dataset,
                       batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,
                       collate_fn=collate_fn)
+
 
 def get_sanity_check_loader():
     dataset = ESNLIDataset(path=settings.data_dir, split='train')
