@@ -30,7 +30,7 @@ def test(model, results_path, dataloader):
         # start batch time
         batch_start = time.time()
         # Run model
-        knwl, att_knwl, nle, pred = model(inputs)
+        pred, nle, att_knwl, _ = model(inputs)
 
         # Compute loss
         loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss

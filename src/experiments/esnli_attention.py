@@ -19,7 +19,7 @@ model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
 model.eval()
 
 # run model
-knwl, att_knwl, _, pred = model(inputs)
+pred, nle, att_knwl, knwl = model(inputs)
 triples = conceptnet.ids2triples(knwl.id.tolist())
 sentences = tokenizer.batch_decode(inputs['Sentences']['input_ids'].to(settings.device), skip_special_tokens=True)
 triples = [' '.join(t) for t in triples]

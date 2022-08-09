@@ -176,7 +176,7 @@ class SANETrainer(TorchModuleBaseTrainer):
                 self.optimizer.zero_grad()
 
             # forward pass & compute loss
-            knwl, att_knwl, nle, pred = self.model(inputs)
+            nle, pred = self.model(inputs)[:2]
 
             # Compute loss
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss

@@ -19,7 +19,7 @@ class SANE(nn.Module):
         att_knwl = self.attention(inputs, knwl.output)
         nle = self.explainer(inputs, att_knwl.output)
         pred = self.predictor(inputs, nle)
-        return knwl, att_knwl, nle, pred
+        return pred, nle, att_knwl, knwl
 
 
 class SANENoKnowledge(nn.Module):
@@ -31,4 +31,4 @@ class SANENoKnowledge(nn.Module):
     def forward(self, inputs):
         nle = self.explainer(inputs)
         pred = self.predictor(inputs, nle)
-        return nle, pred
+        return pred, nle
