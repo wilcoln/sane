@@ -29,7 +29,7 @@
 # python src/experiments/esnli_train.py --data_frac=.05 --nle_pred
 
 
-# Curently running ...
+# Currently running ...
 
 # python src/experiments/esnli_train.py --data_frac=1.0 --batch_size=80
 # python src/experiments/esnli_train.py --data_frac=1.0 --nle_pred --batch_size=80
