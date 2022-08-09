@@ -1,8 +1,7 @@
 from torch import nn
-from transformers import BartForConditionalGeneration
 
 from src.settings import settings
-from src.utils.transformers import BartForKnowledgeAwareConditionalGeneration
+from src.utils.transformers import BartForKnowledgeAwareConditionalGeneration, BartForConditionalGeneration
 
 
 class Explainer(nn.Module):
