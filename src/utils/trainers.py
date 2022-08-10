@@ -7,13 +7,12 @@ from datetime import datetime as dt
 
 import pandas as pd
 import torch
-from icecream import ic
 from matplotlib import pyplot as plt
 from torch import nn
 from torch.optim import Optimizer
 from tqdm import tqdm
 
-from src.settings import settings, exp_settings
+from src.settings import settings
 from src.utils.format import fmt_stats_dict, capitalize
 from src.utils.regret import regret
 
@@ -60,11 +59,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             'model': self.model.__class__.__name__,
         }
 
-        exp_settings_names = [s[0] for s in exp_settings]
-        params_dict.update({k: v for k, v in vars(settings).items() if k in exp_settings_names and v})
-
-        # Log Settings
-        print(params_dict)
+        params_dict.update(settings.exp)
         
         # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
@@ -176,7 +171,6 @@ class SANETrainer(TorchModuleBaseTrainer):
         pbar.set_description(description[split])
         start = time.time()
         for i, inputs in pbar:
-            ic(inputs['Sentences_embedding'].requires_grad)
             if train:
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
@@ -187,6 +181,7 @@ class SANETrainer(TorchModuleBaseTrainer):
 
             # Compute loss
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
+            mean_loss = loss.mean().item()
 
             if train:
                 if self.expert is not None:
@@ -195,15 +190,14 @@ class SANETrainer(TorchModuleBaseTrainer):
                     # Compute regret
                     pred_regret, nle_regret = regret(pred.loss, expert_pred.loss), regret(nle.loss, expert_nle.loss)
                     # Add regret to loss
-                    loss += settings.alpha * nle_regret + settings.alpha * pred_regret
+                    loss = mean_loss + settings.alpha * nle_regret + settings.alpha * pred_regret
 
                 # backward pass + optimization step
-                loss.mean().backward()
+                loss.backward()
                 self.optimizer.step()
 
-            # Update Loss
-            split_loss += loss.item()
-
+            # Update Split Loss
+            split_loss += mean_loss
             # Update Accuracy
             predicted = pred.logits.argmax(1)
             total += inputs['gold_label'].size(0)
