@@ -52,7 +52,7 @@ class ESNLIDataset(Dataset):
                 try:
                     self.esnli[k] = pickle.load(open(key_path, 'rb'))
                     if isinstance(self.esnli[k], torch.Tensor):
-                        self.esnli[k] = self.esnli[k]
+                        self.esnli[k] = self.esnli[k].detach()
                 except Exception as e:
                     ic(e, key_path)
 
