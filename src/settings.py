@@ -18,7 +18,7 @@ exp_settings = [
     ('data_frac', 'Data fraction', float, 1.0),
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
-    ('no_knowledge', 'Disable Knowledge attention', bool, True),
+    ('no_knowledge', 'Disable Knowledge attention', bool, False),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
     ('expert', 'Expert model path', str, None),
 ]

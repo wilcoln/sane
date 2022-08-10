@@ -63,6 +63,9 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         exp_settings_names = [s[0] for s in exp_settings]
         params_dict.update({k: v for k, v in vars(settings).items() if k in exp_settings_names and v})
 
+        # Log Settings
+        print(params_dict)
+        
         # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
         folder_name = '_'.join([date] + [f'{k}={v}' for k, v in params_dict.items() if v is not None])
@@ -179,7 +182,8 @@ class SANETrainer(TorchModuleBaseTrainer):
                 self.optimizer.zero_grad()
 
             # forward pass & compute loss
-            pred, nle = self.model(inputs)[:2]
+            outputs = self.model(inputs)
+            pred, nle = outputs[:2]
 
             # Compute loss
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss

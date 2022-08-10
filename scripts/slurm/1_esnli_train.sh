@@ -38,4 +38,10 @@
 # python src/experiments/esnli_train.py --data_frac=1.0 --batch_size=100 --nle_pred --num_attn_heads=2
 
 # python src/experiments/esnli_train.py --data_frac=.05 --frozen
-python src/experiments/esnli_train.py --data_frac=.05 --no_knowledge
+# python src/experiments/esnli_train.py --data_frac=.05 --no_knowledge
+
+# python src/experiments/esnli_train.py --data_frac=.05
+python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=1.0
+python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=.8
+python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=.5
+python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=.2
