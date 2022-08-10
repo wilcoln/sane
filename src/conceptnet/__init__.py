@@ -53,13 +53,13 @@ class Conceptnet:
         concept_embedding = ChunkedList(n=len(self.concept_dict), dirpath=osp.join(cn_dir, 'concept_embedding'))
         self.concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
         # corrupt concept embedding with knowledge noise
-        self.concept_embedding = corrupt(self.concept_embedding, settings.knowledge_noise_prop)
+        self.concept_embedding = corrupt(self.concept_embedding, settings.knowledge_noise_prop).detach()
 
         # Relation Embeddings
         relation_embedding = ChunkedList(n=len(self.relation_dict), dirpath=osp.join(cn_dir, 'relation_embedding'))
         self.relation_embedding = torch.cat(relation_embedding.get_chunks(), dim=0)
         # corrupt relation embedding with knowledge noise
-        self.relation_embedding = corrupt(self.relation_embedding, settings.knowledge_noise_prop)
+        self.relation_embedding = corrupt(self.relation_embedding, settings.knowledge_noise_prop).detach()
 
     @property
     def size(self) -> Tuple[int, int]:
