@@ -194,7 +194,7 @@ class SANETrainer(TorchModuleBaseTrainer):
                     loss += settings.alpha * nle_regret + settings.alpha * pred_regret
 
                 # backward pass + optimization step
-                loss.backward()
+                loss.mean().backward()
                 self.optimizer.step()
 
             # Update Loss
