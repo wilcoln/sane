@@ -7,6 +7,7 @@ from datetime import datetime as dt
 
 import pandas as pd
 import torch
+from icecream import ic
 from matplotlib import pyplot as plt
 from torch import nn
 from torch.optim import Optimizer
@@ -14,6 +15,7 @@ from tqdm import tqdm
 
 from src.settings import settings, exp_settings
 from src.utils.format import fmt_stats_dict, capitalize
+from src.utils.regret import regret
 
 
 class BaseTrainer:
@@ -138,11 +140,12 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
 
 
 class SANETrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, dataset_name, train_loader, val_loader, test_loader=None):
+    def __init__(self, model, optimizer, dataset_name, train_loader, val_loader, test_loader=None, expert=None):
         super().__init__(model, optimizer, dataset_name)
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
+        self.expert = expert
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
@@ -154,7 +157,6 @@ class SANETrainer(TorchModuleBaseTrainer):
 
         assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
 
-        
         train = split == 'train' and (not settings.frozen)
 
         self.model.train() if train else self.model.eval()
@@ -171,6 +173,7 @@ class SANETrainer(TorchModuleBaseTrainer):
         pbar.set_description(description[split])
         start = time.time()
         for i, inputs in pbar:
+            ic(inputs['Sentences_embedding'].requires_grad)
             if train:
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
@@ -182,6 +185,14 @@ class SANETrainer(TorchModuleBaseTrainer):
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
 
             if train:
+                if self.expert is not None:
+                    # forward + backward on expert
+                    expert_pred, expert_nle = self.expert(inputs)[:2]
+                    # Compute regret
+                    pred_regret, nle_regret = regret(pred.loss, expert_pred.loss), regret(nle.loss, expert_nle.loss)
+                    # Add regret to loss
+                    loss += settings.alpha * nle_regret + settings.alpha * pred_regret
+
                 # backward pass + optimization step
                 loss.backward()
                 self.optimizer.step()
@@ -207,8 +218,10 @@ class SANETrainer(TorchModuleBaseTrainer):
     def train(self) -> dict:
         return self.evaluate(self.train_loader, 'train')
 
+    @torch.no_grad()
     def eval(self) -> dict:
         return self.evaluate(self.val_loader, 'val')
 
+    @torch.no_grad()
     def test(self) -> dict:
         return self.evaluate(self.test_loader, 'test')

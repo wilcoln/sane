@@ -92,7 +92,7 @@ class BartForKnowledgeAwareConditionalGeneration(BaseBartForConditionalGeneratio
 
         masked_lm_loss = None
         if labels is not None:
-            loss_fct = CrossEntropyLoss()
+            loss_fct = CrossEntropyLoss(reduction='none')
             masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
 
         if not return_dict:
@@ -205,7 +205,7 @@ class BartForConditionalGeneration(BaseBartForConditionalGeneration):
 
         masked_lm_loss = None
         if labels is not None:
-            loss_fct = CrossEntropyLoss()
+            loss_fct = CrossEntropyLoss(reduction='none')
             masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
 
         if not return_dict:

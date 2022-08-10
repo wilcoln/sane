@@ -7,8 +7,6 @@ parser = argparse.ArgumentParser()
 
 # Experiment settings
 exp_settings = [
-    ('exp_id', 'Experiment ID', str, None),
-    ('exp_desc', 'Experiment description', str, None),
     ('num_epochs', 'Number of epochs', int, 5),
     ('batch_size', 'Batch size', int, 128),
     ('lr', 'Learning rate', float, 1e-4),
@@ -22,6 +20,7 @@ exp_settings = [
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
     ('no_knowledge', 'Disable Knowledge attention', bool, True),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
+    ('expert', 'Expert model path', str, None),
 ]
 for name, desc, type_, default in exp_settings:
     if type_ is bool:

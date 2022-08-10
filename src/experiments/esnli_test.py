@@ -12,6 +12,7 @@ from src.utils.embeddings import tokenizer
 from src.utils.format import fmt_stats_dict
 
 
+@torch.no_grad()
 def test(model, results_path, dataloader):
     sentences = []
     gold_labels = []
