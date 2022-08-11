@@ -6,7 +6,7 @@ import torch
 parser = argparse.ArgumentParser()
 
 # Experiment settings
-exp_settings = [
+_exp_settings = [
     ('num_epochs', 'Number of epochs', int, 5),
     ('batch_size', 'Batch size', int, 128),
     ('lr', 'Learning rate', float, 1e-4),
@@ -22,7 +22,7 @@ exp_settings = [
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
     ('expert', 'Expert model path', str, None),
 ]
-for name, desc, type_, default in exp_settings:
+for name, desc, type_, default in _exp_settings:
     if type_ is bool:
         parser.add_argument(f'--{name}', action='store_true', help=desc, default=default)
     else:
@@ -47,3 +47,9 @@ parser.add_argument('--frozen', action='store_true', help='freeze model during t
 parser.add_argument('--show_mem_info', action='store_true', help='Whether to show memory usage', default=False)
 settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda'))
+setattr(settings, 'exp', {k: v for k, v in vars(settings).items() if k in [s[0] for s in _exp_settings] and v})
+
+# Print Experimental Settings
+print('*** Experimental Settings ***')
+for key, value in settings.exp.items():
+    print(f'{key}={value}')

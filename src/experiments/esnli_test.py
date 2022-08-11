@@ -33,13 +33,13 @@ def test(model, results_path, dataloader):
         # Run model
         outputs = model(inputs)
         pred, nle = outputs[:2]
-        att_knwl = None if settings.no_knowledge else out[2]
+        att_knwl = None if settings.no_knowledge else outputs[2]
 
         # Compute loss
         loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
 
         # Update Loss
-        test_loss += loss.item()
+        test_loss += loss.mean().item()
 
         # Update Accuracy
         predicted = pred.logits.argmax(1)
