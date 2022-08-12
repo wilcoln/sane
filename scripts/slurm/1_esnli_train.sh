@@ -46,7 +46,20 @@
 # python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=.5
 # python src/experiments/esnli_train.py --data_frac=.05 --knowledge_noise_prop=.2
 
-expert='results/trainers/2022-08-09_17-08-39_087977_dataset=ESNLI_model=SANENoKnowledge_num_epochs=5_batch_size=128_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=1_no_knowledge=True'
-python src/experiments/esnli_train.py --data_frac=.05 --expert=$expert --batch_size=64
 
+
+# To run fg
+# expert='results/trainers/2022-08-09_17-08-39_087977_dataset=ESNLI_model=SANENoKnowledge_num_epochs=5_batch_size=128_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=1_no_knowledge=True'
+# python src/experiments/esnli_train.py --data_frac=.05 --expert=$expert --batch_size=64
 # python src/experiments/esnli_train.py --data_frac=.05 --batch_size=128
+# now running
+
+
+# To run bg
+# python src/experiments/esnli_train.py --data_frac=1.0 --batch_size=80 # 308034
+
+# python src/experiments/esnli_train.py --data_frac=1.0 --batch_size=128 --no_knowledge # 308035
+
+# expert='' # wait for 308034 & 35
+# python src/experiments/esnli_train.py --data_frac=1.0 --expert=$expert --batch_size=64
+

@@ -15,6 +15,7 @@ logger = logging.get_logger(__name__)
 @dataclass
 class BartForConditionalGenerationOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
+    knowledge_relevance: Optional[torch.Tensor] = None
 
 
 class BartWithKnowledgeOutput(Seq2SeqModelOutput):
@@ -210,6 +211,7 @@ class BartForKnowledgeAwareConditionalGeneration(BaseBartForConditionalGeneratio
             encoder_last_hidden_state=outputs.encoder_last_hidden_state,
             encoder_hidden_states=outputs.encoder_hidden_states,
             encoder_attentions=outputs.encoder_attentions,
+            knowledge_relevance=outputs.knowledge_relevance,
         )
 
     def _prepare_encoder_decoder_kwargs_for_generation(
