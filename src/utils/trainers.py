@@ -207,7 +207,8 @@ class SANETrainer(TorchModuleBaseTrainer):
             # Update Split Loss
             split_loss += loss.item()
             # Update Split Knowledge relevance
-            split_kri += nle.knowledge_relevance.mean().item()
+            if not settings.no_knowledge:
+                split_kri += nle.knowledge_relevance.mean().item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
             total += inputs['gold_label'].size(0)
