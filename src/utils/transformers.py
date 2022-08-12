@@ -18,6 +18,7 @@ class BartForConditionalGenerationOutput(Seq2SeqLMOutput):
     knowledge_relevance: Optional[torch.Tensor] = None
 
 
+@dataclass
 class BartWithKnowledgeOutput(Seq2SeqModelOutput):
     knowledge_relevance: Optional[torch.Tensor] = None
 
