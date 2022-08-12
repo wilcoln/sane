@@ -60,6 +60,9 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         }
 
         params_dict.update(settings.exp)
+        for key in {'expert'}:
+            if key in settings.exp:
+                del params_dict[key]
         
         # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
@@ -179,25 +182,28 @@ class SANETrainer(TorchModuleBaseTrainer):
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
 
-            # Compute loss
+            # Compute model loss
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
-            mean_loss = loss.mean().item()
+
+            # Compute regret loss
+            regret_loss = 0
+            if self.expert is not None:
+                # forward + backward on expert
+                expert_pred, expert_nle = self.expert(inputs)[:2]
+                # Compute regret
+                pred_regret, nle_regret = regret(pred.loss, expert_pred.loss), regret(nle.loss, expert_nle.loss)
+                regret_loss = settings.alpha * nle_regret + settings.alpha * pred_regret
+            
+            # Compute full loss
+            loss = loss.mean() + regret_loss
 
             if train:
-                if self.expert is not None:
-                    # forward + backward on expert
-                    expert_pred, expert_nle = self.expert(inputs)[:2]
-                    # Compute regret
-                    pred_regret, nle_regret = regret(pred.loss, expert_pred.loss), regret(nle.loss, expert_nle.loss)
-                    # Add regret to loss
-                    loss = mean_loss + settings.alpha * nle_regret + settings.alpha * pred_regret
-
                 # backward pass + optimization step
                 loss.backward()
                 self.optimizer.step()
 
             # Update Split Loss
-            split_loss += mean_loss
+            split_loss += loss.item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
             total += inputs['gold_label'].size(0)

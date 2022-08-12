@@ -37,6 +37,9 @@
 # input_dir='results/trainers/2022-08-08_22-41-59_516527_dataset=ESNLI_model=KAX_num_epochs=5_batch_size=128_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=2'
 # python tests/esnli_test.py --input_dir=$input_dir --num_attn_heads=2
 
-input_dir=results/trainers/2022-08-10_13-18-53_715197_dataset=ESNLI_model=SANE_num_epochs=5_batch_size=64_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=1_expert=results/trainers/2022-08-09_17-08-39_087977_dataset=ESNLI_model=SANENoKnowledge_num_epochs=5_batch_size=128_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=1_no_knowledge=True
+# input_dir=results/trainers/2022-08-10_13-18-53_715197_dataset=ESNLI_model=SANE_num_epochs=5_batch_size=64_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=1_expert=results/trainers/2022-08-09_17-08-39_087977_dataset=ESNLI_model=SANENoKnowledge_num_epochs=5_batch_size=128_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=1_no_knowledge=True
 # python tests/esnli_test.py --input_dir=$input_dir
-python src/experiments/esnli_test.py --data_frac=.05 --input_dir=$input_dir
+# python src/experiments/esnli_test.py --data_frac=.05 --input_dir=$input_dir
+
+input_dir='results/trainers/2022-08-12_13-47-23_822696_dataset=ESNLI_model=SANE_num_epochs=5_batch_size=64_lr=0.0001_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_num_attn_heads=1'
+python tests/esnli_test.py --input_dir=$input_dir

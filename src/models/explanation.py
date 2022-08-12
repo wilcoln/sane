@@ -8,7 +8,6 @@ class Explainer(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = BartForKnowledgeAwareConditionalGeneration.from_pretrained("facebook/bart-base")
-        self.model.set_fusion_head(knowledge_dim=settings.sent_dim)
 
     def forward(self, inputs, knowledge):
         # send tensors to gpu

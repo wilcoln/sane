@@ -17,7 +17,8 @@ class EncoderOutput:
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
-        self.gnn = GNN(hidden_channels=settings.sent_dim // 3)
+        self.gnn = GNN(hidden_channels=settings.sent_dim)
+        self.lin = nn.Linear(3 * settings.sent_dim, settings.sent_dim)
 
     def forward(self, inputs):
         # trainable gnn encoder
@@ -28,7 +29,7 @@ class Encoder(nn.Module):
         x = conceptnet.concept_embedding[nodes]
         edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
         x, edge_index, edge_attr = self.gnn(x, edge_index, edge_attr)
-        encoded_triples = singles_to_triples(x, edge_index, edge_attr)
+        encoded_triples = self.lin(singles_to_triples(x, edge_index, edge_attr))
 
         if self.training:
             return EncoderOutput(output=encoded_triples)
