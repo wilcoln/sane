@@ -82,10 +82,11 @@ def singles_to_triples(x, edge_index, edge_attr):
     # Return triples
     return torch.cat([heads, relations, tails], dim=1)  # (E, 2D)
 
+
 def freeze(model):
     # freeze parameters
     for param in model.parameters():
-      param.requires_grad = False
+        param.requires_grad = False
     # prepare layers for evaluation
     model.eval()
     return model

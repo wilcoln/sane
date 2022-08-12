@@ -3,15 +3,18 @@
 Oxford MSc in Advanced Computer Science Project
 
 ## Todos:
+
 1. Debug The model
-   - Right now NoKnowledge is better, we need to beat it
-   - We need to see performance improvement over noisy knowledge
+    - Right now NoKnowledge is better, we need to beat it
+    - We need to see performance improvement over noisy knowledge
 
 2. Evaluation of faithfulness of explanations (1h)
     1. Feature importance agreement
     2. Robustness equivalence
 3. Human evaluation of explanations
+
 ###
+
 4. Use different knowledge representations
 
 - Get the generated explanations by rexc on the test set from Bodhi - asked
@@ -42,8 +45,10 @@ Oxford MSc in Advanced Computer Science Project
 - Give better name to results directory.
 - Implement conceptnet api
 - add parameter for result dir naming
-- what embedding to use ? avg bart, sent_trans, bert cls token 
+- what embedding to use ? avg bart, sent_trans, bert cls token
+
 5. Attention maps reporting (as a heatmap)st of required experiments: (1h)
 6. Automatic evaluation of explanations (1h)
+
 - Tried using cls token, very poor !, token mean performs ok, almost on par with sentence transformer
 - Combine explanations and input for prediction ?

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import torch
 from torch import nn
+
 from src.settings import settings
 from src.utils.embeddings import transformer_sentence_pool
 

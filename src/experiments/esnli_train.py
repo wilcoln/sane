@@ -1,12 +1,13 @@
+import os.path as osp
+
 import torch
 import torch.optim as optim
 
-import os.path as osp
 from src.datasets.esnli import get_loader
 from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
-from src.utils.trainers import SANETrainer
 from src.utils.nn import freeze
+from src.utils.trainers import SANETrainer
 
 # Create model
 model = SANENoKnowledge() if settings.no_knowledge else SANE()
@@ -18,7 +19,6 @@ if settings.expert is not None:
     expert = SANENoKnowledge().to(settings.device)
     expert.load_state_dict(torch.load(osp.join(settings.expert, 'model.pt')))
     expert = freeze(expert)
-
 
 # Train Model
 SANETrainer(

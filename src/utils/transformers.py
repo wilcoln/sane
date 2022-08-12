@@ -6,42 +6,46 @@ from torch import nn
 from torch.nn import CrossEntropyLoss
 from transformers import BartConfig, BartModel, BartForConditionalGeneration as BaseBartForConditionalGeneration
 from transformers.modeling_outputs import Seq2SeqLMOutput, Seq2SeqModelOutput, BaseModelOutput
-from transformers.models.bart.modeling_bart import shift_tokens_right, BartPretrainedModel, BartEncoder, BartDecoder
+from transformers.models.bart.modeling_bart import shift_tokens_right
 from transformers.utils import logging, ModelOutput
-from icecream import ic
+
 logger = logging.get_logger(__name__)
 
 
 @dataclass
-class BartOutput(Seq2SeqLMOutput):
+class BartForConditionalGenerationOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
 
 
-class KnowledgeAwareBartModel(BartModel):
+class BartWithKnowledgeOutput(Seq2SeqModelOutput):
+    knowledge_relevance: Optional[torch.Tensor] = None
+
+
+class BartWithKnowledgeModel(BartModel):
     def __init__(self, config: BartConfig):
         super().__init__(config)
         self.fusion_head = nn.Linear(2 * self.config.d_model, self.config.d_model)
 
     def forward(
-        self,
-        input_ids: torch.LongTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        decoder_input_ids: Optional[torch.LongTensor] = None,
-        decoder_attention_mask: Optional[torch.LongTensor] = None,
-        head_mask: Optional[torch.Tensor] = None,
-        decoder_head_mask: Optional[torch.Tensor] = None,
-        cross_attn_head_mask: Optional[torch.Tensor] = None,
-        encoder_outputs: Optional[List[torch.FloatTensor]] = None,
-        past_key_values: Optional[List[torch.FloatTensor]] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        decoder_inputs_embeds: Optional[torch.FloatTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
-        *,
-        knowledge_embedding=None,
-    ) -> Union[Tuple, Seq2SeqModelOutput]:
+            self,
+            input_ids: torch.LongTensor = None,
+            attention_mask: Optional[torch.Tensor] = None,
+            decoder_input_ids: Optional[torch.LongTensor] = None,
+            decoder_attention_mask: Optional[torch.LongTensor] = None,
+            head_mask: Optional[torch.Tensor] = None,
+            decoder_head_mask: Optional[torch.Tensor] = None,
+            cross_attn_head_mask: Optional[torch.Tensor] = None,
+            encoder_outputs: Optional[List[torch.FloatTensor]] = None,
+            past_key_values: Optional[List[torch.FloatTensor]] = None,
+            inputs_embeds: Optional[torch.FloatTensor] = None,
+            decoder_inputs_embeds: Optional[torch.FloatTensor] = None,
+            use_cache: Optional[bool] = None,
+            output_attentions: Optional[bool] = None,
+            output_hidden_states: Optional[bool] = None,
+            return_dict: Optional[bool] = None,
+            *,
+            knowledge_embedding=None,
+    ) -> Union[Tuple, BartWithKnowledgeOutput]:
 
         # different to other models, Bart automatically creates decoder_input_ids from
         # input_ids if no decoder_input_ids are provided
@@ -105,9 +109,10 @@ class KnowledgeAwareBartModel(BartModel):
         )
 
         if not return_dict:
-            return decoder_outputs + encoder_outputs
+            return decoder_outputs + encoder_outputs + (r,)
 
-        return Seq2SeqModelOutput(
+        return BartWithKnowledgeOutput(
+            knowledge_relevance=r,
             last_hidden_state=decoder_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
@@ -122,7 +127,7 @@ class KnowledgeAwareBartModel(BartModel):
 class BartForKnowledgeAwareConditionalGeneration(BaseBartForConditionalGeneration):
     def __init__(self, config: BartConfig):
         super().__init__(config)
-        self.model = KnowledgeAwareBartModel(config)
+        self.model = BartWithKnowledgeModel(config)
 
     def forward(
             self,
@@ -194,7 +199,7 @@ class BartForKnowledgeAwareConditionalGeneration(BaseBartForConditionalGeneratio
             output = (lm_logits,) + outputs[1:]
             return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
 
-        return BartOutput(
+        return BartForConditionalGenerationOutput(
             loss=masked_lm_loss,
             logits=lm_logits,
             last_hidden_state=outputs.last_hidden_state,
@@ -307,7 +312,7 @@ class BartForConditionalGeneration(BaseBartForConditionalGeneration):
             output = (lm_logits,) + outputs[1:]
             return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
 
-        return BartOutput(
+        return BartForConditionalGenerationOutput(
             loss=masked_lm_loss,
             logits=lm_logits,
             last_hidden_state=outputs.last_hidden_state,

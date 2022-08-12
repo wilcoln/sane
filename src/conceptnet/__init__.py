@@ -8,9 +8,9 @@ import torch
 from torch_geometric.data import Data
 
 from src.settings import settings
+from src.utils.embeddings import corrupt
 from src.utils.nltk import all_grams
 from src.utils.types import ChunkedList
-from src.utils.embeddings import corrupt
 
 
 class Conceptnet:

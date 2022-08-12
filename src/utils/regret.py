@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 
+
 def regret(loss, expert_loss, reduce=True, eps=1e-8):
     # result = torch.exp(-expert_loss) * loss
     # result = (torch.exp(-expert_loss) / (eps + expert_loss)) * loss

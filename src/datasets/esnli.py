@@ -42,7 +42,7 @@ class ESNLIDataset(Dataset):
 
             if not settings.no_knowledge:
                 keys += ['concept_ids']
-            
+
             if split in {'val', 'test'}:
                 keys += ['Explanation_2', 'Explanation_3']
 

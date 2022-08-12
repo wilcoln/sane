@@ -63,7 +63,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         for key in {'expert'}:
             if key in settings.exp:
                 del params_dict[key]
-        
+
         # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
         folder_name = '_'.join([date] + [f'{k}={v}' for k, v in params_dict.items() if v is not None])
@@ -164,6 +164,8 @@ class SANETrainer(TorchModuleBaseTrainer):
 
         # Set split loss value
         split_loss = 0.0
+        # Set split knowledge relevance index
+        split_kri = 0.0
 
         # Reset values for accuracy computation
         correct = 0
@@ -193,7 +195,7 @@ class SANETrainer(TorchModuleBaseTrainer):
                 # Compute regret
                 pred_regret, nle_regret = regret(pred.loss, expert_pred.loss), regret(nle.loss, expert_nle.loss)
                 regret_loss = settings.alpha * nle_regret + settings.alpha * pred_regret
-            
+
             # Compute full loss
             loss = loss.mean() + regret_loss
 
@@ -204,6 +206,8 @@ class SANETrainer(TorchModuleBaseTrainer):
 
             # Update Split Loss
             split_loss += loss.item()
+            # Update Split Knowledge relevance
+            split_kri += nle.knowledge_relevance.mean().item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
             total += inputs['gold_label'].size(0)
@@ -211,12 +215,14 @@ class SANETrainer(TorchModuleBaseTrainer):
 
         split_time = time.time() - start
         split_loss /= len(dataloader)
+        split_kri /= len(dataloader)
         split_acc = 100. * correct / total
 
         return {
             f'{split}_acc': split_acc,
             f'{split}_loss': split_loss,
             f'{split}_time': split_time,
+            f'{split}_kri:': split_kri,  # knowledge relevance
         }
 
     def train(self) -> dict:
