@@ -222,7 +222,7 @@ class SANETrainer(TorchModuleBaseTrainer):
             f'{split}_acc': split_acc,
             f'{split}_loss': split_loss,
             f'{split}_time': split_time,
-            f'{split}_kri:': split_kri,  # knowledge relevance
+            f'{split}_kri': split_kri,  # knowledge relevance
         }
 
     def train(self) -> dict:
