@@ -3,7 +3,7 @@ import os.path as osp
 
 import pandas as pd
 
-from src.preprocessing.benchmark import preprocess
+from src.preprocessing.common import preprocess
 from src.settings import settings
 
 

@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, default_collate, DataLoader, ConcatDataset
 from torch_geometric.utils import subgraph
 
 from src.conceptnet import conceptnet
-from src.preprocessing.esnli import compute_concept_ids
+from src.preprocessing.common import compute_concept_ids
 from src.settings import settings
 from src.utils.embeddings import tokenize, bart
 from src.utils.semantic_search import semantic_search
@@ -21,7 +21,8 @@ class ESNLIDataset(Dataset):
     A dataset for ESNLI
     """
 
-    def __init__(self, path: str = None, split: str = 'train', frac=1.0, chunk=0, data_dict=None):
+    def __init__(self, path: str = None, name: str = 'esnli', split: str = 'train', frac=1.0, chunk=0,
+                 data_dict=None):
         if data_dict:
             self.esnli = data_dict
             # encode sentences
@@ -34,10 +35,9 @@ class ESNLIDataset(Dataset):
             assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
 
             super().__init__()
-            self.name = f'ESNLI_{frac}'
 
             # Load pickle file
-            esnli_path = osp.join(path, f'esnli_{frac}')
+            self.path = osp.join(path, f'{name}_{frac}')
             keys = ['Sentences', 'Sentences_embedding', 'gold_label', 'Explanation_1']
 
             if not settings.no_knowledge:
@@ -48,7 +48,7 @@ class ESNLIDataset(Dataset):
 
             self.esnli = {}
             for k in keys:
-                key_path = osp.join(esnli_path, f'{split}_{k}', f'chunk{chunk}.pkl')
+                key_path = osp.join(self.path, f'{split}_{k}', f'chunk{chunk}.pkl')
                 try:
                     self.esnli[k] = pickle.load(open(key_path, 'rb'))
                     if isinstance(self.esnli[k], torch.Tensor):
@@ -69,10 +69,6 @@ class ESNLIDataset(Dataset):
 
 # DataLoader Helper functions
 # Load dataset splits
-og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
-new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_sizes.items()}
-num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
-
 
 def collate_fn(batch):
     elem = batch[0]
@@ -111,7 +107,17 @@ def collate_fn(batch):
     return inputs
 
 
-def get_dataset(split: str):
+def get_dataset(split: str, name: str = 'esnli'):
+    if name == 'esnli':
+        og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
+    elif name == 'comve':
+        og_sizes = {'train': 10000, 'val': 1000, 'test': 1000}
+    else:
+        raise ValueError(f'{name} is not a valid dataset name')
+
+    new_sizes = {split: int(og_size * settings.data_frac) for split, og_size in og_sizes.items()}
+    num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
+
     datasets = [
         ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk)
         for chunk in range(num_chunks[split])
@@ -119,8 +125,8 @@ def get_dataset(split: str):
     return ConcatDataset(datasets)
 
 
-def get_loader(split, dataset=None):
-    dataset = get_dataset(split) if dataset is None else dataset
+def get_loader(split, dataset=None, dataset_name='esnli'):
+    dataset = get_dataset(split, name=dataset_name) if dataset is None else dataset
     return DataLoader(dataset,
                       batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,
