@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser()
 
 # Experiment settings
 _exp_settings = [
+    ('dataset', 'Dataset', str, 'esnli'),
     ('num_epochs', 'Number of epochs', int, 5),
     ('batch_size', 'Batch size', int, 128),
     ('lr', 'Learning rate', float, 1e-4),

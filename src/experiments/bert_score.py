@@ -34,6 +34,6 @@ def compute_bert_score(results_path, test_dataset):
 
 if __name__ == '__main__':
     # Get test dataloader
-    test_dataset = get_dataset('test', 'esnli')
+    test_dataset = get_dataset('test', settings.dataset)
     results_path = settings.input_dir
     compute_bert_score(results_path, test_dataset)
