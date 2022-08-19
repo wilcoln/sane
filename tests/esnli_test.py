@@ -5,7 +5,7 @@ from icecream import ic
 from torch.utils.data import DataLoader
 
 from src.datasets.nl import NLDataset, collate_fn
-from src.experiments.esnli_test import test
+from src.experiments.test import test
 from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
 
