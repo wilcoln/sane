@@ -50,4 +50,4 @@ def reduce_dataset(splits, frac):
 
 
 if __name__ == 'main':
-    preprocess(read_dataset, reduce_dataset, settings.data_frac)
+    preprocess('comve', read_dataset, reduce_dataset, settings.data_frac)

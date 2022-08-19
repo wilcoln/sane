@@ -49,10 +49,10 @@ def compute_concept_ids(sentence_list):
     ]
 
 
-def add_concepts(splits, esnli_output_dir):
+def add_concepts(splits, dataset_output_dir):
     ic('Add Knowledge to Data Points')
     for split, split_set in splits.items():
-        concepts_path = os.path.join(esnli_output_dir, f'{split}_concept_ids')
+        concepts_path = os.path.join(dataset_output_dir, f'{split}_concept_ids')
         try:
             ic(f'Loading Concept ids for {split} split')
             split_set['concept_ids'] = ChunkedList(n=len(split_set['Sentences']), dirpath=concepts_path)
@@ -67,10 +67,10 @@ def add_concepts(splits, esnli_output_dir):
     return splits
 
 
-def preprocess(read_dataset, reduce_dataset, data_frac: float = .01):
-    esnli_output_dir = osp.join(settings.data_dir, f'esnli_{settings.data_frac}')
-    if not os.path.exists(esnli_output_dir):
-        os.mkdir(esnli_output_dir)
+def preprocess(name, read_dataset, reduce_dataset, data_frac: float = .01):
+    dataset = osp.join(settings.data_dir, f'{name}_{settings.data_frac}')
+    if not os.path.exists(dataset):
+        os.mkdir(dataset)
 
     # Read dataset
     ic('Reading dataset')
@@ -83,11 +83,11 @@ def preprocess(read_dataset, reduce_dataset, data_frac: float = .01):
     splits = df_to_dict(splits)
     # Add concepts
     ic('Adding concepts')
-    splits = add_concepts(splits, esnli_output_dir)
+    splits = add_concepts(splits, dataset)
     # Encode sentences
     ic('Encoding sentences')
-    splits = encode(splits, esnli_output_dir)
+    splits = encode(splits, dataset)
     # Save splits
     ic('Saving splits')
-    save_splits(splits, esnli_output_dir)
+    save_splits(splits, dataset)
     ic('Done')
