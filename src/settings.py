@@ -54,3 +54,9 @@ setattr(settings, 'exp', {k: v for k, v in vars(settings).items() if k in [s[0] 
 print('*** Experimental Settings ***')
 for key, value in settings.exp.items():
     print(f'{key}={value}')
+
+# Set number of classes
+num_classes = {'esnli': 3, 'comve': 2, 'cose': 5}
+setattr(settings, 'num_classes', num_classes[settings.dataset])
+
+
