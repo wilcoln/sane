@@ -60,8 +60,6 @@ class ESNLIDataset(Dataset):
             if k in string_keys:
                 self.esnli[k] = [str(elt) for elt in self.esnli[k]]
 
-        print(self.esnli.keys())
-
     def __len__(self):
         return len(self.esnli['gold_label'])
 

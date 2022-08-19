@@ -18,7 +18,6 @@ def read_dataset():
 
 def reduce_dataset(splits, frac):
     for split, split_set in splits.items():
-        split_set = split_set.sample(int(len(split_set) * frac), random_state=0)
         # Replace Sentence1 and Sentence2 with Sentences
         sentences = []
         gold_labels = []
@@ -34,8 +33,8 @@ def reduce_dataset(splits, frac):
             sentences.append(sentence)
             gold_labels.append(label)
 
-        split_set['Sentences'] = pd.Series(sentences)
-        split_set['gold_label'] = pd.Series(gold_labels)
+        split_set['Sentences'] = sentences
+        split_set['gold_label'] = gold_labels
         # Drop useless columns
         useless_columns = ['Confusing Reason1', 'Confusing Reason2', 'Correct Statement', 'Incorrect Statement']
         split_set.drop(columns=useless_columns, inplace=True, errors='ignore')
@@ -45,6 +44,9 @@ def reduce_dataset(splits, frac):
 
         # Update split_set
         splits[split] = split_set
+
+        print(split_set)
+        exit()
 
     return splits
 
