@@ -16,19 +16,20 @@ from src.utils.semantic_search import semantic_search
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
 
 
-class ESNLIDataset(Dataset):
+class NLDataset(Dataset):
     """
-    A dataset for ESNLI
+    A Natural Language dataset
     """
 
     def __init__(self, path: str = None, name: str = 'esnli', split: str = 'train', frac=1.0, chunk=0,
                  data_dict=None):
+        assert name in {'esnli', 'comve', 'cose'}, 'Dataset name not supported'
         if data_dict:
-            self.esnli = data_dict
+            self.nl = data_dict
             # encode sentences
-            self.esnli['Sentences_embedding'] = bart(self.esnli['Sentences'])
+            self.nl['Sentences_embedding'] = bart(self.nl['Sentences'])
             if not settings.no_knowledge:
-                self.esnli['concept_ids'] = compute_concept_ids(self.esnli['Sentences'])
+                self.nl['concept_ids'] = compute_concept_ids(self.nl['Sentences'])
         else:
             assert path is not None
             assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
@@ -46,25 +47,25 @@ class ESNLIDataset(Dataset):
             if split in {'val', 'test'}:
                 keys += ['Explanation_2', 'Explanation_3']
 
-            self.esnli = {}
+            self.nl = {}
             for k in keys:
                 key_path = osp.join(self.path, f'{split}_{k}', f'chunk{chunk}.pkl')
                 try:
-                    self.esnli[k] = pickle.load(open(key_path, 'rb'))
-                    if isinstance(self.esnli[k], torch.Tensor):
-                        self.esnli[k] = self.esnli[k].detach()
+                    self.nl[k] = pickle.load(open(key_path, 'rb'))
+                    if isinstance(self.nl[k], torch.Tensor):
+                        self.nl[k] = self.nl[k].detach()
                 except Exception as e:
                     ic(e, key_path)
 
-        for k in self.esnli:
+        for k in self.nl:
             if k in string_keys:
-                self.esnli[k] = [str(elt) for elt in self.esnli[k]]
+                self.nl[k] = [str(elt) for elt in self.nl[k]]
 
     def __len__(self):
-        return len(self.esnli['gold_label'])
+        return len(self.nl['gold_label'])
 
     def __getitem__(self, i):
-        return {k: v[i] for k, v in self.esnli.items()}
+        return {k: v[i] for k, v in self.nl.items()}
 
 
 # DataLoader Helper functions
@@ -107,11 +108,13 @@ def collate_fn(batch):
     return inputs
 
 
-def get_dataset(split: str, name: str = 'esnli'):
+def get_dataset(split: str, name: str):
     if name == 'esnli':
         og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
     elif name == 'comve':
         og_sizes = {'train': 10000, 'val': 1000, 'test': 1000}
+    elif name == 'cose':
+        og_sizes = {'train': 9741, 'val': 1221}
     else:
         raise ValueError(f'{name} is not a valid dataset name')
 
@@ -119,7 +122,7 @@ def get_dataset(split: str, name: str = 'esnli'):
     num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
     datasets = [
-        ESNLIDataset(path=settings.data_dir, name=name, split=split, frac=settings.data_frac, chunk=chunk)
+        NLDataset(path=settings.data_dir, name=name, split=split, frac=settings.data_frac, chunk=chunk)
         for chunk in range(num_chunks[split])
     ]
     return ConcatDataset(datasets)
@@ -133,8 +136,8 @@ def get_loader(split):
                       collate_fn=collate_fn)
 
 
-def get_sanity_check_loader(dataset_name='esnli'):
-    dataset = ESNLIDataset(path=settings.data_dir, name=dataset_name, split='train')
+def get_sanity_check_loader():
+    dataset = NLDataset(path=settings.data_dir, split='train')
     dataset = torch.utils.data.Subset(dataset, list(range(10)))
     return DataLoader(dataset,
                       batch_size=settings.batch_size, shuffle=False,

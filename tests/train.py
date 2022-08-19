@@ -1,6 +1,6 @@
 import torch.optim as optim
 
-from src.datasets.esnli import get_sanity_check_loader
+from src.datasets.nl import get_sanity_check_loader
 from src.models.sane import SANE
 from src.settings import settings
 from src.utils.trainers import SANETrainer

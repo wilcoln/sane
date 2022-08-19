@@ -3,7 +3,7 @@ import os.path as osp
 import pandas as pd
 from bert_score import score
 
-from src.datasets.esnli import get_dataset
+from src.datasets.nl import get_dataset
 from src.settings import settings
 
 
@@ -17,8 +17,8 @@ def compute_bert_score(results_path, test_dataset):
     # Prepare candidates and (multi-) refs
     candidates = test_results_df['explanation'].tolist()
     multi_refs = [[exp1, exp2, exp3] for exp1, exp2, exp3 in
-                  zip(test_dataset.esnli['Explanation_1'], test_dataset.esnli['Explanation_2'],
-                      test_dataset.esnli['Explanation_3'])]
+                  zip(test_dataset.nl['Explanation_1'], test_dataset.nl['Explanation_2'],
+                      test_dataset.nl['Explanation_3'])]
 
     # Compute bert score
     (P, R, F), hashname = score(candidates, multi_refs, lang='en', return_hash=True)

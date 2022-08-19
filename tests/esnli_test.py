@@ -4,7 +4,7 @@ import torch
 from icecream import ic
 from torch.utils.data import DataLoader
 
-from src.datasets.esnli import ESNLIDataset, collate_fn
+from src.datasets.nl import NLDataset, collate_fn
 from src.experiments.esnli_test import test
 from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
@@ -40,7 +40,7 @@ esnli_input_dict = {
 }
 
 ic('Create Dataset')
-dataset = ESNLIDataset(data_dict=esnli_input_dict)
+dataset = NLDataset(data_dict=esnli_input_dict)
 ic('Create dataloader')
 dataloader = DataLoader(dataset,
                         batch_size=settings.batch_size, shuffle=False,

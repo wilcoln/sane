@@ -1,4 +1,5 @@
-from src.datasets.esnli import get_dataset
+from src.datasets.nl import get_dataset
+from src.settings import settings
 
 
 def test_overlap(name):
@@ -17,5 +18,5 @@ def test_overlap(name):
 
 
 if __name__ == '__main__':
-    test_overlap('esnli')
+    test_overlap(settings.dataset)
 

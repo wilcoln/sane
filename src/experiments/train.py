@@ -3,7 +3,7 @@ import os.path as osp
 import torch
 import torch.optim as optim
 
-from src.datasets.esnli import get_loader
+from src.datasets.nl import get_loader
 from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
 from src.utils.nn import freeze

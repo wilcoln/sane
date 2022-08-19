@@ -157,7 +157,7 @@ def hetero_subgraph(heterodata, subset_dict: Dict[NodeType, Tensor]) -> 'HeteroD
     return data
 
 # if __name__ == '__main__':
-#     from src.datasets.esnli import conceptnet
+#     from src.datasets.nl import conceptnet
 #
 #     print(conceptnet)
 #
