@@ -60,6 +60,8 @@ class ESNLIDataset(Dataset):
             if k in string_keys:
                 self.esnli[k] = [str(elt) for elt in self.esnli[k]]
 
+        print(self.esnli.keys())
+
     def __len__(self):
         return len(self.esnli['gold_label'])
 
@@ -119,7 +121,7 @@ def get_dataset(split: str, name: str = 'esnli'):
     num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
     datasets = [
-        ESNLIDataset(path=settings.data_dir, split=split, frac=settings.data_frac, chunk=chunk)
+        ESNLIDataset(path=settings.data_dir, name=name, split=split, frac=settings.data_frac, chunk=chunk)
         for chunk in range(num_chunks[split])
     ]
     return ConcatDataset(datasets)
@@ -133,8 +135,8 @@ def get_loader(split, dataset=None, dataset_name='esnli'):
                       collate_fn=collate_fn)
 
 
-def get_sanity_check_loader():
-    dataset = ESNLIDataset(path=settings.data_dir, split='train')
+def get_sanity_check_loader(dataset_name='esnli'):
+    dataset = ESNLIDataset(path=settings.data_dir, name=dataset_name, split='train')
     dataset = torch.utils.data.Subset(dataset, list(range(10)))
     return DataLoader(dataset,
                       batch_size=settings.batch_size, shuffle=False,
