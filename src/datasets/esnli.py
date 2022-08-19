@@ -125,8 +125,8 @@ def get_dataset(split: str, name: str = 'esnli'):
     return ConcatDataset(datasets)
 
 
-def get_loader(split, dataset=None, dataset_name='esnli'):
-    dataset = get_dataset(split, name=dataset_name) if dataset is None else dataset
+def get_loader(split):
+    dataset = get_dataset(split, name=settings.dataset)
     return DataLoader(dataset,
                       batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,

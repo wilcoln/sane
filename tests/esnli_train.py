@@ -12,7 +12,6 @@ dataloader = get_sanity_check_loader()
 SANETrainer(
     model=model,
     optimizer=optim.Adam(model.parameters(), lr=settings.lr),
-    dataset_name='ESNLI',
     train_loader=dataloader,
     val_loader=dataloader,
 ).run()

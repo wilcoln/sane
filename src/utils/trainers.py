@@ -18,9 +18,6 @@ from src.utils.regret import regret
 
 
 class BaseTrainer:
-    def __init__(self, dataset_name: str = None):
-        self.dataset_name = dataset_name
-
     def train(self, *args, **kwargs) -> dict:
         raise NotImplementedError
 
@@ -38,7 +35,6 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
     def __init__(self,
                  model: nn.Module,
                  optimizer: Optimizer,
-                 dataset_name: str = None,
                  *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,15 +45,11 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         self.best_model_state_dict = None
         self.model = model
         self.optimizer = optimizer
-        self.dataset_name = dataset_name
         self.results = []
 
     def save_params_and_prepare_to_save_results(self):
         # Create dictionary with all the parameters
-        params_dict = {
-            'dataset': self.dataset_name,
-            'model': self.model.__class__.__name__,
-        }
+        params_dict = {'model': self.model.__class__.__name__}
 
         params_dict.update(settings.exp)
         for key in {'expert'}:
@@ -141,8 +133,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
 
 
 class SANETrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, dataset_name, train_loader, val_loader, test_loader=None, expert=None):
-        super().__init__(model, optimizer, dataset_name)
+    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None, expert=None):
+        super().__init__(model, optimizer)
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader

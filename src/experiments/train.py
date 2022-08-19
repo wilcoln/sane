@@ -3,7 +3,7 @@ import os.path as osp
 import torch
 import torch.optim as optim
 
-from src.datasets.comve import get_loader
+from src.datasets.esnli import get_loader
 from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
 from src.utils.nn import freeze
@@ -24,7 +24,6 @@ if settings.expert is not None:
 SANETrainer(
     model=model,
     optimizer=optim.Adam(model.parameters(), lr=settings.lr),
-    dataset_name='COMVE',
     train_loader=get_loader('train'),
     val_loader=get_loader('val'),
     expert=expert,
