@@ -63,4 +63,5 @@
 # python src/experiments/esnli_train.py --data_frac=1.0 --expert=$expert --batch_size=64
 
 # Maximizing knowledge relevance
-python src/experiments/esnli_train.py --data_frac=.05 --batch_size=128
+# python src/experiments/train.py --data_frac=1.0 --batch_size=128 --dataset=comve
+python src/experiments/train.py --data_frac=1.0 --batch_size=128 --dataset=cose
