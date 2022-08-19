@@ -29,7 +29,7 @@ def reduce_dataset(splits, frac):
                 sentence = sentence1 + '. ' + sentence2
 
             # remove double periods
-            sentence = sentence.replace('..', '.')
+            sentence = sentence.replace('..', '.', regex=False)
             sentences.append(sentence)
             gold_labels.append(label)
 
