@@ -49,5 +49,5 @@ def reduce_dataset(splits, frac):
     return splits
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     preprocess('comve', read_dataset, reduce_dataset, settings.data_frac)

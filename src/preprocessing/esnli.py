@@ -46,5 +46,5 @@ def reduce_dataset(splits, frac):
     return splits
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     preprocess('esnli', read_dataset, reduce_dataset, data_frac=settings.data_frac)
