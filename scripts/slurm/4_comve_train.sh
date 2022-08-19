@@ -20,5 +20,4 @@
 
 # run the application
 
-python src/experiments/comve_train.py --data_frac=1.0 --batch_size=128
-
+python src/experiments/comve_train.py --data_frac=1.0 --batch_size=128 --num_epochs=10
