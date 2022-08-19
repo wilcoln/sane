@@ -37,7 +37,7 @@ def reduce_dataset(splits, frac):
         split_set['Sentences'] = pd.Series(sentences)
         split_set['gold_label'] = pd.Series(gold_labels)
         # Drop useless columns
-        useless_columns = ['Confusing Reason1', 'Confusing Reason2']
+        useless_columns = ['Confusing Reason1', 'Confusing Reason2', 'Correct Statement', 'Incorrect Statement']
         split_set.drop(columns=useless_columns, inplace=True, errors='ignore')
 
         # Rename explanation columns
