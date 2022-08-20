@@ -3,10 +3,10 @@ import os.path as osp
 
 import numpy as np
 import pandas as pd
-from icecream import ic
 
 from src.preprocessing.common import preprocess
 from src.settings import settings
+from src.utils.embeddings import tokenizer
 
 
 def jsonl_to_dataframe(jsonl_file):
@@ -59,11 +59,9 @@ def read_dataset():
 def reduce_dataset(splits, frac):
     for split, split_set in splits.items():
         # Concatenate question and choice_i columns into one column 'Sentences'
-        split_set['Sentences'] = split_set['stem'] + '? A) ' + split_set['choice_0'] + ', B) ' + split_set[
-            'choice_1'] + ', C) ' + split_set['choice_2'] + ', D) ' + split_set['choice_3'] + ', E) ' + split_set[
-                                     'choice_4'] + '.'
-        split_set['Sentences'] = split_set['Sentences'].str.replace('??', '?', regex=False)
-        split_set['Sentences'] = split_set['Sentences'].str.replace('..', '.', regex=False)
+        split_set['Sentences'] = split_set['stem'] + '?'
+        for i in range(5):
+            split_set['Sentences'] += ' ' + tokenizer.sep_token + ' ' + split_set[f'choice_{i}']
 
         # Drop useless columns
         useless_columns = [
@@ -75,6 +73,7 @@ def reduce_dataset(splits, frac):
         split_set = split_set.rename(columns={'open-ended': 'Explanation_1', 'label': 'gold_label'})
         # Update split_set
         splits[split] = split_set
+
     return splits
 
 

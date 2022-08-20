@@ -5,6 +5,7 @@ import pandas as pd
 
 from src.preprocessing.common import preprocess
 from src.settings import settings
+from src.utils.embeddings import tokenizer
 
 
 def read_dataset():
@@ -24,12 +25,10 @@ def reduce_dataset(splits, frac):
         for sentence1, sentence2 in zip(split_set['Correct Statement'], split_set['Incorrect Statement']):
             label = random.randint(0, 1)
             if label:
-                sentence = sentence2 + '. ' + sentence1
+                sentence = sentence2 + ' ' + tokenizer.sep_token + ' ' + sentence1
             else:
-                sentence = sentence1 + '. ' + sentence2
+                sentence = sentence1 + ' ' + tokenizer.sep_token + ' ' + sentence2
 
-            # remove double periods
-            sentence = sentence.replace('..', '.')
             sentences.append(sentence)
             gold_labels.append(label)
 
