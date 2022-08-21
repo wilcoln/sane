@@ -75,5 +75,7 @@ def tokenize(sentence_list):
     return tokenizer(sentence_list, max_length=512, truncation=True, padding=True, return_tensors='pt')
 
 
-def corrupt(tensor, noise_prop):
+def corrupt(tensor, noise_prop=None, sigma2=None):
+    if sigma2 is not None:
+        return tensor + torch.randn_like(tensor) * sigma2
     return (1 - noise_prop) * tensor + torch.rand_like(tensor) * noise_prop
