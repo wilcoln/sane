@@ -11,16 +11,17 @@ _exp_settings = [
     ('num_epochs', 'Number of epochs', int, 5),
     ('batch_size', 'Batch size', int, 128),
     ('lr', 'Learning rate', float, 1e-4),
+    ('weight_decay', 'Weight Decay', float, 1e-2),
     ('sent_dim', 'Sentence dimension', int, 768),  # Bart-base d_model = 768
     ('hidden_dim', 'Hidden dimension', int, 64),
     ('max_concepts_per_sent', 'Max concepts per sentence', int, 200),
     ('sentence_pool', 'Sentence pool', str, 'mean'),
     ('data_frac', 'Data fraction', float, 1.0),
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
+    ('beta', 'Exact loss weight in regret-augmented loss', float, 0.5),
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
     ('no_knowledge', 'Disable Knowledge attention', bool, False),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
-    ('expert', 'Expert model path', str, None),
 ]
 for name, desc, type_, default in _exp_settings:
     if type_ is bool:
@@ -57,5 +58,3 @@ for key, value in settings.exp.items():
 # Set number of classes
 num_classes = {'esnli': 3, 'comve': 2, 'cose': 5}
 setattr(settings, 'num_classes', num_classes[settings.dataset])
-
-

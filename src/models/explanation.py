@@ -1,13 +1,13 @@
 from torch import nn
 
 from src.settings import settings
-from src.utils.transformers import BartForKnowledgeAwareConditionalGeneration, BartForConditionalGeneration
+from src.utils.transformers import BartWithKnowledgeForConditionalGeneration, BartForConditionalGeneration
 
 
 class Explainer(nn.Module):
     def __init__(self):
         super().__init__()
-        self.model = BartForKnowledgeAwareConditionalGeneration.from_pretrained("facebook/bart-base")
+        self.model = BartWithKnowledgeForConditionalGeneration.from_pretrained("facebook/bart-base")
 
     def forward(self, inputs, knowledge):
         # send tensors to gpu

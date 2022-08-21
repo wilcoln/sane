@@ -15,18 +15,26 @@ logger = logging.get_logger(__name__)
 @dataclass
 class BartForConditionalGenerationOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
+    last_hidden_state_no_knowledge: Optional[torch.Tensor] = None
     knowledge_relevance: Optional[torch.Tensor] = None
+    loss_no_knowledge: Optional[torch.Tensor] = None
 
 
 @dataclass
 class BartWithKnowledgeOutput(Seq2SeqModelOutput):
     knowledge_relevance: Optional[torch.Tensor] = None
+    last_hidden_state_no_knowledge: Optional[torch.Tensor] = None
 
 
 class BartWithKnowledgeModel(BartModel):
     def __init__(self, config: BartConfig):
         super().__init__(config)
         self.fusion_head = nn.Linear(2 * self.config.d_model, self.config.d_model)
+        self.transform = nn.Sequential(
+            nn.Linear(self.config.d_model, self.config.d_model),
+            nn.ReLU(),
+            nn.Linear(self.config.d_model, self.config.d_model),
+        )
 
     def forward(
             self,
@@ -88,17 +96,36 @@ class BartWithKnowledgeModel(BartModel):
                 attentions=encoder_outputs[2] if len(encoder_outputs) > 2 else None,
             )
 
+
+        encoder_output = self.transform(encoder_outputs[0])
+
+        # With knowledge
         # Fuse knowledge and encoder outputs
-        n = encoder_outputs[0].shape[0] // knowledge_embedding.shape[0]
-        m = encoder_outputs[0].shape[1]
+        n = encoder_output.shape[0] // knowledge_embedding.shape[0]
+        m = encoder_output.shape[1]
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(n, m, 1)
-        r = torch.sigmoid(self.fusion_head(torch.cat([encoder_outputs[0], knowledge_embedding], dim=2)))
-        z = encoder_outputs[0] + r * knowledge_embedding
+        r = torch.sigmoid(self.fusion_head(torch.cat([encoder_output, knowledge_embedding], dim=2)))
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,
             attention_mask=decoder_attention_mask,
-            encoder_hidden_states=z,
+            encoder_hidden_states=encoder_output + r * knowledge_embedding,
+            encoder_attention_mask=attention_mask,
+            head_mask=decoder_head_mask,
+            cross_attn_head_mask=cross_attn_head_mask,
+            past_key_values=past_key_values,
+            inputs_embeds=decoder_inputs_embeds,
+            use_cache=use_cache,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        # Without knowledge
+        decoder_outputs_no_knowledge = self.decoder(
+            input_ids=decoder_input_ids,
+            attention_mask=decoder_attention_mask,
+            encoder_hidden_states=encoder_output,
             encoder_attention_mask=attention_mask,
             head_mask=decoder_head_mask,
             cross_attn_head_mask=cross_attn_head_mask,
@@ -116,6 +143,7 @@ class BartWithKnowledgeModel(BartModel):
         return BartWithKnowledgeOutput(
             knowledge_relevance=r,
             last_hidden_state=decoder_outputs.last_hidden_state,
+            last_hidden_state_no_knowledge=decoder_outputs_no_knowledge.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
             decoder_attentions=decoder_outputs.attentions,
@@ -126,7 +154,7 @@ class BartWithKnowledgeModel(BartModel):
         )
 
 
-class BartForKnowledgeAwareConditionalGeneration(BaseBartForConditionalGeneration):
+class BartWithKnowledgeForConditionalGeneration(BaseBartForConditionalGeneration):
     def __init__(self, config: BartConfig):
         super().__init__(config)
         self.model = BartWithKnowledgeModel(config)
@@ -190,12 +218,20 @@ class BartForKnowledgeAwareConditionalGeneration(BaseBartForConditionalGeneratio
             knowledge_embedding=knowledge_embedding,
         )
 
+        # With knowledge
         lm_logits = self.lm_head(outputs.last_hidden_state) + self.final_logits_bias
 
         masked_lm_loss = None
         if labels is not None:
             loss_fct = CrossEntropyLoss(reduction='none')
-            masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
+            masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1)).reshape(labels.shape[0], -1).mean(dim=1)
+
+        # Without knowledge
+        lm_logits_nk = self.lm_head(outputs.last_hidden_state_no_knowledge) + self.final_logits_bias
+        masked_lm_loss_nk = None
+        if labels is not None:
+            loss_fct = CrossEntropyLoss(reduction='none')
+            masked_lm_loss_nk = loss_fct(lm_logits_nk.view(-1, self.config.vocab_size), labels.view(-1)).reshape(labels.shape[0], -1).mean(dim=1)
 
         if not return_dict:
             output = (lm_logits,) + outputs[1:]
@@ -203,8 +239,10 @@ class BartForKnowledgeAwareConditionalGeneration(BaseBartForConditionalGeneratio
 
         return BartForConditionalGenerationOutput(
             loss=masked_lm_loss,
+            loss_no_knowledge=masked_lm_loss_nk,
             logits=lm_logits,
             last_hidden_state=outputs.last_hidden_state,
+            last_hidden_state_no_knowledge=outputs.last_hidden_state_no_knowledge,
             past_key_values=outputs.past_key_values,
             decoder_hidden_states=outputs.decoder_hidden_states,
             decoder_attentions=outputs.decoder_attentions,
@@ -309,7 +347,7 @@ class BartForConditionalGeneration(BaseBartForConditionalGeneration):
         masked_lm_loss = None
         if labels is not None:
             loss_fct = CrossEntropyLoss(reduction='none')
-            masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
+            masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1)).reshape(labels.shape[0], -1).mean(dim=1)
 
         if not return_dict:
             output = (lm_logits,) + outputs[1:]

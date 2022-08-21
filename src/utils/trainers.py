@@ -52,9 +52,6 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         params_dict = {'model': self.model.__class__.__name__}
 
         params_dict.update(settings.exp)
-        for key in {'expert'}:
-            if key in settings.exp:
-                del params_dict[key]
 
         # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
@@ -133,12 +130,11 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
 
 
 class SANETrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None, expert=None):
+    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
         super().__init__(model, optimizer)
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
-        self.expert = expert
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
@@ -155,12 +151,12 @@ class SANETrainer(TorchModuleBaseTrainer):
         self.model.train() if train else self.model.eval()
 
         # Set split loss value
-        split_loss = 0.0
+        split_loss, split_loss_nk = 0.0, 0.0
         # Set split knowledge relevance indices
         split_ekri, split_pkri = 0.0, 0.0
 
         # Reset values for accuracy computation
-        correct = 0
+        correct, correct_nk = 0, 0
         total = 0
 
         # Iterate over the DataLoader for training data
@@ -169,53 +165,85 @@ class SANETrainer(TorchModuleBaseTrainer):
         start = time.time()
         for i, inputs in pbar:
             if train:
-                # zero the parameter gradients
                 self.optimizer.zero_grad()
+            #####################################
+            # (1) Compute loss without knowledge
+            #####################################
+            # forward pass & compute loss without knowledge
+            outputs = self.model(inputs)
+            pred, nle = outputs[:2]
+            loss_nk = settings.alpha * nle.loss_no_knowledge + (1 - settings.alpha) * pred.loss_no_knowledge
+            loss_nk = loss_nk.mean()
 
+            if train:
+                # backward pass + optimization step
+                loss_nk.backward()
+                self.optimizer.step()
+                self.optimizer.zero_grad()
+            
+
+            # Update Split Loss no knowledge
+            split_loss_nk += loss_nk.item()
+            # Update Accuracy
+            predicted = pred.logits_no_knowledge.argmax(1)
+            correct_nk += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
+            # clean intermediate vars
+            del outputs, pred, nle, predicted, loss_nk
+            # reset the gradients
+            
+
+
+            #################################
+            # (2) Compute loss with knowledge
+            #################################
             # forward pass & compute loss
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
 
-            # Compute model loss
+            # Compute exact loss with knowledge
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
 
             # Compute regret loss
-            regret_loss = 0
-            if self.expert is not None:
-                # forward + backward on expert
-                expert_pred, expert_nle = self.expert(inputs)[:2]
-                # Compute regret
-                pred_regret, nle_regret = regret(pred.loss, expert_pred.loss), regret(nle.loss, expert_nle.loss)
-                regret_loss = settings.alpha * nle_regret + settings.alpha * pred_regret
+            pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
+            nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
 
-            # Compute full loss
-            loss = loss.mean() + regret_loss
+            regret_loss = settings.alpha * nle_regret + (1 - settings.alpha) * pred_regret
+            regret_loss = regret_loss.mean()
+
+            # Compute regret-augmented loss with knowledge
+            loss = loss.mean()
+            augmented_loss = settings.beta * loss + (1 - settings.beta) * regret_loss
 
             if train:
                 # backward pass + optimization step
-                loss.backward()
+                augmented_loss.backward()
                 self.optimizer.step()
 
             # Update Split Loss
             split_loss += loss.item()
             # Update Split Knowledge relevance
-            if not settings.no_knowledge:
-                split_ekri += nle.knowledge_relevance.mean().item()
-                split_pkri += pred.knowledge_relevance.mean().item()
+            split_ekri += nle.knowledge_relevance.mean().item()
+            split_pkri += pred.knowledge_relevance.mean().item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
-            total += inputs['gold_label'].size(0)
             correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
+
+            # Update total
+            total += inputs['gold_label'].size(0)
 
         split_time = time.time() - start
         split_loss /= len(dataloader)
+        split_loss_nk /= len(dataloader)
         split_ekri /= len(dataloader)
         split_pkri /= len(dataloader)
         split_acc = 100. * correct / total
+        split_acc_nk = 100. * correct_nk / total
 
         return {
             f'{split}_acc': split_acc,
+            f'{split}_acc_nk': split_acc_nk,
             f'{split}_loss': split_loss,
+            f'{split}_loss_nk': split_loss_nk,
             f'{split}_time': split_time,
             f'{split}_ekri': split_ekri,  # explanation knowledge relevance
             f'{split}_pkri': split_pkri,  # prediction knowledge relevance

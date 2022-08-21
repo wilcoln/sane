@@ -70,6 +70,6 @@
 
 
 # Test new architecture
-# python src/experiments/train.py --data_frac=.05 --dataset=esnli
-python src/experiments/train.py --dataset=comve
-# python src/experiments/train.py --dataset=cose
+# python src/experiments/train.py --data_frac=.05 --dataset=esnli --batch_size=64
+# python src/experiments/train.py --dataset=comve --num_epochs=20 --alpha=.01 --beta=.9 --hidden_dim=512 --max_concepts_per_sent=10 --weight_decay=.1
+python src/experiments/train.py --dataset=cose --num_epochs=20 --alpha=.01 --hidden_dim=512 --max_concepts_per_sent=20
