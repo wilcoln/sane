@@ -156,8 +156,8 @@ class SANETrainer(TorchModuleBaseTrainer):
 
         # Set split loss value
         split_loss = 0.0
-        # Set split knowledge relevance index
-        split_kri = 0.0
+        # Set split knowledge relevance indices
+        split_ekri, split_pkri = 0.0, 0.0
 
         # Reset values for accuracy computation
         correct = 0
@@ -200,7 +200,8 @@ class SANETrainer(TorchModuleBaseTrainer):
             split_loss += loss.item()
             # Update Split Knowledge relevance
             if not settings.no_knowledge:
-                split_kri += nle.knowledge_relevance.mean().item()
+                split_ekri += nle.knowledge_relevance.mean().item()
+                split_pkri += pred.knowledge_relevance.mean().item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
             total += inputs['gold_label'].size(0)
@@ -208,14 +209,16 @@ class SANETrainer(TorchModuleBaseTrainer):
 
         split_time = time.time() - start
         split_loss /= len(dataloader)
-        split_kri /= len(dataloader)
+        split_ekri /= len(dataloader)
+        split_pkri /= len(dataloader)
         split_acc = 100. * correct / total
 
         return {
             f'{split}_acc': split_acc,
             f'{split}_loss': split_loss,
             f'{split}_time': split_time,
-            f'{split}_kri': split_kri,  # knowledge relevance
+            f'{split}_ekri': split_ekri,  # explanation knowledge relevance
+            f'{split}_pkri': split_pkri,  # prediction knowledge relevance
         }
 
     def train(self) -> dict:

@@ -13,7 +13,6 @@ _exp_settings = [
     ('lr', 'Learning rate', float, 1e-4),
     ('sent_dim', 'Sentence dimension', int, 768),  # Bart-base d_model = 768
     ('hidden_dim', 'Hidden dimension', int, 64),
-    ('nle_pred', 'Predict with NLE only', bool, False),
     ('max_concepts_per_sent', 'Max concepts per sentence', int, 200),
     ('sentence_pool', 'Sentence pool', str, 'mean'),
     ('data_frac', 'Data fraction', float, 1.0),
