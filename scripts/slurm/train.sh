@@ -64,4 +64,12 @@
 
 # Maximizing knowledge relevance
 # python src/experiments/train.py --data_frac=1.0 --batch_size=128 --dataset=comve
-python src/experiments/train.py --data_frac=1.0 --batch_size=128 --dataset=cose
+# python src/experiments/train.py --data_frac=1.0 --batch_size=128 --dataset=cose --chunk_size=5000 --num_epochs=10 --max_concepts_per_sent=20 --hidden_dim=768
+# python src/experiments/train.py --data_frac=1.0 --batch_size=128 --dataset=cose --chunk_size=5000 --num_epochs=20
+# python src/preprocessing/comve.py
+
+
+# Test new architecture
+# python src/experiments/train.py --data_frac=.05 --dataset=esnli
+python src/experiments/train.py --dataset=comve
+# python src/experiments/train.py --dataset=cose

@@ -93,7 +93,7 @@ class BartWithKnowledgeModel(BartModel):
         m = encoder_outputs[0].shape[1]
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(n, m, 1)
         r = torch.sigmoid(self.fusion_head(torch.cat([encoder_outputs[0], knowledge_embedding], dim=2)))
-        z = (1 - r) * encoder_outputs[0] + r * knowledge_embedding
+        z = encoder_outputs[0] + r * knowledge_embedding
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,

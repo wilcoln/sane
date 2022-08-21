@@ -1,12 +1,12 @@
 import os.path as osp
-
+import torch
 import pandas as pd
 from bert_score import score as bert_score
 
 from src.datasets.nl import get_dataset
 from src.settings import settings
 import evaluate
-
+from icecream import ic
 
 def compute_auto_nle_scores(results_path, test_dataset):
     # Load test results
@@ -19,30 +19,42 @@ def compute_auto_nle_scores(results_path, test_dataset):
     candidates = test_results_df['explanation'].tolist()
 
     # Prepare (multi-)reference sentences
-    if 'Explanation_2' in test_dataset.nl and 'Explanation_3' in test_dataset.nl:
-        multi_refs = [[exp1, exp2, exp3] for exp1, exp2, exp3 in
-                      zip(test_dataset.nl['Explanation_1'], test_dataset.nl['Explanation_2'],
-                          test_dataset.nl['Explanation_3'])]
+    keys = set(test_dataset.datasets[0].nl.keys())
+
+    def get_explanations(num):
+        return [d[f'Explanation_{num}'] for d in test_dataset]
+
+    num_refs = 3 if ('Explanation_2' in keys and 'Explanation_3') in keys else 1
+    if num_refs == 3:
+        refs = list(zip(get_explanations(1), get_explanations(2), get_explanations(3)))
     else:
-        multi_refs = test_dataset.nl['Explanation_1']
+        refs = [get_explanations(1)]
 
     # Compute bert score
-    (P, R, F), hashname = bert_score(candidates, multi_refs, lang='en', return_hash=True)
+    (P, R, F), hashname = bert_score(candidates, refs, lang='en', return_hash=True)
     bert_score_result = f'BERT_SCORE: P={P.mean().item():.6f} R={R.mean().item():.6f} F={F.mean().item():.6f}\n'
     # Print bert score result
     print(bert_score_result)
 
+
+    def get_metric_results(metric):
+        metric = evaluate.load(metric, module_type='metric')
+        metric_scores = []
+        for i in range(num_refs):
+            metric_score = metric.compute(predictions=candidates, references=get_explanations(i+1))['scores']
+            metric_scores.append(metric_score)
+
+        metric_scores = torch.Tensor(metric_scores).max(0)[0]
+        ic(metric_scores)
+        return f'{metric.upper()}: {metric_scores.mean().item():.6f}\n'
+
     # Compute bleurt score
-    bleurt = evaluate.load('bleurt', module_type='metric')
-    bleurt_scores = bleurt.compute(predictions=candidates, references=multi_refs)['scores']
-    bleurt_score_result = f'BLEURT: {sum(bleurt_scores)/len(bleurt_scores):.6f}\n'
+    bleurt_score_result = get_metric_results('bleurt')
     # Print bleurt score result
     print(bleurt_score_result)
 
     # Compute meteor score
-    meteor = evaluate.load('meteor')
-    meteor_scores = meteor.compute(predictions=candidates, references=multi_refs)['meteor']
-    meteor_score_result = f'METEOR: {sum(meteor_scores)/len(meteor_scores):.6f}\n'
+    meteor_score_result = get_metric_results('meteor')
     # Print meteor score result
     print(meteor_score_result)
 
