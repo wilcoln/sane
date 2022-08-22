@@ -198,9 +198,9 @@ class SANETrainer(TorchModuleBaseTrainer):
             del outputs, pred, nle, predicted, loss_nk
             # reset the gradients
 
-            #################################
-            # (2) Compute loss with knowledge
-            #################################
+            ##################################################
+            # (2) Compute regret-augmented loss with knowledge
+            ##################################################
             # freeze \theta_f
             for module in self.model.f_modules:
                 freeze(module)
@@ -224,7 +224,7 @@ class SANETrainer(TorchModuleBaseTrainer):
 
             # Compute regret-augmented loss with knowledge
             loss = loss.mean()
-            augmented_loss = settings.beta * loss + (1 - settings.beta) * regret_loss
+            augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
 
             if train:
                 # backward pass + optimization step

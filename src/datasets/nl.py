@@ -131,7 +131,7 @@ def get_dataset(split: str, name: str):
 def get_loader(split):
     dataset = get_dataset(split, name=settings.dataset)
     return DataLoader(dataset,
-                      batch_size=settings.batch_size, shuffle=True,
+                      batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,
                       collate_fn=collate_fn)
 
@@ -140,6 +140,6 @@ def get_sanity_check_loader():
     dataset = NLDataset(path=settings.data_dir, split='train')
     dataset = torch.utils.data.Subset(dataset, list(range(10)))
     return DataLoader(dataset,
-                      batch_size=settings.batch_size, shuffle=True,
+                      batch_size=settings.batch_size, shuffle=False,
                       num_workers=settings.num_workers,
                       collate_fn=collate_fn)
