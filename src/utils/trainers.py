@@ -12,8 +12,10 @@ from torch import nn
 from torch.optim import Optimizer
 from tqdm import tqdm
 
+from src.models.sane import SANE
 from src.settings import settings
 from src.utils.format import fmt_stats_dict, capitalize
+from src.utils.nn import freeze, unfreeze
 from src.utils.regret import regret
 
 
@@ -169,6 +171,12 @@ class SANETrainer(TorchModuleBaseTrainer):
             #####################################
             # (1) Compute loss without knowledge
             #####################################
+            # unfreeze \theta_f
+            for module in self.model.f_modules:
+                unfreeze(module)
+            # freeze \theta_g & \theta_h
+            for module in self.model.g_modules.extend(self.model.h_modules):
+                freeze(module)
             # forward pass & compute loss without knowledge
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
@@ -180,7 +188,6 @@ class SANETrainer(TorchModuleBaseTrainer):
                 loss_nk.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
-            
 
             # Update Split Loss no knowledge
             split_loss_nk += loss_nk.item()
@@ -190,12 +197,17 @@ class SANETrainer(TorchModuleBaseTrainer):
             # clean intermediate vars
             del outputs, pred, nle, predicted, loss_nk
             # reset the gradients
-            
-
 
             #################################
             # (2) Compute loss with knowledge
             #################################
+            # freeze \theta_f
+            for module in self.model.f_modules:
+                freeze(module)
+
+            # unfreeze \theta_g & \theta_h
+            for module in self.model.g_modules.extend(self.model.h_modules):
+                unfreeze(module)
             # forward pass & compute loss
             outputs = self.model(inputs)
             pred, nle = outputs[:2]

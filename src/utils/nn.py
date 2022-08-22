@@ -87,6 +87,9 @@ def freeze(model):
     # freeze parameters
     for param in model.parameters():
         param.requires_grad = False
-    # prepare layers for evaluation
-    model.eval()
-    return model
+
+
+def unfreeze(model):
+    # unfreeze parameters
+    for param in model.parameters():
+        param.requires_grad = True

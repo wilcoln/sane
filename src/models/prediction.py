@@ -19,7 +19,7 @@ class PredictorOutput:
 class Predictor(nn.Module):
     def __init__(self):
         super().__init__()
-        self.lin = nn.Linear(2 * settings.sent_dim, settings.num_classes)
+        self.pred_head = nn.Linear(2 * settings.sent_dim, settings.num_classes)
         self.loss_fn = nn.CrossEntropyLoss(reduction='none')
         self.fusion_head = nn.Linear(2 * settings.sent_dim, settings.sent_dim)
         self.transform = nn.Sequential(
@@ -36,12 +36,12 @@ class Predictor(nn.Module):
         nle_embed = transformer_sentence_pool(nle.last_hidden_state)
         r = torch.sigmoid(self.fusion_head(torch.cat([sent_embed, knwl], dim=1)))
         input_pred = torch.cat([sent_embed + r * knwl, nle_embed], dim=1)
-        logits = self.lin(input_pred)
+        logits = self.pred_head(input_pred)
         loss = self.loss_fn(logits, labels)
         # Without knowledge
         nle_embed = transformer_sentence_pool(nle.last_hidden_state_no_knowledge)
         input_pred_nk = torch.cat([sent_embed, nle_embed], dim=1)
-        logits_nk = self.lin(input_pred_nk)
+        logits_nk = self.pred_head(input_pred_nk)
         loss_nk = self.loss_fn(logits_nk, labels)
 
         return PredictorOutput(logits=logits, logits_no_knowledge=logits_nk, loss=loss, loss_no_knowledge=loss_nk, knowledge_relevance=r)

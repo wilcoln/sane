@@ -21,6 +21,26 @@ class SANE(nn.Module):
         pred = self.predictor(inputs, att_knwl.output, nle)
         return pred, nle, att_knwl, knwl
 
+    def g_modules(self):
+        return [
+            self.encoder,
+            self.attention,
+            self.explainer.model.model.fusion_head,
+            self.predictor.fusion_head,
+        ]
+
+    def h_modules(self):
+        return [
+            self.explainer.model.model.transform,
+            self.predictor.transform,
+        ]
+
+    def f_modules(self):
+        return [
+            self.explainer.model.lm_head,
+            self.predictor.pred_head,
+        ]
+
 
 class SANENoKnowledge(nn.Module):
     def __init__(self):
