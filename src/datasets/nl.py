@@ -83,18 +83,25 @@ def collate_fn(batch):
         inputs[key] = tokenize([d[key] for d in batch])
 
     if not settings.no_knowledge:
-        # Convert concept_ids to tensor
-        concept_ids = [torch.LongTensor(d[concept_ids_key]) for d in batch]
-        # Curate sub-knowledge using semantic search
-        concept_ids = torch.unique(torch.cat(concept_ids, dim=0))
-        top_concepts_indices = semantic_search(
+        # Get exact concept ids
+        exact_concept_ids = [torch.LongTensor(d[concept_ids_key][0]) for d in batch]
+        exact_concept_ids = torch.unique(torch.cat(exact_concept_ids, dim=0))
+
+        # Get neighboring concept ids
+        neighboring_concept_ids = [torch.LongTensor(d[concept_ids_key][1]) for d in batch]
+        neighboring_concept_ids = torch.unique(torch.cat(neighboring_concept_ids, dim=0))
+
+        # Filter neighboring concepts using semantic search
+        top_neighboring_concepts_indices = semantic_search(
             queries=inputs['Sentences_embedding'],
-            values=conceptnet.concept_embedding[concept_ids],
+            values=conceptnet.concept_embedding[neighboring_concept_ids],
             top_k=settings.max_concepts_per_sent,
         )
+        neighboring_concept_ids = neighboring_concept_ids[top_neighboring_concepts_indices]
 
-        concept_ids = concept_ids[top_concepts_indices]
-        concept_ids = torch.unique(concept_ids.squeeze())
+        # Merge exact and neighboring concept ids and filter out duplicates
+        concept_ids = torch.cat([exact_concept_ids.squeeze(), neighboring_concept_ids.squeeze()], dim=0)
+        concept_ids = torch.unique(concept_ids)
 
         # Finalize batch
         inputs[concept_ids_key] = concept_ids

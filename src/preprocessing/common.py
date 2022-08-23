@@ -1,6 +1,8 @@
 import math
 import os
 import os.path as osp
+import string
+
 from icecream import ic
 from tqdm import tqdm
 
@@ -43,10 +45,13 @@ def save_splits(splits, output_dir):
 
 
 def compute_concept_ids(sentence_list):
-    return [
-        cn.nodes2ids(cn.subgraph(cn.search(sentence), radius=1).nodes)
-        for sentence in tqdm(sentence_list)
-    ]
+    results = []
+    for sentence in tqdm(sentence_list):
+        exact_matches = cn.search(sentence)
+        neighbors = set(neighbor for concept in exact_matches for neighbor in cn.nx.neighbors(concept))
+        neighbors = neighbors - exact_matches
+        results.append((cn.nodes2ids(list(exact_matches)), cn.nodes2ids(list(neighbors))))  # exact_matches, neighbors
+    return results
 
 
 def add_concepts(splits, dataset_output_dir):
