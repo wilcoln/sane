@@ -10,7 +10,7 @@ from torch_geometric.utils import subgraph
 from src.conceptnet import conceptnet
 from src.preprocessing.common import compute_concept_ids
 from src.settings import settings
-from src.utils.embeddings import tokenize, bart
+from src.utils.embeddings import tokenize, bart, tokenizer
 from src.utils.semantic_search import semantic_search
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
@@ -102,7 +102,7 @@ def collate_fn(batch):
             subset=concept_ids,
             edge_index=conceptnet.pyg.edge_index,
             edge_attr=conceptnet.pyg.edge_attr,
-            relabel_nodes=True
+            relabel_nodes=True,
         )
 
     return inputs

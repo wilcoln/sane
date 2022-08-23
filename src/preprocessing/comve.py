@@ -22,12 +22,13 @@ def reduce_dataset(splits, frac):
         # Replace Sentence1 and Sentence2 with Sentences
         sentences = []
         gold_labels = []
-        for sentence1, sentence2 in zip(split_set['Correct Statement'], split_set['Incorrect Statement']):
-            label = random.randint(0, 1)
+        sentence_pairs = zip(split_set['Correct Statement'], split_set['Incorrect Statement'])
+        for i, (correct, incorrect) in enumerate(sentence_pairs):
+            label = i % 2
             if label:
-                sentence = sentence2 + ' ' + tokenizer.sep_token + ' ' + sentence1
+                sentence = correct + ' ' + tokenizer.sep_token + ' ' + incorrect
             else:
-                sentence = sentence1 + ' ' + tokenizer.sep_token + ' ' + sentence2
+                sentence = incorrect + ' ' + tokenizer.sep_token + ' ' + correct
 
             sentences.append(sentence)
             gold_labels.append(label)

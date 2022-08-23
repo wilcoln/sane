@@ -75,4 +75,4 @@
 # python src/experiments/train.py --dataset=cose --num_epochs=20 --alpha=.4 --max_concepts_per_sent=20
 
 
-python src/experiments/train.py --dataset=comve --num_epochs=20 --max_concepts_per_sent=20 --algo=2 --ablate_knowledge
+python src/experiments/train.py --dataset=comve --num_epochs=20 --max_concepts_per_sent=20 --algo=2

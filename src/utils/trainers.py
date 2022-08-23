@@ -228,10 +228,10 @@ class SANETrainer(TorchModuleBaseTrainer):
             del outputs, pred, nle, predicted, loss_nk
             # reset the gradients
 
-            ##################################################
-            # (2) Compute regret-augmented loss with knowledge
-            ##################################################
             if not settings.ablate_knowledge:
+                ##################################################
+                # (2) Compute regret-augmented loss with knowledge
+                ##################################################
                 # freeze in second step
                 freeze_modules(self.step_two_freeze)
                 # unfreeze in second step

@@ -1,5 +1,6 @@
 import os.path as osp
 import random
+import string
 from typing import Tuple, List, Union
 
 import networkx as onx
@@ -79,15 +80,15 @@ class Conceptnet:
         nodes = self.neighbors(nodes, radius)
         return self.nx.subgraph(nodes)
 
-    def search(self, query: str, limit: int = None) -> List[str]:
+    def search(self, query: str, limit: int = None) -> set:
+        query = query.lower()  # lowercase query
+        query = query.translate(str.maketrans('', '', string.punctuation))  # remove punctuation
         ngrams = all_grams(query)
-        count = 0
-        results = []
+        results = set()
         for ngram in ngrams:
             if ngram in self.concept_dict:
-                count += 1
-                results.append(ngram)
-            if limit is not None and count >= limit:
+                results.add(ngram)
+            if limit is not None and len(results) >= limit:
                 break
         return results
 
@@ -102,18 +103,6 @@ class Conceptnet:
 
     def nodes2ids(self, nodes: list) -> list:
         return [self.concept_dict[node] for node in nodes]
-
-    def sample_neighbors(self, concept: Union[str, int], sample_size: int = 10) -> List[str]:
-        if isinstance(concept, int):
-            concept = self.inv_concept_dict[concept]
-            neighbors = self.nodes2ids(self.nx.neighbors(concept))
-        else:
-            neighbors = self.nx.neighbors(concept)
-
-        if sample_size < len(neighbors):
-            return random.sample(neighbors, sample_size)
-        else:
-            return neighbors
 
     @staticmethod
     def decompose_df(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
