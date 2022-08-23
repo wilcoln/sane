@@ -12,10 +12,9 @@ from torch import nn
 from torch.optim import Optimizer
 from tqdm import tqdm
 
-from src.models.sane import SANE
 from src.settings import settings
 from src.utils.format import fmt_stats_dict, capitalize
-from src.utils.nn import freeze, unfreeze
+from src.utils.nn import freeze_modules, unfreeze_modules
 from src.utils.regret import regret
 
 
@@ -85,7 +84,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
 
         torch.save(self.best_model_state_dict, osp.join(self.results_path, 'model.pt'))
 
-    def run(self, val_metric='acc'):
+    def run(self, val_metric='nle_loss', less_is_more=True):
         if not settings.no_save:
             self.save_params_and_prepare_to_save_results()
 
@@ -100,8 +99,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
             epoch_results = {**train_results, **eval_results, **test_results}
 
             # Save best model epoch
-            val_metric_key = f'val_{val_metric}'
-            if not self.best_epoch or epoch_results[val_metric_key] > self.results[self.best_epoch - 1][val_metric_key]:
+            if self.are_best_results(epoch_results, f'val_{val_metric}', less_is_more):
                 self.best_epoch = epoch
                 self.best_model_state_dict = self.model.state_dict()
 
@@ -130,6 +128,13 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         epoch_results_str = fmt_stats_dict(stats_dict)
         print(f'Epoch: {epoch:02d}, {epoch_results_str}')
 
+    def are_best_results(self, epoch_results, val_metric_key, less_is_more):
+        if not self.best_epoch:
+            return True
+        if less_is_more:
+            return self.results[self.best_epoch - 1][val_metric_key] >= epoch_results[val_metric_key]
+        return self.results[self.best_epoch - 1][val_metric_key] <= epoch_results[val_metric_key]
+
 
 class SANETrainer(TorchModuleBaseTrainer):
     def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
@@ -137,6 +142,30 @@ class SANETrainer(TorchModuleBaseTrainer):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
+
+        if settings.algo == 1:
+            self.step_one_unfreeze = self.model.f_modules
+            self.step_one_freeze = self.model.g_modules + self.model.h_modules
+            self.step_two_unfreeze = self.model.g_modules + self.model.h_modules
+            self.step_two_freeze = self.model.f_modules
+
+        elif settings.algo == 2:
+            self.step_one_unfreeze = self.model.f_modules + self.model.h_modules
+            self.step_one_freeze = self.model.g_modules
+            self.step_two_unfreeze = self.model.g_modules
+            self.step_two_freeze = []
+
+        elif settings.algo == 3:
+            self.step_one_unfreeze = self.model.f_modules + self.model.h_modules
+            self.step_one_freeze = self.model.g_modules
+            self.step_two_unfreeze = self.model.g_modules
+            self.step_two_freeze = self.model.f_modules + self.model.h_modules
+
+        elif settings.algo == 4:
+            self.step_one_unfreeze = self.model.f_modules
+            self.step_one_freeze = self.model.g_modules + self.model.h_modules
+            self.step_two_unfreeze = self.model.g_modules + self.model.h_modules
+            self.step_two_freeze = []
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
@@ -154,6 +183,7 @@ class SANETrainer(TorchModuleBaseTrainer):
 
         # Set split loss value
         split_loss, split_loss_nk = 0.0, 0.0
+        split_nle_loss, split_nle_loss_nk = 0.0, 0.0
         # Set split knowledge relevance indices
         split_ekri, split_pkri = 0.0, 0.0
 
@@ -171,12 +201,10 @@ class SANETrainer(TorchModuleBaseTrainer):
             #####################################
             # (1) Compute loss without knowledge
             #####################################
-            # unfreeze \theta_f
-            for module in self.model.f_modules:
-                unfreeze(module)
-            # freeze \theta_g & \theta_h
-            for module in self.model.g_modules.extend(self.model.h_modules):
-                freeze(module)
+            # unfreeze in first step
+            unfreeze_modules(self.step_one_unfreeze)
+            # freeze in first step
+            freeze_modules(self.step_one_freeze)
             # forward pass & compute loss without knowledge
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
@@ -191,6 +219,8 @@ class SANETrainer(TorchModuleBaseTrainer):
 
             # Update Split Loss no knowledge
             split_loss_nk += loss_nk.item()
+            # Update split nle loss no knowledge
+            split_nle_loss_nk += nle.loss_no_knowledge.mean().item()
             # Update Accuracy
             predicted = pred.logits_no_knowledge.argmax(1)
             correct_nk += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
@@ -201,19 +231,17 @@ class SANETrainer(TorchModuleBaseTrainer):
             ##################################################
             # (2) Compute regret-augmented loss with knowledge
             ##################################################
-            # freeze \theta_f
-            for module in self.model.f_modules:
-                freeze(module)
-
-            # unfreeze \theta_g & \theta_h
-            for module in self.model.g_modules.extend(self.model.h_modules):
-                unfreeze(module)
+            # freeze in second step
+            freeze_modules(self.step_two_freeze)
+            # unfreeze in second step
+            unfreeze_modules(self.step_two_unfreeze)
             # forward pass & compute loss
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
 
             # Compute exact loss with knowledge
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
+            loss = loss.mean()
 
             # Compute regret loss
             pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
@@ -223,7 +251,6 @@ class SANETrainer(TorchModuleBaseTrainer):
             regret_loss = regret_loss.mean()
 
             # Compute regret-augmented loss with knowledge
-            loss = loss.mean()
             augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
 
             if train:
@@ -233,6 +260,8 @@ class SANETrainer(TorchModuleBaseTrainer):
 
             # Update Split Loss
             split_loss += loss.item()
+            # Update split nle loss
+            split_nle_loss += nle.loss.mean().item()
             # Update Split Knowledge relevance
             split_ekri += nle.knowledge_relevance.mean().item()
             split_pkri += pred.knowledge_relevance.mean().item()
@@ -255,7 +284,8 @@ class SANETrainer(TorchModuleBaseTrainer):
             f'{split}_acc': split_acc,
             f'{split}_acc_nk': split_acc_nk,
             f'{split}_loss': split_loss,
-            f'{split}_loss_nk': split_loss_nk,
+            f'{split}_nle_loss': split_nle_loss,
+            f'{split}_nle_loss_nk': split_loss_nk,
             f'{split}_time': split_time,
             f'{split}_ekri': split_ekri,  # explanation knowledge relevance
             f'{split}_pkri': split_pkri,  # prediction knowledge relevance

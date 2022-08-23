@@ -28,7 +28,11 @@ class Attention(nn.Module):
             for _ in range(settings.num_attn_heads)
         ])
 
-        self.final_proj = nn.Linear(settings.num_attn_heads * settings.sent_dim, settings.sent_dim)
+        self.transform = nn.Sequential(
+            nn.Linear(settings.num_attn_heads * settings.sent_dim, settings.sent_dim),
+            nn.ReLU(),
+            nn.Linear(settings.sent_dim, settings.sent_dim),
+        )
 
     def forward(self, inputs, knowledge):
         # send tensors to gpu
@@ -50,7 +54,7 @@ class Attention(nn.Module):
             attention_output_list.append(attention_output)  # (batch_size, hidden_dim)
 
         # (num_heads, batch_size, knowledge_size), (batch_size, hidden_dim)
-        weights, output = torch.cat(attention_weights_list, dim=0), self.final_proj(
+        weights, output = torch.cat(attention_weights_list, dim=0), self.transform(
             torch.cat(attention_output_list, dim=1))
 
         if self.training:

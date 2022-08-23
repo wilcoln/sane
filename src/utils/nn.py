@@ -93,3 +93,13 @@ def unfreeze(model):
     # unfreeze parameters
     for param in model.parameters():
         param.requires_grad = True
+
+
+def freeze_modules(models):
+    for model in models:
+        freeze(model)
+
+
+def unfreeze_modules(models):
+    for model in models:
+        unfreeze(model)

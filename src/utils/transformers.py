@@ -35,6 +35,10 @@ class BartWithKnowledgeModel(BartModel):
             nn.ReLU(),
             nn.Linear(self.config.d_model, self.config.d_model),
         )
+    
+        # freeze the encoder weights
+        for param in self.encoder.parameters():
+            param.requires_grad = False
 
     def forward(
             self,

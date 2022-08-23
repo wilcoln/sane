@@ -21,6 +21,7 @@ class SANE(nn.Module):
         pred = self.predictor(inputs, att_knwl.output, nle)
         return pred, nle, att_knwl, knwl
 
+    @property
     def g_modules(self):
         return [
             self.encoder,
@@ -29,16 +30,19 @@ class SANE(nn.Module):
             self.predictor.fusion_head,
         ]
 
+    @property
     def h_modules(self):
         return [
             self.explainer.model.model.transform,
             self.predictor.transform,
         ]
 
+    @property
     def f_modules(self):
         return [
             self.explainer.model.lm_head,
             self.predictor.pred_head,
+            self.explainer.model.model.decoder,
         ]
 
 

@@ -28,15 +28,17 @@ esnli_input_dict = {
         2,
         1,
     ],
-    'Explanation_1': [
-        "We don't know whether Wilfried is from Cameroon",
-        'John cannot be a professional football player and plays basketball for a living',
-        'Not all research projects are about explaining machine learning models',
-        "Just because SANE beats sota performance doesn't mean it is bugged",
-        'An automated tool cannot be sentient',
-        'The dog is not necessarily running after a squirrel',
-        "he needs a flashlight because he's in the dark",
-    ],
+    # 'Explanation_1': [
+    #     "We don't know whether Wilfried is from Cameroon",
+    #     'John cannot be a professional football player and plays basketball for a living',
+    #     'Not all research projects are about explaining machine learning models',
+    #     "Just because SANE beats sota performance doesn't mean it is bugged",
+    #     'An automated tool cannot be sentient',
+    #     'The dog is not necessarily running after a squirrel',
+    #     "he needs a flashlight because he's in the dark",
+    # ],
+
+    'Explanation_1': ['' for _ in range(7)],
 }
 
 ic('Create Dataset')
