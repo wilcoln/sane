@@ -100,7 +100,6 @@ class BartWithKnowledgeModel(BartModel):
                 attentions=encoder_outputs[2] if len(encoder_outputs) > 2 else None,
             )
 
-
         encoder_output = self.transform(encoder_outputs[0])
 
         # With knowledge

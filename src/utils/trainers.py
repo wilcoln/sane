@@ -57,7 +57,7 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
         folder_name = '_'.join([date] + [f'{k}={v}' for k, v in params_dict.items() if v is not None])
-        self.results_path = osp.join(settings.results_dir, 'trainers', folder_name)
+        self.results_path = osp.join(settings.results_dir, 'trainers', folder_name)[:200]
 
         # Create results folder
         os.makedirs(self.results_path)
@@ -231,43 +231,44 @@ class SANETrainer(TorchModuleBaseTrainer):
             ##################################################
             # (2) Compute regret-augmented loss with knowledge
             ##################################################
-            # freeze in second step
-            freeze_modules(self.step_two_freeze)
-            # unfreeze in second step
-            unfreeze_modules(self.step_two_unfreeze)
-            # forward pass & compute loss
-            outputs = self.model(inputs)
-            pred, nle = outputs[:2]
-
-            # Compute exact loss with knowledge
-            loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
-            loss = loss.mean()
-
-            # Compute regret loss
-            pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
-            nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
-
-            regret_loss = settings.alpha * nle_regret + (1 - settings.alpha) * pred_regret
-            regret_loss = regret_loss.mean()
-
-            # Compute regret-augmented loss with knowledge
-            augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
-
-            if train:
-                # backward pass + optimization step
-                augmented_loss.backward()
-                self.optimizer.step()
-
-            # Update Split Loss
-            split_loss += loss.item()
-            # Update split nle loss
-            split_nle_loss += nle.loss.mean().item()
-            # Update Split Knowledge relevance
-            split_ekri += nle.knowledge_relevance.mean().item()
-            split_pkri += pred.knowledge_relevance.mean().item()
-            # Update Accuracy
-            predicted = pred.logits.argmax(1)
-            correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
+            if not settings.ablate_knowledge:
+                # freeze in second step
+                freeze_modules(self.step_two_freeze)
+                # unfreeze in second step
+                unfreeze_modules(self.step_two_unfreeze)
+                # forward pass & compute loss
+                outputs = self.model(inputs)
+                pred, nle = outputs[:2]
+    
+                # Compute exact loss with knowledge
+                loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
+                loss = loss.mean()
+    
+                # Compute regret loss
+                pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
+                nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
+    
+                regret_loss = settings.alpha * nle_regret + (1 - settings.alpha) * pred_regret
+                regret_loss = regret_loss.mean()
+    
+                # Compute regret-augmented loss with knowledge
+                augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
+    
+                if train:
+                    # backward pass + optimization step
+                    augmented_loss.backward()
+                    self.optimizer.step()
+    
+                # Update Split Loss
+                split_loss += loss.item()
+                # Update split nle loss
+                split_nle_loss += nle.loss.mean().item()
+                # Update Split Knowledge relevance
+                split_ekri += nle.knowledge_relevance.mean().item()
+                split_pkri += pred.knowledge_relevance.mean().item()
+                # Update Accuracy
+                predicted = pred.logits.argmax(1)
+                correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
 
             # Update total
             total += inputs['gold_label'].size(0)
