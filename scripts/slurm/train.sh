@@ -76,4 +76,11 @@
 # python src/experiments/train.py --dataset=cose --num_epochs=20 --alpha=.4 --max_concepts_per_sent=20
 
 
-python src/experiments/train.py --dataset=comve --num_epochs=20 --max_concepts_per_sent=20 --algo=2 --batch_size=1
+# Monitor all of these
+# python src/experiments/train.py --dataset=comve --num_epochs=15 --algo=4
+# python src/experiments/train.py --dataset=comve --num_epochs=15 --algo=2
+# python src/experiments/train.py --dataset=comve --num_epochs=15 --algo=3
+
+# python src/experiments/train.py --dataset=comve --num_epochs=20 --hidden_dim=256 --max_concepts_per_sent=20
+# python src/experiments/train.py --dataset=cose --num_epochs=20 --hidden_dim=256 --max_concepts_per_sent=20 --algo=4
+python src/experiments/train.py --dataset=cose --num_epochs=15 --no_knowledge

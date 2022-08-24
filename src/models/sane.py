@@ -33,6 +33,7 @@ class SANE(nn.Module):
     @property
     def h_modules(self):
         return {
+            self.explainer.model.model.encoder,
             self.explainer.model.model.transform,
             self.predictor.transform,
         }
