@@ -21,7 +21,6 @@ _exp_settings = [
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
     ('beta', 'Exact loss weight in regret-augmented loss', float, 0.5),
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
-    ('ablate_knowledge', 'Ablate knowledge', bool, False),
     ('no_knowledge', 'Disable Knowledge attention', bool, False),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
 ]

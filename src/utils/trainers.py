@@ -144,28 +144,20 @@ class SANETrainer(TorchModuleBaseTrainer):
         self.test_loader = test_loader
 
         if settings.algo == 1:
-            self.step_one_unfreeze = self.model.f_modules
-            self.step_one_freeze = self.model.g_modules + self.model.h_modules
-            self.step_two_unfreeze = self.model.g_modules + self.model.h_modules
-            self.step_two_freeze = self.model.f_modules
+            self.step_one_train = self.model.f_modules
+            self.step_two_train = self.model.h_modules | self.model.g_modules
 
         elif settings.algo == 2:
-            self.step_one_unfreeze = self.model.f_modules + self.model.h_modules
-            self.step_one_freeze = self.model.g_modules
-            self.step_two_unfreeze = self.model.g_modules
-            self.step_two_freeze = []
+            self.step_one_train = self.model.f_modules | self.model.h_modules
+            self.step_two_train = self.model.f_modules | self.model.g_modules | self.model.h_modules
 
         elif settings.algo == 3:
-            self.step_one_unfreeze = self.model.f_modules + self.model.h_modules
-            self.step_one_freeze = self.model.g_modules
-            self.step_two_unfreeze = self.model.g_modules
-            self.step_two_freeze = self.model.f_modules + self.model.h_modules
+            self.step_one_train = self.model.f_modules | self.model.h_modules
+            self.step_two_train = self.model.g_modules
 
         elif settings.algo == 4:
-            self.step_one_unfreeze = self.model.f_modules
-            self.step_one_freeze = self.model.g_modules + self.model.h_modules
-            self.step_two_unfreeze = self.model.g_modules + self.model.h_modules
-            self.step_two_freeze = []
+            self.step_one_train = self.model.f_modules
+            self.step_two_train = self.model.f_modules | self.model.g_modules | self.model.h_modules
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
@@ -201,10 +193,11 @@ class SANETrainer(TorchModuleBaseTrainer):
             #####################################
             # (1) Compute loss without knowledge
             #####################################
-            # unfreeze in first step
-            unfreeze_modules(self.step_one_unfreeze)
             # freeze in first step
-            freeze_modules(self.step_one_freeze)
+            freeze_modules(self.step_two_train)
+            # unfreeze in first step
+            unfreeze_modules(self.step_one_train)
+
             # forward pass & compute loss without knowledge
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
@@ -228,47 +221,46 @@ class SANETrainer(TorchModuleBaseTrainer):
             del outputs, pred, nle, predicted, loss_nk
             # reset the gradients
 
-            if not settings.ablate_knowledge:
-                ##################################################
-                # (2) Compute regret-augmented loss with knowledge
-                ##################################################
-                # freeze in second step
-                freeze_modules(self.step_two_freeze)
-                # unfreeze in second step
-                unfreeze_modules(self.step_two_unfreeze)
-                # forward pass & compute loss
-                outputs = self.model(inputs)
-                pred, nle = outputs[:2]
-    
-                # Compute exact loss with knowledge
-                loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
-                loss = loss.mean()
-    
-                # Compute regret loss
-                pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
-                nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
-    
-                regret_loss = settings.alpha * nle_regret + (1 - settings.alpha) * pred_regret
-                regret_loss = regret_loss.mean()
-    
-                # Compute regret-augmented loss with knowledge
-                augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
-    
-                if train:
-                    # backward pass + optimization step
-                    augmented_loss.backward()
-                    self.optimizer.step()
-    
-                # Update Split Loss
-                split_loss += loss.item()
-                # Update split nle loss
-                split_nle_loss += nle.loss.mean().item()
-                # Update Split Knowledge relevance
-                split_ekri += nle.knowledge_relevance.mean().item()
-                split_pkri += pred.knowledge_relevance.mean().item()
-                # Update Accuracy
-                predicted = pred.logits.argmax(1)
-                correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
+            ##################################################
+            # (2) Compute regret-augmented loss with knowledge
+            ##################################################
+            # freeze in second step
+            freeze_modules(self.step_one_train)
+            # unfreeze in second step
+            unfreeze_modules(self.step_two_train)
+            # forward pass & compute loss
+            outputs = self.model(inputs)
+            pred, nle = outputs[:2]
+
+            # Compute exact loss with knowledge
+            loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
+            loss = loss.mean()
+
+            # Compute regret loss
+            pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
+            nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
+
+            regret_loss = settings.alpha * nle_regret + (1 - settings.alpha) * pred_regret
+            regret_loss = regret_loss.mean()
+
+            # Compute regret-augmented loss with knowledge
+            augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
+
+            if train:
+                # backward pass + optimization step
+                augmented_loss.backward()
+                self.optimizer.step()
+
+            # Update Split Loss
+            split_loss += loss.item()
+            # Update split nle loss
+            split_nle_loss += nle.loss.mean().item()
+            # Update Split Knowledge relevance
+            split_ekri += nle.knowledge_relevance.mean().item()
+            split_pkri += pred.knowledge_relevance.mean().item()
+            # Update Accuracy
+            predicted = pred.logits.argmax(1)
+            correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
 
             # Update total
             total += inputs['gold_label'].size(0)
@@ -290,6 +282,85 @@ class SANETrainer(TorchModuleBaseTrainer):
             f'{split}_time': split_time,
             f'{split}_ekri': split_ekri,  # explanation knowledge relevance
             f'{split}_pkri': split_pkri,  # prediction knowledge relevance
+        }
+
+    def train(self) -> dict:
+        return self.evaluate(self.train_loader, 'train')
+
+    @torch.no_grad()
+    def eval(self) -> dict:
+        return self.evaluate(self.val_loader, 'val')
+
+    @torch.no_grad()
+    def test(self) -> dict:
+        return self.evaluate(self.test_loader, 'test')
+
+
+class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
+    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
+        super().__init__(model, optimizer)
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.test_loader = test_loader
+
+    def evaluate(self, dataloader, split):
+        """Train, Evaluate, and Test the Model"""
+
+        description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
+        if dataloader is None:
+            print(f'Skipping {description[split]}')
+            return {}
+
+        assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
+
+        train = split == 'train' and (not settings.frozen)
+
+        self.model.train() if train else self.model.eval()
+
+        # Set split loss value
+        split_loss = 0.0
+
+        # Reset values for accuracy computation
+        correct = 0
+        total = 0
+
+        # Iterate over the DataLoader for training data
+        pbar = tqdm(enumerate(dataloader, 0), total=len(dataloader))
+        pbar.set_description(description[split])
+        start = time.time()
+        for i, inputs in pbar:
+            if train:
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
+
+            # forward pass & compute loss
+            outputs = self.model(inputs)
+            pred, nle = outputs[:2]
+
+            # Compute model loss
+            loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
+            loss = loss.mean()
+
+            if train:
+                # backward pass + optimization step
+                loss.backward()
+                self.optimizer.step()
+
+            # Update Split Loss
+            split_loss += loss.item()
+            # Update Accuracy
+            predicted = pred.logits.argmax(1)
+            total += inputs['gold_label'].size(0)
+            correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
+
+        split_time = time.time() - start
+        split_loss /= len(dataloader)
+        split_acc = 100. * correct / total
+
+        return {
+            f'{split}_acc': split_acc,
+            f'{split}_loss': split_loss,
+            f'{split}_time': split_time,
         }
 
     def train(self) -> dict:

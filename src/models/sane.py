@@ -23,27 +23,27 @@ class SANE(nn.Module):
 
     @property
     def g_modules(self):
-        return [
+        return {
             self.encoder,
             self.attention,
             self.explainer.model.model.fusion_head,
             self.predictor.fusion_head,
-        ]
+        }
 
     @property
     def h_modules(self):
-        return [
+        return {
             self.explainer.model.model.transform,
             self.predictor.transform,
-        ]
+        }
 
     @property
     def f_modules(self):
-        return [
+        return {
+            self.explainer.model.model.decoder,
             self.explainer.model.lm_head,
             self.predictor.pred_head,
-            self.explainer.model.model.decoder,
-        ]
+        }
 
 
 class SANENoKnowledge(nn.Module):
