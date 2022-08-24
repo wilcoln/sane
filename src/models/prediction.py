@@ -11,7 +11,7 @@ from src.utils.embeddings import transformer_sentence_pool
 class PredictorOutput:
     loss: torch.Tensor
     logits: torch.Tensor
-    logits_no_knowledge: torch.Tensor
+    logits_no_knowledge: torch.Tensor = None
     knowledge_relevance: torch.Tensor = None
     loss_no_knowledge: torch.Tensor = None
 
@@ -51,7 +51,7 @@ class PredictorNoKnowledge(nn.Module):
     def __init__(self):
         super().__init__()
         self.lin = nn.Linear(2 * settings.sent_dim, settings.num_classes)
-        self.loss_fn = nn.CrossEntropyLoss(reduction='none')
+        self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, inputs, nle):
         nle_embed = transformer_sentence_pool(nle.last_hidden_state)

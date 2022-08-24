@@ -136,12 +136,32 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         return self.results[self.best_epoch - 1][val_metric_key] <= epoch_results[val_metric_key]
 
 
-class SANETrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
+class SANEVariantTrainer(TorchModuleBaseTrainer):
+    def __init__(self, model, optimizer, train_loader, val_loader, test_loader):
         super().__init__(model, optimizer)
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
+        self.split_descriptions = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
+
+    def evaluate(self, loader, split) -> dict:
+        raise NotImplementedError
+
+    def train(self) -> dict:
+        return self.evaluate(self.train_loader, 'train')
+
+    @torch.no_grad()
+    def eval(self) -> dict:
+        return self.evaluate(self.val_loader, 'val')
+
+    @torch.no_grad()
+    def test(self) -> dict:
+        return self.evaluate(self.test_loader, 'test')
+
+
+class SANETrainer(SANEVariantTrainer):
+    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
+        super().__init__(model, optimizer, train_loader, val_loader, test_loader)
 
         if settings.algo == 1:
             self.step_one_train = self.model.f_modules
@@ -162,12 +182,9 @@ class SANETrainer(TorchModuleBaseTrainer):
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
 
-        description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
         if dataloader is None:
-            print(f'Skipping {description[split]}')
+            print(f'Skipping {self.split_descriptions[split]}')
             return {}
-
-        assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
 
         train = split == 'train' and (not settings.frozen)
 
@@ -185,7 +202,7 @@ class SANETrainer(TorchModuleBaseTrainer):
 
         # Iterate over the DataLoader for training data
         pbar = tqdm(enumerate(dataloader, 0), total=len(dataloader))
-        pbar.set_description(description[split])
+        pbar.set_description(self.split_descriptions[split])
         start = time.time()
         for i, inputs in pbar:
             if train:
@@ -284,34 +301,21 @@ class SANETrainer(TorchModuleBaseTrainer):
             f'{split}_pkri': split_pkri,  # prediction knowledge relevance
         }
 
-    def train(self) -> dict:
-        return self.evaluate(self.train_loader, 'train')
 
-    @torch.no_grad()
-    def eval(self) -> dict:
-        return self.evaluate(self.val_loader, 'val')
-
-    @torch.no_grad()
-    def test(self) -> dict:
-        return self.evaluate(self.test_loader, 'test')
-
-
-class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
+class SANENoKnowledgeTrainer(SANEVariantTrainer):
     def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
-        super().__init__(model, optimizer)
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.test_loader = test_loader
+        super().__init__(model, optimizer, train_loader, val_loader, test_loader)
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
 
-        description = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
         if dataloader is None:
-            print(f'Skipping {description[split]}')
+            print(f'Skipping {self.split_descriptions[split]}')
             return {}
 
-        assert split in {'train', 'val', 'test'}, "split must be either 'train', 'val' or 'test'"
+        train = split == 'train' and (not settings.frozen)
+
+        self.model.train() if train else self.model.eval()
 
         train = split == 'train' and (not settings.frozen)
 
@@ -319,6 +323,7 @@ class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
 
         # Set split loss value
         split_loss = 0.0
+        split_nle_loss = 0.0
 
         # Reset values for accuracy computation
         correct = 0
@@ -326,7 +331,7 @@ class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
 
         # Iterate over the DataLoader for training data
         pbar = tqdm(enumerate(dataloader, 0), total=len(dataloader))
-        pbar.set_description(description[split])
+        pbar.set_description(self.split_descriptions[split])
         start = time.time()
         for i, inputs in pbar:
             if train:
@@ -339,7 +344,6 @@ class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
 
             # Compute model loss
             loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
-            loss = loss.mean()
 
             if train:
                 # backward pass + optimization step
@@ -348,6 +352,8 @@ class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
 
             # Update Split Loss
             split_loss += loss.item()
+            # Update split nle loss
+            split_nle_loss += nle.loss.item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
             total += inputs['gold_label'].size(0)
@@ -360,16 +366,6 @@ class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
         return {
             f'{split}_acc': split_acc,
             f'{split}_loss': split_loss,
+            f'{split}_nle_loss': split_nle_loss,
             f'{split}_time': split_time,
         }
-
-    def train(self) -> dict:
-        return self.evaluate(self.train_loader, 'train')
-
-    @torch.no_grad()
-    def eval(self) -> dict:
-        return self.evaluate(self.val_loader, 'val')
-
-    @torch.no_grad()
-    def test(self) -> dict:
-        return self.evaluate(self.test_loader, 'test')
