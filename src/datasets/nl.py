@@ -100,7 +100,7 @@ def collate_fn(batch):
         neighboring_concept_ids = neighboring_concept_ids[top_neighboring_concepts_indices]
 
         # Merge exact and neighboring concept ids and filter out duplicates
-        concept_ids = torch.cat([exact_concept_ids.squeeze(), neighboring_concept_ids.squeeze()], dim=0)
+        concept_ids = torch.cat([exact_concept_ids.flatten(), neighboring_concept_ids.flatten()], dim=0)
         concept_ids = torch.unique(concept_ids)
 
         # Finalize batch
