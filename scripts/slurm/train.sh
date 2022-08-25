@@ -71,7 +71,7 @@
 # python src/preprocessing/esnli.py --data_frac=.05
 
 # Test new architecture
-# python src/experiments/train.py --data_frac=.05 --dataset=esnli --batch_size=64 --algo=2
+python src/experiments/train.py --data_frac=.05 --dataset=esnli --batch_size=64
 # python src/experiments/train.py --dataset=comve --num_epochs=20 --alpha=.01 --beta=.9 --hidden_dim=512 --max_concepts_per_sent=10 --weight_decay=.1
 # python src/experiments/train.py --dataset=cose --num_epochs=20 --alpha=.4 --max_concepts_per_sent=20
 
@@ -83,4 +83,4 @@
 
 # python src/experiments/train.py --dataset=comve --num_epochs=20 --hidden_dim=256 --max_concepts_per_sent=20
 # python src/experiments/train.py --dataset=cose --num_epochs=20 --hidden_dim=256 --max_concepts_per_sent=20 --algo=4
-python src/experiments/train.py --dataset=cose --num_epochs=15 --no_knowledge
+# python src/experiments/train.py --dataset=cose --num_epochs=15 --no_knowledge --chunk_size=5000
