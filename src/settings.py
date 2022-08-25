@@ -19,6 +19,8 @@ _exp_settings = [
     ('sentence_pool', 'Sentence pool', str, 'mean'),
     ('data_frac', 'Data fraction', float, 1.0),
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
+    ('alpha_regret', 'NLE regret weight in total regret', float, 0.5),
+    ('margin_regret', 'Regret margin', float, 1.0),
     ('beta', 'Exact loss weight in regret-augmented loss', float, 0.5),
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
     ('no_knowledge', 'Disable Knowledge attention', bool, False),

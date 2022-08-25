@@ -257,7 +257,7 @@ class SANETrainer(SANEVariantTrainer):
             pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
             nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
 
-            regret_loss = settings.alpha * nle_regret + (1 - settings.alpha) * pred_regret
+            regret_loss = settings.alpha_regret * nle_regret + (1 - settings.alpha_regret) * pred_regret
             regret_loss = regret_loss.mean()
 
             # Compute regret-augmented loss with knowledge
@@ -294,6 +294,7 @@ class SANETrainer(SANEVariantTrainer):
             f'{split}_acc': split_acc,
             f'{split}_acc_nk': split_acc_nk,
             f'{split}_loss': split_loss,
+            f'{split}_loss_nk': split_loss_nk,
             f'{split}_nle_loss': split_nle_loss,
             f'{split}_nle_loss_nk': split_loss_nk,
             f'{split}_time': split_time,
