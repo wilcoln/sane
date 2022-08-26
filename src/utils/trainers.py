@@ -164,16 +164,16 @@ class SANETrainer(SANEVariantTrainer):
         super().__init__(model, optimizer, train_loader, val_loader, test_loader)
 
         if settings.algo == 1:
-            self.step_one_train = self.model.f_modules
-            self.step_two_train = self.model.h_modules | self.model.g_modules
+            self.step_one_train = self.model.f_modules | self.model.h_modules
+            self.step_two_train = self.model.g_modules
 
         elif settings.algo == 2:
             self.step_one_train = self.model.f_modules | self.model.h_modules
             self.step_two_train = self.model.f_modules | self.model.g_modules | self.model.h_modules
 
         elif settings.algo == 3:
-            self.step_one_train = self.model.f_modules | self.model.h_modules
-            self.step_two_train = self.model.g_modules
+            self.step_one_train = self.model.f_modules
+            self.step_two_train = self.model.h_modules | self.model.g_modules
 
         elif settings.algo == 4:
             self.step_one_train = self.model.f_modules
