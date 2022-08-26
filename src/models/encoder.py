@@ -31,7 +31,7 @@ class Encoder(nn.Module):
         x, edge_index, edge_attr = self.gnn(x, edge_index, edge_attr)
         encoded_triples = self.lin(singles_to_triples(x, edge_index, edge_attr))
 
-        if False: # self.training:
+        if self.training:
             return EncoderOutput(output=encoded_triples)
         else:
             # Return triple ids too
