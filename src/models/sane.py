@@ -22,9 +22,10 @@ class SANE(nn.Module):
     def g_modules(self):
         return {
             self.encoder,
-            self.attention,
-            self.explainer.model.model.fusion_head,
+            self.predictor.attention,
             self.predictor.fusion_head,
+            self.explainer.model.model.attention,
+            self.explainer.model.model.fusion_head,
         }
 
     @property
