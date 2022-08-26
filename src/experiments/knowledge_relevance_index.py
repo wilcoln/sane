@@ -31,6 +31,7 @@ def compute_knowledge_relevance_index(model, inputs, results_path):
     plt.tight_layout()
     # Save the plot in the results directory
     plt.savefig(osp.join(results_path, 'knowledge_relevance_index.pdf'))
+    plt.savefig(osp.join(results_path, 'knowledge_relevance_index.png'))
 
     # Show the plot
     plt.show()

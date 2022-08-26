@@ -40,6 +40,7 @@ def plot_loss_comparison(results):
 
     # Save the plot in the results directory
     plt.savefig(osp.join(results_path, 'loss_comparison.pdf'))
+    plt.savefig(osp.join(results_path, 'loss_comparison.png'))
 
     # Show the plot
     plt.show()
