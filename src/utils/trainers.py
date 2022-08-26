@@ -160,24 +160,10 @@ class SANEVariantTrainer(TorchModuleBaseTrainer):
 
 
 class SANETrainer(SANEVariantTrainer):
-    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
+    def __init__(self, model, model_nk, optimizer, optimizer_nk, train_loader, val_loader, test_loader=None):
         super().__init__(model, optimizer, train_loader, val_loader, test_loader)
-
-        if settings.algo == 1:
-            self.step_one_train = self.model.f_modules
-            self.step_two_train = self.model.h_modules | self.model.g_modules
-
-        elif settings.algo == 2:
-            self.step_one_train = self.model.f_modules | self.model.h_modules
-            self.step_two_train = self.model.f_modules | self.model.g_modules | self.model.h_modules
-
-        elif settings.algo == 3:
-            self.step_one_train = self.model.f_modules | self.model.h_modules
-            self.step_two_train = self.model.g_modules
-
-        elif settings.algo == 4:
-            self.step_one_train = self.model.f_modules
-            self.step_two_train = self.model.f_modules | self.model.g_modules | self.model.h_modules
+        self.model_nk = model_nk
+        self.optimizer_nk = optimizer_nk
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
@@ -209,34 +195,25 @@ class SANETrainer(SANEVariantTrainer):
             # (1) Compute loss without knowledge
             #####################################
             if train:
-                self.optimizer.zero_grad()
-
-            # freeze in first step
-            freeze_modules(self.step_two_train)
-            # unfreeze in first step
-            unfreeze_modules(self.step_one_train)
+                self.optimizer_nk.zero_grad()
 
             # forward pass & compute loss without knowledge
-            outputs = self.model(inputs)
-            pred, nle = outputs[:2]
-            loss_nk = (settings.alpha * nle.loss_no_knowledge.mean()
-                       + (1 - settings.alpha) * pred.loss_no_knowledge.mean())
+            outputs = self.model_nk(inputs)
+            pred_nk, nle_nk = outputs[:2]
+            loss_nk = settings.alpha * nle_nk.loss.mean() + (1 - settings.alpha) * pred_nk.loss.mean()
 
             if train:
                 # backward pass + optimization step
                 loss_nk.backward()
-                self.optimizer.step()
-                self.optimizer.zero_grad()
+                self.optimizer_nk.step()
 
             # Update Split Loss no knowledge
             split_loss_nk += loss_nk.item()
             # Update split nle loss no knowledge
-            split_nle_loss_nk += nle.loss_no_knowledge.mean().item()
+            split_nle_loss_nk += nle_nk.loss.mean().item()
             # Update Accuracy
-            predicted = pred.logits_no_knowledge.argmax(1)
+            predicted = pred_nk.logits.argmax(1)
             correct_nk += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
-            # clean intermediate vars
-            del outputs, pred, nle, predicted, loss_nk
 
             ##################################################
             # (2) Compute regret-augmented loss with knowledge
@@ -245,11 +222,6 @@ class SANETrainer(SANEVariantTrainer):
                 # reset the gradients
                 self.optimizer.zero_grad()
 
-            # freeze in second step
-            freeze_modules(self.step_one_train)
-            # unfreeze in second step
-            unfreeze_modules(self.step_two_train)
-            # forward pass & compute loss
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
 
@@ -257,8 +229,8 @@ class SANETrainer(SANEVariantTrainer):
             loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
 
             # Compute regret loss
-            pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
-            nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
+            pred_regret = regret(pred.loss, pred_nk.loss, reduce=False)
+            nle_regret = regret(nle.loss, nle_nk.loss, reduce=False)
 
             regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
 
@@ -272,7 +244,6 @@ class SANETrainer(SANEVariantTrainer):
 
             # Update Split Loss
             split_loss += loss.item()
-            # Update split pred loss
             # Update split nle loss
             split_nle_loss += nle.loss.mean().item()
             # Update Split Knowledge relevance
