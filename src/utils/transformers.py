@@ -17,9 +17,7 @@ logger = logging.get_logger(__name__)
 @dataclass
 class BartForConditionalGenerationOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
-    last_hidden_state_no_knowledge: Optional[torch.Tensor] = None
     knowledge_relevance: Optional[torch.Tensor] = None
-    loss_no_knowledge: Optional[torch.Tensor] = None
 
 
 @dataclass
@@ -27,7 +25,6 @@ class BartModelOutput(Seq2SeqModelOutput):
     knowledge_relevance: Optional[torch.Tensor] = None
     knowledge_attention_weights: Optional[torch.Tensor] = None
     transformed_encoder_last_hidden_state: Optional[torch.Tensor] = None
-    last_hidden_state_no_knowledge: Optional[torch.Tensor] = None
 
 
 class BartModel(BaseBartModel):
@@ -114,7 +111,6 @@ class BartModel(BaseBartModel):
 
         return BartModelOutput(
             last_hidden_state=decoder_outputs.last_hidden_state,
-            last_hidden_state_no_knowledge=decoder_outputs.last_hidden_state,
             transformed_encoder_last_hidden_state=transformed_encoder_last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
@@ -151,35 +147,57 @@ class BartWithKnowledgeModel(BartModel):
             *,
             knowledge_embedding=None,
     ) -> Union[Tuple, BartModelOutput]:
-        bart_outputs = super().forward(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            decoder_input_ids=decoder_input_ids,
-            decoder_attention_mask=decoder_attention_mask,
-            head_mask=head_mask,
-            decoder_head_mask=decoder_head_mask,
-            cross_attn_head_mask=cross_attn_head_mask,
-            encoder_outputs=encoder_outputs,
-            past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds,
-            decoder_inputs_embeds=decoder_inputs_embeds,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
+        # different to other models, Bart automatically creates decoder_input_ids from
+        # input_ids if no decoder_input_ids are provided
+        if decoder_input_ids is None and decoder_inputs_embeds is None:
+            if input_ids is None:
+                raise ValueError(
+                    "If no `decoder_input_ids` or `decoder_inputs_embeds` are "
+                    "passed, `input_ids` cannot be `None`. Please pass either "
+                    "`input_ids` or `decoder_input_ids` or `decoder_inputs_embeds`."
+                )
+
+            decoder_input_ids = shift_tokens_right(
+                input_ids, self.config.pad_token_id, self.config.decoder_start_token_id
+            )
+
+        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+        output_hidden_states = (
+            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
+        use_cache = use_cache if use_cache is not None else self.config.use_cache
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        if encoder_outputs is None:
+            encoder_outputs = self.encoder(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                head_mask=head_mask,
+                inputs_embeds=inputs_embeds,
+                output_attentions=output_attentions,
+                output_hidden_states=output_hidden_states,
+                return_dict=return_dict,
+            )
+        # If the user passed a tuple for encoder_outputs, we wrap it in a BaseModelOutput when return_dict=True
+        elif return_dict and not isinstance(encoder_outputs, BaseModelOutput):
+            encoder_outputs = BaseModelOutput(
+                last_hidden_state=encoder_outputs[0],
+                hidden_states=encoder_outputs[1] if len(encoder_outputs) > 1 else None,
+                attentions=encoder_outputs[2] if len(encoder_outputs) > 2 else None,
+            )
 
         # With knowledge
         # Fuse knowledge and encoder transformed outputs
-        att_knwl = self.attention(bart_outputs.encoder_last_hidden_state, knowledge_embedding)
-        input_fusion_head = torch.cat([bart_outputs.encoder_last_hidden_state, att_knwl.output], dim=2)
+        att_knwl = self.attention(encoder_outputs.last_hidden_state, knowledge_embedding)
+        input_fusion_head = torch.cat([encoder_outputs.last_hidden_state, att_knwl.output], dim=2)
         r = torch.sigmoid(self.fusion_head(input_fusion_head))
 
+        transformed_encoder_last_hidden_state = self.transform(encoder_outputs.last_hidden_state)
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,
             attention_mask=decoder_attention_mask,
-            encoder_hidden_states=bart_outputs.transformed_encoder_last_hidden_state + r * att_knwl.output,
+            encoder_hidden_states=transformed_encoder_last_hidden_state + r * att_knwl.output,
             encoder_attention_mask=attention_mask,
             head_mask=decoder_head_mask,
             cross_attn_head_mask=cross_attn_head_mask,
@@ -195,14 +213,13 @@ class BartWithKnowledgeModel(BartModel):
             knowledge_relevance=r,
             knowledge_attention_weights=att_knwl.weights,
             last_hidden_state=decoder_outputs.last_hidden_state,
-            last_hidden_state_no_knowledge=bart_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
             decoder_attentions=decoder_outputs.attentions,
             cross_attentions=decoder_outputs.cross_attentions,
-            encoder_last_hidden_state=bart_outputs.encoder_last_hidden_state,
-            encoder_hidden_states=bart_outputs.encoder_hidden_states,
-            encoder_attentions=bart_outputs.encoder_attentions,
+            encoder_last_hidden_state=encoder_outputs.last_hidden_state,
+            encoder_hidden_states=encoder_outputs.hidden_states,
+            encoder_attentions=encoder_outputs.attentions,
         )
 
 
@@ -304,7 +321,7 @@ class BartForConditionalGeneration(BartPretrainedModel):
 
         masked_lm_loss = None
         if labels is not None:
-            loss_fct = CrossEntropyLoss()
+            loss_fct = CrossEntropyLoss(reduction='none')
             masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
 
         if not return_dict:
@@ -437,23 +454,14 @@ class BartWithKnowledgeForConditionalGeneration(BartForConditionalGeneration):
             loss_fct = CrossEntropyLoss(reduction='none')
             masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
 
-        # Without knowledge
-        lm_logits_nk = self.lm_head(outputs.last_hidden_state_no_knowledge) + self.final_logits_bias
-        masked_lm_loss_nk = None
-        if labels is not None:
-            loss_fct = CrossEntropyLoss(reduction='none')
-            masked_lm_loss_nk = loss_fct(lm_logits_nk.view(-1, self.config.vocab_size), labels.view(-1))
-
         if not return_dict:
             output = (lm_logits,) + outputs[1:]
             return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
 
         return BartForConditionalGenerationOutput(
             loss=masked_lm_loss,
-            loss_no_knowledge=masked_lm_loss_nk,
             logits=lm_logits,
             last_hidden_state=outputs.last_hidden_state,
-            last_hidden_state_no_knowledge=outputs.last_hidden_state_no_knowledge,
             past_key_values=outputs.past_key_values,
             decoder_hidden_states=outputs.decoder_hidden_states,
             decoder_attentions=outputs.decoder_attentions,
