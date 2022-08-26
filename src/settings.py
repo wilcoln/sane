@@ -20,8 +20,8 @@ _exp_settings = [
     ('data_frac', 'Data fraction', float, 1.0),
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
     ('alpha_regret', 'NLE regret weight in total regret', float, 0.5),
-    ('margin_regret', 'Regret margin', float, 1.0),
-    ('beta', 'Exact loss weight in regret-augmented loss', float, 0.5),
+    ('margin_regret', 'Regret margin', float, 0.0),
+    ('beta', 'Regret loss weight in regret-augmented loss', float, 0.5),
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
     ('no_knowledge', 'Disable Knowledge attention', bool, False),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
@@ -48,7 +48,7 @@ parser.add_argument('--monitor_test', action='store_true', default=False)
 parser.add_argument('--out_suffix', help='Output suffix', default='')
 parser.add_argument('--in_suffix', help='Input suffix', default='')
 parser.add_argument('--frozen', action='store_true', help='freeze model during train', default=False)
-parser.add_argument('--show_mem_info', action='store_true', help='Whether to show memory usage', default=False)
+parser.add_argument('--use_science', action='store_true', help='Whether to use scientific plots style', default=False)
 settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda'))
 setattr(settings, 'exp', {k: v for k, v in vars(settings).items() if k in [s[0] for s in _exp_settings] and v})

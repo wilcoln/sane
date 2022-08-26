@@ -21,7 +21,8 @@ def compute_knowledge_relevance_index(model, inputs, results_path):
     ekr = ekr.flatten().cpu().detach().numpy()
 
     # Plot histogram of pkr and ekr
-    plt.style.use('science')
+    if settings.use_science:
+        plt.style.use('science')
 
     plt.hist(pkr, bins=np.arange(0, 1.1, 0.05), alpha=0.5, label='Pred KRI', edgecolor='black', linewidth=1.)
     plt.hist(ekr, bins=np.arange(0, 1.1, 0.05), alpha=0.5, weights=ekr_factor*np.ones_like(ekr), label='NLE KRI',
@@ -29,7 +30,7 @@ def compute_knowledge_relevance_index(model, inputs, results_path):
     plt.legend(loc='upper right')
     plt.tight_layout()
     # Save the plot in the results directory
-    plt.savefig(osp.join(results_path, 'knowledge_relevance_index.png'))
+    plt.savefig(osp.join(results_path, 'knowledge_relevance_index.pdf'))
 
     # Show the plot
     plt.show()
@@ -41,7 +42,7 @@ if __name__ == '__main__':
 
     # Load model
     model = SANE().to(settings.device)
-    results_path = ''  # settings.input_dir
+    results_path = settings.input_dir
     model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
     model.eval()
 

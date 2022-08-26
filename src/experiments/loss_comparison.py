@@ -8,9 +8,11 @@ from src.utils.format import capitalize
 
 
 def plot_loss_comparison(results):
-    plt.style.use('science')
+    # Plot histogram of pkr and ekr
+    if settings.use_science:
+        plt.style.use('science')
 
-    keys = ['acc', 'nle_loss']
+    keys = ['loss', 'nle_loss']
     fig, axes = plt.subplots(1, len(keys))
     fig.set_size_inches(8, 4)
     for key, ax in zip(keys, axes):
@@ -37,7 +39,7 @@ def plot_loss_comparison(results):
     fig.tight_layout()
 
     # Save the plot in the results directory
-    plt.savefig(osp.join(results_path, 'loss_comparison.png'))
+    plt.savefig(osp.join(results_path, 'loss_comparison.pdf'))
 
     # Show the plot
     plt.show()
