@@ -9,6 +9,8 @@ from transformers.modeling_outputs import Seq2SeqLMOutput, Seq2SeqModelOutput, B
 from transformers.models.bart.modeling_bart import shift_tokens_right, BartPretrainedModel
 from transformers.utils import logging, ModelOutput
 
+from src.utils.attention_nle import AttentionNLE
+
 logger = logging.get_logger(__name__)
 
 
@@ -23,6 +25,7 @@ class BartForConditionalGenerationOutput(Seq2SeqLMOutput):
 @dataclass
 class BartModelOutput(Seq2SeqModelOutput):
     knowledge_relevance: Optional[torch.Tensor] = None
+    knowledge_attention_weights: Optional[torch.Tensor] = None
     transformed_encoder_last_hidden_state: Optional[torch.Tensor] = None
     last_hidden_state_no_knowledge: Optional[torch.Tensor] = None
 
@@ -32,7 +35,6 @@ class BartModel(BaseBartModel):
         super().__init__(config)
         self.fusion_head = nn.Linear(2 * self.config.d_model, 1)
         self.transform = nn.Identity()
-
 
     def forward(
             self,
@@ -125,6 +127,10 @@ class BartModel(BaseBartModel):
 
 
 class BartWithKnowledgeModel(BartModel):
+    def __init__(self, config: BartConfig):
+        super().__init__(config)
+        self.attention = AttentionNLE()
+
     def forward(
             self,
             input_ids: torch.LongTensor = None,
@@ -165,17 +171,15 @@ class BartWithKnowledgeModel(BartModel):
 
         # With knowledge
         # Fuse knowledge and encoder transformed outputs
-        n = bart_outputs.encoder_last_hidden_state.shape[0] // knowledge_embedding.shape[0]
-        m = bart_outputs.encoder_last_hidden_state.shape[1]
-        knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(n, m, 1)
-        input_fusion_head = torch.cat([bart_outputs.encoder_last_hidden_state, knowledge_embedding], dim=2)
+        att_knwl = self.attention(bart_outputs.encoder_last_hidden_state, knowledge_embedding)
+        input_fusion_head = torch.cat([bart_outputs.encoder_last_hidden_state, att_knwl.output], dim=2)
         r = torch.sigmoid(self.fusion_head(input_fusion_head))
-        
+
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,
             attention_mask=decoder_attention_mask,
-            encoder_hidden_states=bart_outputs.transformed_encoder_last_hidden_state + r * knowledge_embedding,
+            encoder_hidden_states=bart_outputs.transformed_encoder_last_hidden_state + r * att_knwl.output,
             encoder_attention_mask=attention_mask,
             head_mask=decoder_head_mask,
             cross_attn_head_mask=cross_attn_head_mask,
@@ -189,6 +193,7 @@ class BartWithKnowledgeModel(BartModel):
 
         return BartModelOutput(
             knowledge_relevance=r,
+            knowledge_attention_weights=att_knwl.weights,
             last_hidden_state=decoder_outputs.last_hidden_state,
             last_hidden_state_no_knowledge=bart_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,

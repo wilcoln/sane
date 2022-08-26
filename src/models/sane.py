@@ -1,6 +1,5 @@
 from torch import nn
 
-from src.models.attention import Attention
 from src.models.explanation import Explainer, ExplainerNoKnowledge
 from src.models.encoder import Encoder
 from src.models.prediction import Predictor, PredictorNoKnowledge
@@ -10,24 +9,23 @@ class SANE(nn.Module):
     def __init__(self):
         super().__init__()
         self.encoder = Encoder()
-        self.attention = Attention()
         self.explainer = Explainer()
         self.predictor = Predictor()
 
     def forward(self, inputs):
         knwl = self.encoder(inputs)
-        att_knwl = self.attention(inputs, knwl.output)
-        nle = self.explainer(inputs, att_knwl.output)
-        pred = self.predictor(inputs, att_knwl.output, nle)
-        return pred, nle, att_knwl, knwl
+        nle = self.explainer(inputs, knwl.output)
+        pred = self.predictor(inputs, knwl.output, nle)
+        return pred, nle, knwl
 
     @property
     def g_modules(self):
         return {
             self.encoder,
-            self.attention,
-            self.explainer.model.model.fusion_head,
+            self.predictor.attention,
             self.predictor.fusion_head,
+            self.explainer.model.model.attention,
+            self.explainer.model.model.fusion_head,
         }
 
     @property
