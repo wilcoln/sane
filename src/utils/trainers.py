@@ -190,7 +190,7 @@ class SANETrainer(SANEVariantTrainer):
 
         self.model.train() if train else self.model.eval()
 
-        # Set split loss value
+        # Set split loss values
         split_loss, split_loss_nk = 0.0, 0.0
         split_nle_loss, split_nle_loss_nk = 0.0, 0.0
         # Set split knowledge relevance indices
@@ -205,11 +205,12 @@ class SANETrainer(SANEVariantTrainer):
         pbar.set_description(self.split_descriptions[split])
         start = time.time()
         for i, inputs in pbar:
-            if train:
-                self.optimizer.zero_grad()
             #####################################
             # (1) Compute loss without knowledge
             #####################################
+            if train:
+                self.optimizer.zero_grad()
+
             # freeze in first step
             freeze_modules(self.step_two_train)
             # unfreeze in first step
@@ -218,8 +219,8 @@ class SANETrainer(SANEVariantTrainer):
             # forward pass & compute loss without knowledge
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
-            loss_nk = settings.alpha * nle.loss_no_knowledge + (1 - settings.alpha) * pred.loss_no_knowledge
-            loss_nk = loss_nk.mean()
+            loss_nk = (settings.alpha * nle.loss_no_knowledge.mean()
+                       + (1 - settings.alpha) * pred.loss_no_knowledge.mean())
 
             if train:
                 # backward pass + optimization step
@@ -236,11 +237,14 @@ class SANETrainer(SANEVariantTrainer):
             correct_nk += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
             # clean intermediate vars
             del outputs, pred, nle, predicted, loss_nk
-            # reset the gradients
 
             ##################################################
             # (2) Compute regret-augmented loss with knowledge
             ##################################################
+            if train:
+                # reset the gradients
+                self.optimizer.zero_grad()
+
             # freeze in second step
             freeze_modules(self.step_one_train)
             # unfreeze in second step
@@ -250,15 +254,13 @@ class SANETrainer(SANEVariantTrainer):
             pred, nle = outputs[:2]
 
             # Compute exact loss with knowledge
-            loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
-            loss = loss.mean()
+            loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
 
             # Compute regret loss
             pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
             nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
 
-            regret_loss = settings.alpha_regret * nle_regret + (1 - settings.alpha_regret) * pred_regret
-            regret_loss = regret_loss.mean()
+            regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
 
             # Compute regret-augmented loss with knowledge
             augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
@@ -270,6 +272,7 @@ class SANETrainer(SANEVariantTrainer):
 
             # Update Split Loss
             split_loss += loss.item()
+            # Update split pred loss
             # Update split nle loss
             split_nle_loss += nle.loss.mean().item()
             # Update Split Knowledge relevance

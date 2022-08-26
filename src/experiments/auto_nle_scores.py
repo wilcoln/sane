@@ -8,6 +8,7 @@ from src.datasets.nl import get_dataset
 from src.settings import settings
 import evaluate
 
+
 def compute_auto_nle_scores(results_path, test_dataset):
     # Load test results
     test_results_df = pd.read_csv(osp.join(results_path, f'test_results{settings.in_suffix}.csv'))
