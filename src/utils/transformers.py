@@ -30,7 +30,7 @@ class BartModelOutput(Seq2SeqModelOutput):
 class BartModel(BaseBartModel):
     def __init__(self, config: BartConfig):
         super().__init__(config)
-        self.fusion_head = nn.Linear(2 * self.config.d_model, self.config.d_model)
+        self.fusion_head = nn.Linear(2 * self.config.d_model, 1)
         self.transform = nn.Identity()
 
 

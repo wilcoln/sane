@@ -21,7 +21,7 @@ class Predictor(nn.Module):
         super().__init__()
         self.pred_head = nn.Linear(2 * settings.sent_dim, settings.num_classes)
         self.loss_fn = nn.CrossEntropyLoss(reduction='none')
-        self.fusion_head = nn.Linear(2 * settings.sent_dim, settings.sent_dim)
+        self.fusion_head = nn.Linear(2 * settings.sent_dim, 1)
         self.transform = nn.Sequential(
             nn.Linear(settings.sent_dim, settings.sent_dim),
             nn.ReLU(),
