@@ -13,7 +13,7 @@ class AttentionOutput:
     weights: torch.Tensor = None
 
 
-class Attention(nn.Module):
+class AttentionNLE(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -34,32 +34,24 @@ class Attention(nn.Module):
             nn.Linear(settings.sent_dim, settings.sent_dim),
         )
 
-    def forward(self, inputs, knowledge):
-        # send tensors to gpu
-        sentences = inputs['Sentences_embedding'].to(settings.device)
-
+    def forward(self, encoder_last_hidden_state, knowledge):
         # compute attention weights & output for each attention head
         attention_weights_list = []
         attention_output_list = []
         for i in range(settings.num_attn_heads):
             # Project sentences and knowledge
-            S = self.s_proj_list[i](sentences)  # (batch_size, hidden_dim)
+            S = self.s_proj_list[i](encoder_last_hidden_state)  # (batch_size, seq_len, hidden_dim)
             K = self.k_proj_list[i](knowledge)  # (knowledge_size, hidden_dim)
             # scaled dot product attention
-            alignment_weights = S @ K.T / math.sqrt(self.hidden_dim)  # (batch_size, knowledge_size)
-            attention_weights = torch.softmax(alignment_weights, dim=1)  # (batch_size, knowledge_size)
-            attention_output = attention_weights @ knowledge  # (batch_size, sent_dim)
+            alignment_weights = S @ K.T / math.sqrt(self.hidden_dim)  # (batch_size, seq_len, knowledge_size)
+            attention_weights = torch.softmax(alignment_weights, dim=2)  # (batch_size, seq_len, knowledge_size)
+            attention_output = attention_weights @ knowledge  # (batch_size, seq_len, sent_dim)
             # save attention head weights and outputs
-            attention_weights_list.append(attention_weights)  # (batch_size, sent_dim)
-            attention_output_list.append(attention_output)  # (batch_size, sent_dim)
+            attention_weights_list.append(attention_weights)  # (batch_size, seq_len, sent_dim)
+            attention_output_list.append(attention_output)  # (batch_size, seq_len, sent_dim)
 
-        # (num_heads, batch_size, knowledge_size), (batch_size, sent_dim)
+        # (num_heads, batch_size, seq_len, knowledge_size), (batch_size, seq_len, sent_dim)
         weights, output = torch.cat(attention_weights_list, dim=0), self.transform(
             torch.cat(attention_output_list, dim=1))
 
-        if self.training:
-            # Return just the attention output during training
-            return AttentionOutput(output=output)
-        else:
-            # Return attention weights too
-            return AttentionOutput(weights=weights, output=output)
+        return AttentionOutput(output=output)
