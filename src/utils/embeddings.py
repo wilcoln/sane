@@ -15,8 +15,7 @@ os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 
 frozen_bart_model = None
 frozen_bart_tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
-frozen_bart_model = BartModel.from_pretrained("facebook/bart-base")
-freeze(frozen_bart_tokenizer)
+frozen_bart_model = BartModel.from_pretrained("facebook/bart-base").to(settings.device)
 freeze(frozen_bart_model)
 
 

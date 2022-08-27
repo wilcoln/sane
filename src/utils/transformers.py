@@ -146,44 +146,23 @@ class BartWithKnowledgeModel(BartModel):
             init_input_embeds=None,
 
     ) -> Union[Tuple, BartModelOutput]:
-        # different to other models, Bart automatically creates decoder_input_ids from
-        # input_ids if no decoder_input_ids are provided
-        if decoder_input_ids is None and decoder_inputs_embeds is None:
-            if input_ids is None:
-                raise ValueError(
-                    "If no `decoder_input_ids` or `decoder_inputs_embeds` are "
-                    "passed, `input_ids` cannot be `None`. Please pass either "
-                    "`input_ids` or `decoder_input_ids` or `decoder_inputs_embeds`."
-                )
-
-            decoder_input_ids = shift_tokens_right(
-                input_ids, self.config.pad_token_id, self.config.decoder_start_token_id
-            )
-
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        bart_outputs = super().forward(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            decoder_input_ids=decoder_input_ids,
+            decoder_attention_mask=decoder_attention_mask,
+            head_mask=head_mask,
+            decoder_head_mask=decoder_head_mask,
+            cross_attn_head_mask=cross_attn_head_mask,
+            encoder_outputs=encoder_outputs,
+            past_key_values=past_key_values,
+            inputs_embeds=inputs_embeds,
+            decoder_inputs_embeds=decoder_inputs_embeds,
+            use_cache=use_cache,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
         )
-        use_cache = use_cache if use_cache is not None else self.config.use_cache
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-
-        if encoder_outputs is None:
-            encoder_outputs = self.encoder(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                head_mask=head_mask,
-                inputs_embeds=inputs_embeds,
-                output_attentions=output_attentions,
-                output_hidden_states=output_hidden_states,
-                return_dict=return_dict,
-            )
-        # If the user passed a tuple for encoder_outputs, we wrap it in a BaseModelOutput when return_dict=True
-        elif return_dict and not isinstance(encoder_outputs, BaseModelOutput):
-            encoder_outputs = BaseModelOutput(
-                last_hidden_state=encoder_outputs[0],
-                hidden_states=encoder_outputs[1] if len(encoder_outputs) > 1 else None,
-                attentions=encoder_outputs[2] if len(encoder_outputs) > 2 else None,
-            )
 
         # With knowledge
         # Fuse knowledge and encoder transformed outputs
@@ -192,11 +171,12 @@ class BartWithKnowledgeModel(BartModel):
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(n, m, 1)
         input_fusion_head = torch.cat([init_input_embeds, knowledge_embedding], dim=2)
         r = torch.sigmoid(self.fusion_head(input_fusion_head))
+
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,
             attention_mask=decoder_attention_mask,
-            encoder_hidden_states=encoder_outputs.last_hidden_state + r * knowledge_embedding,
+            encoder_hidden_states=bart_outputs.encoder_last_hidden_state + r * knowledge_embedding,
             encoder_attention_mask=attention_mask,
             head_mask=decoder_head_mask,
             cross_attn_head_mask=cross_attn_head_mask,
@@ -211,13 +191,14 @@ class BartWithKnowledgeModel(BartModel):
         return BartModelOutput(
             knowledge_relevance=r,
             last_hidden_state=decoder_outputs.last_hidden_state,
+            last_hidden_state_nk=bart_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
             decoder_attentions=decoder_outputs.attentions,
             cross_attentions=decoder_outputs.cross_attentions,
-            encoder_last_hidden_state=encoder_outputs.last_hidden_state,
-            encoder_hidden_states=encoder_outputs.hidden_states,
-            encoder_attentions=encoder_outputs.attentions,
+            encoder_last_hidden_state=bart_outputs.encoder_last_hidden_state,
+            encoder_hidden_states=bart_outputs.encoder_hidden_states,
+            encoder_attentions=bart_outputs.encoder_attentions,
         )
 
 
@@ -405,6 +386,7 @@ class BartWithKnowledgeForConditionalGeneration(BartForConditionalGeneration):
             return_dict: Optional[bool] = None,
             *,
             knowledge_embedding=None,
+            init_input_embeds=None,
     ) -> Union[Tuple, Seq2SeqLMOutput]:
         r"""
         labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -442,6 +424,7 @@ class BartWithKnowledgeForConditionalGeneration(BartForConditionalGeneration):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
             knowledge_embedding=knowledge_embedding,
+            init_input_embeds=init_input_embeds,
         )
 
         # With knowledge

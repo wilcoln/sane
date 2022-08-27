@@ -20,7 +20,7 @@ _exp_settings = [
     ('data_frac', 'Data fraction', float, 1.0),
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
     ('alpha_regret', 'NLE regret weight in total regret', float, 0.5),
-    ('margin_regret', 'Regret margin', float, 0.0),
+    ('margin_regret', 'Regret margin', float, 1.0),
     ('beta', 'Regret loss weight in regret-augmented loss', float, 0.5),
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
     ('no_knowledge', 'Disable Knowledge attention', bool, False),
