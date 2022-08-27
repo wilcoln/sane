@@ -8,12 +8,16 @@ from tqdm import tqdm
 from transformers import BartTokenizer, BartModel
 
 from src.settings import settings
+from src.utils.nn import freeze
 
 logging.basicConfig(level='INFO')
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 
-bart_model = None
-tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+frozen_bart_model = None
+frozen_bart_tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+frozen_bart_model = BartModel.from_pretrained("facebook/bart-base")
+freeze(frozen_bart_tokenizer)
+freeze(frozen_bart_model)
 
 
 def transformer_mean_pool(token_embeddings, attention_mask=None):
@@ -46,11 +50,6 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     Returns:
         embeddings: embeddings for each node
     """
-    global bart_model
-
-    if bart_model is None:
-        bart_model = BartModel.from_pretrained("facebook/bart-base")
-
     sentences = [str(sent) for sent in sentences]
     num_sentences = len(sentences)
     batch_size = 128
@@ -59,8 +58,8 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     batches = tqdm(batches, total=math.ceil(num_sentences / batch_size)) if verbose else batches
 
     for i, batch in enumerate(batches):
-        encoded_inputs = tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')
-        model_outputs = bart_model(**encoded_inputs)
+        encoded_inputs = frozen_bart_tokenizer(batch, max_length=512, truncation=True, padding=True, return_tensors='pt')
+        model_outputs = frozen_bart_model(**encoded_inputs)
         encoded_batch = transformer_sentence_pool(model_outputs['last_hidden_state'], encoded_inputs['attention_mask'])
 
         if i == 0:
@@ -72,7 +71,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
 
 
 def tokenize(sentence_list):
-    return tokenizer(sentence_list, max_length=512, truncation=True, padding=True, return_tensors='pt')
+    return frozen_bart_tokenizer(sentence_list, max_length=512, truncation=True, padding=True, return_tensors='pt')
 
 
 def corrupt(tensor, noise_prop=None, sigma2=None):

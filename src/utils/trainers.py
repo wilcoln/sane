@@ -219,8 +219,8 @@ class SANETrainer(SANEVariantTrainer):
             # forward pass & compute loss without knowledge
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
-            loss_nk = (settings.alpha * nle.loss_no_knowledge.mean()
-                       + (1 - settings.alpha) * pred.loss_no_knowledge.mean())
+            loss_nk = (settings.alpha * nle.loss_nk.mean()
+                       + (1 - settings.alpha) * pred.loss_nk.mean())
 
             if train:
                 # backward pass + optimization step
@@ -231,9 +231,9 @@ class SANETrainer(SANEVariantTrainer):
             # Update Split Loss no knowledge
             split_loss_nk += loss_nk.item()
             # Update split nle loss no knowledge
-            split_nle_loss_nk += nle.loss_no_knowledge.mean().item()
+            split_nle_loss_nk += nle.loss_nk.mean().item()
             # Update Accuracy
-            predicted = pred.logits_no_knowledge.argmax(1)
+            predicted = pred.logits_nk.argmax(1)
             correct_nk += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
             # clean intermediate vars
             del outputs, pred, nle, predicted, loss_nk
@@ -257,8 +257,8 @@ class SANETrainer(SANEVariantTrainer):
             loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
 
             # Compute regret loss
-            pred_regret = regret(pred.loss, pred.loss_no_knowledge, reduce=False)
-            nle_regret = regret(nle.loss, nle.loss_no_knowledge, reduce=False)
+            pred_regret = regret(pred.loss, pred.loss_nk, reduce=False)
+            nle_regret = regret(nle.loss, nle.loss_nk, reduce=False)
 
             regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
 

@@ -5,7 +5,7 @@ import pandas as pd
 
 from src.preprocessing.common import preprocess
 from src.settings import settings
-from src.utils.embeddings import tokenizer
+from src.utils.embeddings import frozen_bart_tokenizer
 
 
 def read_dataset():
@@ -25,7 +25,7 @@ def reduce_dataset(splits, frac):
     for split, split_set in splits.items():
         split_set = split_set.sample(int(len(split_set) * frac), random_state=0)
         # Replace Sentence1 and Sentence2 with Sentences
-        split_set['Sentences'] = split_set['Sentence1'] + ' ' + tokenizer.sep_token + ' ' + split_set['Sentence2']
+        split_set['Sentences'] = split_set['Sentence1'] + ' ' + frozen_bart_tokenizer.sep_token + ' ' + split_set['Sentence2']
         # Drop useless columns
         useless_columns = [
             'pairID', 'WorkerId',

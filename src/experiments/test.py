@@ -8,7 +8,7 @@ from tqdm import tqdm
 from src.datasets.nl import get_loader
 from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
-from src.utils.embeddings import tokenizer
+from src.utils.embeddings import frozen_bart_tokenizer
 from src.utils.format import fmt_stats_dict
 
 
@@ -52,8 +52,8 @@ def test(model, results_path, dataloader):
         encoded_knowledge = {} if settings.no_knowledge else {'knowledge_embedding': att_knwl.output}
         nles_tokens = model.explainer.model.generate(**encoded_inputs, **encoded_knowledge, do_sample=False,
                                                      max_length=30)
-        sentences.extend(tokenizer.batch_decode(encoded_inputs['input_ids'], skip_special_tokens=True))
-        explanations.extend(tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
+        sentences.extend(frozen_bart_tokenizer.batch_decode(encoded_inputs['input_ids'], skip_special_tokens=True))
+        explanations.extend(frozen_bart_tokenizer.batch_decode(nles_tokens, skip_special_tokens=True))
         gold_labels.extend(inputs['gold_label'].tolist())
         predictions.extend(pred.logits.argmax(1).tolist())
 

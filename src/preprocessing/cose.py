@@ -6,7 +6,7 @@ import pandas as pd
 
 from src.preprocessing.common import preprocess
 from src.settings import settings
-from src.utils.embeddings import tokenizer
+from src.utils.embeddings import frozen_bart_tokenizer
 
 
 def jsonl_to_dataframe(jsonl_file):
@@ -61,7 +61,7 @@ def reduce_dataset(splits, frac):
         # Concatenate question and choice_i columns into one column 'Sentences'
         split_set['Sentences'] = split_set['stem'] + '?'
         for i in range(5):
-            split_set['Sentences'] += ' ' + tokenizer.sep_token + ' ' + split_set[f'choice_{i}']
+            split_set['Sentences'] += ' ' + frozen_bart_tokenizer.sep_token + ' ' + split_set[f'choice_{i}']
 
         # Drop useless columns
         useless_columns = [

@@ -1,6 +1,7 @@
 from torch import nn
 
 from src.settings import settings
+from src.utils.embeddings import frozen_bart_model
 from src.utils.transformers import BartWithKnowledgeForConditionalGeneration, BartForConditionalGeneration
 
 
@@ -13,7 +14,8 @@ class Explainer(nn.Module):
         # send tensors to gpu
         encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
         encoded_labels = {k: v.to(settings.device) for k, v in inputs['Explanation_1'].items()}
-        encoded_knowledge = {'knowledge_embedding': knowledge}
+        init_input_embeds = frozen_bart_model(**encoded_inputs).last_hidden_state
+        encoded_knowledge = {'knowledge_embedding': knowledge, 'init_input_embeds': init_input_embeds}
         return self.model(**encoded_inputs, **encoded_knowledge, labels=encoded_labels['input_ids'])
 
 

@@ -5,7 +5,7 @@ import pandas as pd
 
 from src.preprocessing.common import preprocess
 from src.settings import settings
-from src.utils.embeddings import tokenizer
+from src.utils.embeddings import frozen_bart_tokenizer
 
 
 def read_dataset():
@@ -26,9 +26,9 @@ def reduce_dataset(splits, frac):
         for i, (correct, incorrect) in enumerate(sentence_pairs):
             label = i % 2
             if label:
-                sentence = correct + ' ' + tokenizer.sep_token + ' ' + incorrect
+                sentence = correct + ' ' + frozen_bart_tokenizer.sep_token + ' ' + incorrect
             else:
-                sentence = incorrect + ' ' + tokenizer.sep_token + ' ' + correct
+                sentence = incorrect + ' ' + frozen_bart_tokenizer.sep_token + ' ' + correct
 
             sentences.append(sentence)
             gold_labels.append(label)

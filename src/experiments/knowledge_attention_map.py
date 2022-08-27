@@ -7,14 +7,14 @@ from src.conceptnet import conceptnet
 from src.datasets.nl import get_loader
 from src.models.sane import SANE
 from src.settings import settings
-from src.utils.embeddings import tokenizer
+from src.utils.embeddings import frozen_bart_tokenizer
 
 
 def compute_knowledge_attention_map(inputs, model):
     # run model
     pred, nle, att_knwl, knwl = model(inputs)
     triples = conceptnet.ids2triples(knwl.id.tolist())
-    sentences = tokenizer.batch_decode(inputs['Sentences']['input_ids'].to(settings.device), skip_special_tokens=True)
+    sentences = frozen_bart_tokenizer.batch_decode(inputs['Sentences']['input_ids'].to(settings.device), skip_special_tokens=True)
     triples = [' '.join(t) for t in triples]
 
     # Get top k triples and their attention weightstopk_triples = []

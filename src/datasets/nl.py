@@ -10,7 +10,7 @@ from torch_geometric.utils import subgraph
 from src.conceptnet import conceptnet
 from src.preprocessing.common import compute_concept_ids
 from src.settings import settings
-from src.utils.embeddings import tokenize, bart, tokenizer
+from src.utils.embeddings import tokenize, bart
 from src.utils.semantic_search import semantic_search
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}

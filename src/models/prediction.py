@@ -11,9 +11,9 @@ from src.utils.embeddings import transformer_sentence_pool
 class PredictorOutput:
     loss: torch.Tensor
     logits: torch.Tensor
-    logits_no_knowledge: torch.Tensor = None
+    logits_nk: torch.Tensor = None
     knowledge_relevance: torch.Tensor = None
-    loss_no_knowledge: torch.Tensor = None
+    loss_nk: torch.Tensor = None
 
 
 class Predictor(nn.Module):
@@ -40,12 +40,12 @@ class Predictor(nn.Module):
         loss = self.loss_fn(logits, labels)
 
         # Without knowledge
-        nle_embed = transformer_sentence_pool(nle.last_hidden_state_no_knowledge)
+        nle_embed = transformer_sentence_pool(nle.last_hidden_state_nk)
         input_pred_nk = torch.cat([sent_embed, nle_embed], dim=1)
         logits_nk = self.pred_head(input_pred_nk)
         loss_nk = self.loss_fn(logits_nk, labels)
 
-        return PredictorOutput(logits=logits, logits_no_knowledge=logits_nk, loss=loss, loss_no_knowledge=loss_nk, knowledge_relevance=r)
+        return PredictorOutput(logits=logits, logits_nk=logits_nk, loss=loss, loss_nk=loss_nk, knowledge_relevance=r)
 
 
 class PredictorNoKnowledge(nn.Module):

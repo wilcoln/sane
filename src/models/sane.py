@@ -34,7 +34,6 @@ class SANE(nn.Module):
     def h_modules(self):
         return {
             self.explainer.model.model.encoder,
-            self.explainer.model.model.transform,
             self.predictor.transform,
         }
 
