@@ -206,9 +206,9 @@ class SANETrainer(TorchModuleBaseTrainer):
 
             # forward pass & compute loss without knowledge
             outputs = self.model(inputs)
-            pred, nle = outputs[:2]
-            loss_nk = (settings.alpha * nle.loss_nk.mean()
-                       + (1 - settings.alpha) * pred.loss_nk.mean())
+            pred1, nle1 = outputs[:2]
+            loss_nk = (settings.alpha * nle1.loss_nk.mean()
+                       + (1 - settings.alpha) * pred1.loss_nk.mean())
 
             if train:
                 # backward pass + optimization step
@@ -219,12 +219,12 @@ class SANETrainer(TorchModuleBaseTrainer):
             # Update Split Loss no knowledge
             split_loss_nk += loss_nk.item()
             # Update split nle loss no knowledge
-            split_nle_loss_nk += nle.loss_nk.mean().item()
+            split_nle_loss_nk += nle1.loss_nk.mean().item()
             # Update Accuracy
-            predicted = pred.logits_nk.argmax(1)
+            predicted = pred1.logits_nk.argmax(1)
             correct_nk += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
             # clean intermediate vars
-            del outputs, pred, nle, predicted, loss_nk
+            del outputs, predicted, loss_nk
 
             ##################################################
             # (2) Compute regret-augmented loss with knowledge
@@ -245,8 +245,8 @@ class SANETrainer(TorchModuleBaseTrainer):
             loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
 
             # Compute regret loss
-            pred_regret = regret(pred.loss, pred.loss_nk, reduce=False)
-            nle_regret = regret(nle.loss, nle.loss_nk, reduce=False)
+            pred_regret = regret(pred.loss, pred1.loss_nk.detach(), reduce=False)
+            nle_regret = regret(nle.loss, nle1.loss_nk.detach(), reduce=False)
 
             regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
 
