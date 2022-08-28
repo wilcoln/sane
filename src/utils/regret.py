@@ -9,9 +9,7 @@ def regret(loss, expert_loss, reduce=True):
     # result = (torch.exp(-expert_loss) / (eps + expert_loss)) * loss
     # result = (torch.exp(-expert_loss) * loss / (eps + expert_loss)) * loss
     # result = torch.exp(-expert_loss) * torch.norm(loss - expert_loss)
-    temp = F.relu(loss - expert_loss + settings.margin_regret)
-    result = temp * temp
-    # result = (F.relu(loss - expert_loss) / torch.norm(loss - expert_loss)) * loss
+    result = F.relu(loss - expert_loss + settings.margin_regret)
     if reduce:
         return result.mean()
     return result

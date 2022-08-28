@@ -25,6 +25,8 @@ _exp_settings = [
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
     ('no_knowledge', 'Disable Knowledge attention', bool, False),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
+    ('num_runs', 'Number of runs', int, 10),
+    ('desc', 'Additional description', str, None)
 ]
 for name, desc, type_, default in _exp_settings:
     if type_ is bool:
@@ -54,9 +56,9 @@ setattr(settings, 'device', torch.device('cuda'))
 setattr(settings, 'exp', {k: v for k, v in vars(settings).items() if k in [s[0] for s in _exp_settings] and v})
 
 # Print Experimental Settings
-print('*** Experimental Settings ***')
-for key, value in settings.exp.items():
-    print(f'{key}={value}')
+# print('*** Experimental Settings ***')
+# for key, value in settings.exp.items():
+#     print(f'{key}={value}')
 
 # Set number of classes
 num_classes = {'esnli': 3, 'comve': 2, 'cose': 5}

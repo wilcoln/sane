@@ -10,6 +10,7 @@ import torch
 from matplotlib import pyplot as plt
 from torch import nn
 from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.settings import settings
@@ -18,24 +19,14 @@ from src.utils.nn import freeze_modules, unfreeze_modules
 from src.utils.regret import regret
 
 
-class BaseTrainer:
-    def train(self, *args, **kwargs) -> dict:
-        raise NotImplementedError
-
-    def eval(self, *args, **kwargs) -> dict:
-        raise NotImplementedError
-
-    def test(self, *args, **kwargs) -> dict:
-        raise NotImplementedError
-
-    def run(self, *args, **kwargs) -> dict:
-        raise NotImplementedError
-
-
-class TorchModuleBaseTrainer(BaseTrainer, ABC):
+class TorchModuleBaseTrainer(ABC):
     def __init__(self,
                  model: nn.Module,
                  optimizer: Optimizer,
+                 train_loader: DataLoader,
+                 val_loader: DataLoader,
+                 params: dict,
+                 test_loader: DataLoader = None,
                  *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,13 +37,18 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         self.best_model_state_dict = None
         self.model = model
         self.optimizer = optimizer
+        self.params = params
         self.results = []
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.test_loader = test_loader
+        self.split_descriptions = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
 
     def save_params_and_prepare_to_save_results(self):
         # Create dictionary with all the parameters
         params_dict = {'model': self.model.__class__.__name__}
 
-        params_dict.update(settings.exp)
+        params_dict.update(self.params)
 
         # Create a timestamped and args-explicit named for the results' folder name
         date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
@@ -84,11 +80,11 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
 
         torch.save(self.best_model_state_dict, osp.join(self.results_path, 'model.pt'))
 
-    def run(self, val_metric='nle_loss', less_is_more=True):
+    def run(self, val_metric='loss', less_is_more=True):
         if not settings.no_save:
             self.save_params_and_prepare_to_save_results()
 
-        for epoch in range(1, settings.num_epochs + 1):
+        for epoch in range(1, self.params['num_epochs'] + 1):
             print(f'Epoch {epoch}')
             # Train, eval & test
             train_results = self.train()
@@ -121,7 +117,8 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         self.print_epoch(self.best_epoch)
 
         # Print path to the results directory
-        print(f'Results saved to {self.results_path}')
+        if not settings.no_save:
+            print(f'Results saved to {self.results_path}')
 
     def print_epoch(self, epoch):
         stats_dict = self.results[epoch - 1]
@@ -134,15 +131,6 @@ class TorchModuleBaseTrainer(BaseTrainer, ABC):
         if less_is_more:
             return self.results[self.best_epoch - 1][val_metric_key] >= epoch_results[val_metric_key]
         return self.results[self.best_epoch - 1][val_metric_key] <= epoch_results[val_metric_key]
-
-
-class SANEVariantTrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, train_loader, val_loader, test_loader):
-        super().__init__(model, optimizer)
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.test_loader = test_loader
-        self.split_descriptions = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
 
     def evaluate(self, loader, split) -> dict:
         raise NotImplementedError
@@ -159,9 +147,9 @@ class SANEVariantTrainer(TorchModuleBaseTrainer):
         return self.evaluate(self.test_loader, 'test')
 
 
-class SANETrainer(SANEVariantTrainer):
-    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
-        super().__init__(model, optimizer, train_loader, val_loader, test_loader)
+class SANETrainer(TorchModuleBaseTrainer):
+    def __init__(self, model, optimizer, train_loader, val_loader):
+        super().__init__(model, optimizer, train_loader, val_loader, params=settings.exp)
 
         if settings.algo == 1:
             self.step_one_train = self.model.f_modules
@@ -306,9 +294,9 @@ class SANETrainer(SANEVariantTrainer):
         }
 
 
-class SANENoKnowledgeTrainer(SANEVariantTrainer):
-    def __init__(self, model, optimizer, train_loader, val_loader, test_loader=None):
-        super().__init__(model, optimizer, train_loader, val_loader, test_loader)
+class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
+    def __init__(self, model, optimizer, train_loader, val_loader):
+        super().__init__(model, optimizer, train_loader, val_loader, params=settings.exp)
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
