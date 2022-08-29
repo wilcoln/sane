@@ -240,8 +240,8 @@ class SANETrainer(TorchModuleBaseTrainer):
             # Update split nle loss
             split_nle_loss += nle.loss.mean().item()
             # Update Split Knowledge relevance
-            split_ekri += nle.knowledge_relevance.mean().item()
-            split_pkri += pred.knowledge_relevance.mean().item()
+            # split_ekri += nle.knowledge_relevance.mean().item()
+            # split_pkri += pred.knowledge_relevance.mean().item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
             correct += predicted.eq(labels).sum().item()
@@ -264,7 +264,7 @@ class SANETrainer(TorchModuleBaseTrainer):
             f'{split}_loss_nk': split_loss_nk,
             f'{split}_nle_loss': split_nle_loss,
             f'{split}_nle_loss_nk': split_loss_nk,
-            f'{split}_time': split_time,
+            # f'{split}_time': split_time,
             f'{split}_ekri': split_ekri,  # explanation knowledge relevance
             f'{split}_pkri': split_pkri,  # prediction knowledge relevance
         }
