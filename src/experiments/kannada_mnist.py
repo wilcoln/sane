@@ -5,7 +5,6 @@ from datetime import datetime as dt
 
 import numpy as np
 import torch
-from icecream import ic
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from sklearn.datasets import fetch_california_housing
@@ -151,8 +150,9 @@ class Trainer(TorchModuleBaseTrainer):
             #####################################
             # (1) Compute loss without knowledge
             #####################################
-            # zero the parameter gradients
-            self.optimizer_nk.zero_grad()
+            if train:
+                # zero the parameter gradients
+                self.optimizer_nk.zero_grad()
 
             # forward pass & compute loss without knowledge
             yhat, _, _ = self.model_nk(x, k)
@@ -170,15 +170,12 @@ class Trainer(TorchModuleBaseTrainer):
             yhat = yhat.argmax(1)
             correct_nk += yhat.eq(y).sum().item()
 
-            # clean vars and gradients after step
-            self.optimizer_nk.zero_grad()
-            del yhat
-
             #################################################
             # (2) Compute regret-augmented loss with knowledge
             ##################################################
-            # zero the parameter gradients
-            self.optimizer.zero_grad()
+            if train:
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
 
             # forward pass
             yhat, kri, kci = self.model(x, k)
@@ -205,10 +202,6 @@ class Trainer(TorchModuleBaseTrainer):
             # Update Accuracy
             yhat = yhat.argmax(1)
             correct += yhat.eq(y).sum().item()
-
-            # clean vars and gradients after step
-            self.optimizer.zero_grad()
-            del yhat, loss, loss_nk
 
             # Update total
             total += len(y)
@@ -239,7 +232,7 @@ if __name__ == '__main__':
         'num_epochs': settings.num_epochs,
         'num_runs': settings.num_runs,
         'train_size': 0.8,
-        'batch_size': 4096,
+        'batch_size': 1024,
         'lr': 1e-2,
         'input': 'pca',
     }
@@ -266,11 +259,6 @@ if __name__ == '__main__':
     data_dir = osp.join(settings.data_dir, 'kannada_mnist_2d_pca_tsne_umap')
     x_k = torch.from_numpy(np.load(osp.join(data_dir, 'x.npy'))).float()
     y = torch.from_numpy(np.load(osp.join(data_dir, 'y.npy')))
-
-    # Truncate dataset to 5000 random samples
-    idx = torch.randperm(len(x_k))[:5000]
-    x_k = x_k[idx]
-    y = y[idx]
     # Set input features
     x = x_k[:, _slice[params['input']]]
 
@@ -279,10 +267,11 @@ if __name__ == '__main__':
         if knowledge == 'gaussian':
             k = torch.randn_like(x)
         elif knowledge == 'confusing':
-            housing = fetch_california_housing().data[:x.shape[0]]
+            housing = fetch_california_housing().data
             k = torch.from_numpy(housing[:x.shape[0]]).float()
         else:
             k = x_k[:, _slice[knowledge]]
+
         # Create dataset
         dataset = torch.utils.data.TensorDataset(x, k, y)
 
@@ -307,8 +296,8 @@ if __name__ == '__main__':
             model_nk = SimpleSANENoKnowledge(x_dim, k_dim, y_dim, h_dim).to(settings.device)
 
             # Create the optimizers
-            optimizer = torch.optim.AdamW(model.parameters(), lr=params['lr'])
-            optimizer_nk = torch.optim.AdamW(model_nk.parameters(), lr=params['lr'])
+            optimizer = torch.optim.Adam(model.parameters(), lr=params['lr'])
+            optimizer_nk = torch.optim.Adam(model_nk.parameters(), lr=params['lr'])
 
             # Create the loss functions
             loss_fn = nn.CrossEntropyLoss(reduction='none')
