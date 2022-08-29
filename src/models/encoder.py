@@ -23,15 +23,15 @@ class Encoder(nn.Module):
     def forward(self, inputs):
         # trainable gnn encoder
         nodes, edge_index, edge_attr = inputs['concept_ids'], inputs['edge_index'], inputs['edge_attr']
-        edge_relation, edge_weight = edge_attr[:, 0].long(), edge_attr[:, 1]
+        edge_relation, edge_weight = edge_attr[:, 0].long(), edge_attr[:, 1].to(settings.device)
 
         # Get initial node embeddings from conceptnet
-        x = conceptnet.concept_embedding[nodes]
-        edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
+        x = conceptnet.concept_embedding[nodes].to(settings.device)
+        edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation].to(settings.device)
         # edge_attr = conceptnet.relation_embedding[edge_relation]  # ignore precomputed edge_weight
 
-        # Apply GNN
         if not settings.no_gnn:
+            # Apply GNN
             x = self.gnn(x, edge_index, edge_attr)
 
         # Add self-loops
@@ -40,7 +40,7 @@ class Encoder(nn.Module):
         self_loop_attr = conceptnet.self_loop_embedding.repeat(len(nodes), 1)
         self_loops = torch.Tensor([conceptnet.self_loop_id]).repeat(len(nodes))
         edge_relation = torch.cat([edge_relation, self_loops])
-        edge_attr = torch.vstack((edge_attr.to(settings.device), self_loop_attr))
+        edge_attr = torch.vstack((edge_attr, self_loop_attr))
 
         # Convert to triples and project to sentence dimension
         encoded_triples = self.lin(singles_to_triples(x, edge_index, edge_attr))
