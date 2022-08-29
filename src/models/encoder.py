@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import torch
+from icecream import ic
 from torch import nn
 
 from src.conceptnet import conceptnet
@@ -12,6 +13,7 @@ from src.utils.nn import GNN, singles_to_triples
 class EncoderOutput:
     output: torch.Tensor  # encoded knowledge (knowledge_size, sent_dim)
     id: torch.Tensor = None  # id of the knowledge (knowledge_size, 3)
+    mask: torch.Tensor = None  # mask of the knowledge (batch_size, knowledge_size)
 
 
 class Encoder(nn.Module):
@@ -45,11 +47,26 @@ class Encoder(nn.Module):
         # Convert to triples and project to sentence dimension
         encoded_triples = self.lin(singles_to_triples(x, edge_index, edge_attr))
 
+        # Get triple ids
+        x = nodes.view(-1, 1)
+        edge_attr = edge_relation.view(-1, 1)
+        triple_ids = singles_to_triples(x, edge_index, edge_attr)
+
+        # Get head and tail ids
+        head_ids = triple_ids[:, 0]
+        tail_ids = triple_ids[:, 2]
+
+        # Compute sentences -> triples mask
+        # mask[i][j] = 1 if head_ids[j] in inputs['sent_concept_ids'][i] or tail_ids[j][2] in inputs[
+        # 'sent_concept_ids'][i] else 0
+        mask = torch.zeros((len(inputs['sent_concept_ids']), len(triple_ids)), dtype=torch.bool)
+        for i, sent_concept_ids in enumerate(inputs['sent_concept_ids']):
+            mask[i] = torch.any(head_ids == sent_concept_ids.view(-1, 1), dim=0) | torch.any(tail_ids == sent_concept_ids.view(-1, 1), dim=0)
+        mask = mask.to(settings.device)
+
+        ic(inputs['sent_concept_ids'], triple_ids, mask)
+        exit()
         if self.training:
-            return EncoderOutput(output=encoded_triples)
+            return EncoderOutput(output=encoded_triples, mask=mask)
         else:
-            # Return triple ids too
-            x = nodes.view(-1, 1)
-            edge_attr = edge_relation.view(-1, 1)
-            triple_ids = singles_to_triples(x, edge_index, edge_attr)
-            return EncoderOutput(output=encoded_triples, id=triple_ids)
+            return EncoderOutput(output=encoded_triples, mask=mask, id=triple_ids)

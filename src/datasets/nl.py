@@ -84,12 +84,12 @@ def collate_fn(batch):
 
     if not settings.no_knowledge:
         # Get exact concept ids
-        exact_concept_ids = [torch.LongTensor(d[concept_ids_key][0]) for d in batch]
-        exact_concept_ids = torch.unique(torch.cat(exact_concept_ids, dim=0))
+        exact_sent_concept_ids = [torch.LongTensor(d[concept_ids_key][0]) for d in batch]
+        exact_concept_ids = torch.unique(torch.cat(exact_sent_concept_ids, dim=0))
 
         # Get neighboring concept ids
-        neighboring_concept_ids = [torch.LongTensor(d[concept_ids_key][1]) for d in batch]
-        neighboring_concept_ids = torch.unique(torch.cat(neighboring_concept_ids, dim=0))
+        neighboring_sent_concept_ids = [torch.LongTensor(d[concept_ids_key][1]) for d in batch]
+        neighboring_concept_ids = torch.unique(torch.cat(neighboring_sent_concept_ids, dim=0))
 
         # Filter neighboring concepts using semantic search
         top_neighboring_concepts_indices = semantic_search(
@@ -99,11 +99,17 @@ def collate_fn(batch):
         )
         neighboring_concept_ids = neighboring_concept_ids[top_neighboring_concepts_indices]
 
-        # Merge exact and neighboring concept ids and filter out duplicates
+        # Merge exact and neighboring concept ids at sentence-level
+        sent_concept_ids = [
+            torch.cat([exact_sent_concept_ids[i], neighboring_concept_ids[i]])
+            for i in range(len(batch))
+        ]
+        # Merge exact and neighboring concept ids and filter out duplicates at batch-level
         concept_ids = torch.cat([exact_concept_ids.flatten(), neighboring_concept_ids.flatten()], dim=0)
         concept_ids = torch.unique(concept_ids)
 
         # Finalize batch
+        inputs[f'sent_{concept_ids_key}'] = sent_concept_ids
         inputs[concept_ids_key] = concept_ids
         inputs['edge_index'], inputs['edge_attr'] = subgraph(
             subset=concept_ids,

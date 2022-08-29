@@ -49,6 +49,7 @@ class Attention(nn.Module):
             # scaled dot product attention
             alignment_weights = S @ K.T / math.sqrt(self.align_dim)  # (batch_size, knowledge_size)
             attention_weights = torch.softmax(alignment_weights, dim=1)  # (batch_size, knowledge_size)
+            attention_weights = attention_weights * knowledge.mask
             attention_output = attention_weights @ knowledge  # (batch_size, hidden_dim)
             # save attention head weights and outputs
             attention_weights_list.append(attention_weights)  # (batch_size, hidden_dim)
