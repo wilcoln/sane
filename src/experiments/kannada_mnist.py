@@ -232,7 +232,7 @@ if __name__ == '__main__':
         'num_epochs': settings.num_epochs,
         'num_runs': settings.num_runs,
         'train_size': 0.8,
-        'batch_size': 1024,
+        'batch_size': settings.batch_size,
         'lr': 1e-2,
         'input': 'pca',
     }
