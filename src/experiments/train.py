@@ -8,11 +8,11 @@ from src.utils.trainers import SANETrainer
 
 # Create models
 model = SANE().to(settings.device)
-model_nk = SANENoKnowledge().to(settings.device) if settings.train_nk else None
+model_nk = SANENoKnowledge().to(settings.device) if not settings.no_train_nk else None
 
 # Create optimizers
 optimizer = optim.AdamW(model.parameters(), lr=settings.lr, weight_decay=settings.weight_decay)
-optimizer_nk = optim.AdamW(model_nk.parameters(), lr=settings.lr, weight_decay=settings.weight_decay) if settings.train_nk else None
+optimizer_nk = optim.AdamW(model_nk.parameters(), lr=settings.lr, weight_decay=settings.weight_decay) if not settings.no_train_nk else None
 
 # Train Model
 SANETrainer(
