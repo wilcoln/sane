@@ -191,10 +191,10 @@ class SANETrainer(TorchModuleBaseTrainer):
             pred_nk, nle_nk = self.model_nk(inputs)[:2]
             loss_nk = settings.alpha * nle_nk.loss.mean() + (1 - settings.alpha) * pred_nk.loss.mean()
 
-            if train:
-                # backward pass + optimization step
-                loss_nk.backward()
-                self.optimizer_nk.step()
+            # if train:
+            #     # backward pass + optimization step
+            #     loss_nk.backward()
+            #     self.optimizer_nk.step()
 
             # Update Split Loss no knowledge
             split_loss_nk += loss_nk.item()

@@ -31,4 +31,4 @@ class ExplainerNoKnowledge(nn.Module):
         encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
         encoded_labels = {k: v.to(settings.device) for k, v in inputs['Explanation_1'].items()}
         encoded_knowledge = {'knowledge_embedding': None, 'init_input_embeds': None}
-        return self.model(**encoded_inputs, labels=encoded_labels['input_ids'])
+        return self.model(**encoded_inputs, **encoded_knowledge, labels=encoded_labels['input_ids'])
