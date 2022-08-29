@@ -56,9 +56,9 @@ setattr(settings, 'device', torch.device('cuda'))
 setattr(settings, 'exp', {k: v for k, v in vars(settings).items() if k in [s[0] for s in _exp_settings] and v})
 
 # Print Experimental Settings
-# print('*** Experimental Settings ***')
-# for key, value in settings.exp.items():
-#     print(f'{key}={value}')
+print('*** Experimental Settings ***')
+for key, value in settings.exp.items():
+    print(f'{key}={value}')
 
 # Set number of classes
 num_classes = {'esnli': 3, 'comve': 2, 'cose': 5}

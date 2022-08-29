@@ -213,7 +213,7 @@ class BartWithKnowledgeModel(BartModel):
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,
             attention_mask=decoder_attention_mask,
-            encoder_hidden_states=encoder_outputs.last_hidden_state + r * knowledge_embedding,
+            encoder_hidden_states=encoder_outputs.last_hidden_state,  # + r * knowledge_embedding,
             encoder_attention_mask=attention_mask,
             head_mask=decoder_head_mask,
             cross_attn_head_mask=cross_attn_head_mask,
