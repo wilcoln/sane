@@ -23,12 +23,10 @@ class Explainer(nn.Module):
 class ExplainerNoKnowledge(nn.Module):
     def __init__(self):
         super().__init__()
-        # self.model = BartForConditionalGeneration.from_pretrained("facebook/bart-base")
-        self.model = BartWithKnowledgeForConditionalGeneration.from_pretrained("facebook/bart-base")
+        self.model = BartForConditionalGeneration.from_pretrained("facebook/bart-base")
 
     def forward(self, inputs):
         # send tensors to gpu
         encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
         encoded_labels = {k: v.to(settings.device) for k, v in inputs['Explanation_1'].items()}
-        encoded_knowledge = {'knowledge_embedding': None, 'init_input_embeds': None}
-        return self.model(**encoded_inputs, **encoded_knowledge, labels=encoded_labels['input_ids'])
+        return self.model(**encoded_inputs, labels=encoded_labels['input_ids'])

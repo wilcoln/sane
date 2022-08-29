@@ -31,6 +31,7 @@ class Attention(nn.Module):
         self.transform = nn.Sequential(
             nn.Linear(settings.num_attn_heads * settings.sent_dim, settings.sent_dim),
             nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(settings.sent_dim, settings.sent_dim),
         )
 
