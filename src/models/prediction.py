@@ -41,8 +41,9 @@ class Predictor(nn.Module):
     def forward(self, inputs, knwl, nle):
         sent_embed, labels = inputs['Sentences_embedding'].to(settings.device), inputs['gold_label'].to(settings.device)
         nle_embed = transformer_sentence_pool(nle.last_hidden_state)
-        r = self.g1(torch.hstack((sent_embed, knwl)))
-        sent_embed = self.h(sent_embed) + r * knwl
+        # r = self.g1(torch.hstack((sent_embed, knwl)))
+        # sent_embed = self.h(sent_embed) + r * knwl
+        r = torch.zeros(sent_embed.shape[0], 1).to(sent_embed.device)
         input_pred = torch.hstack((sent_embed, nle_embed))
         logits = self.f(input_pred)
         loss = self.loss_fn(logits, labels)

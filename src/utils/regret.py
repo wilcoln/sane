@@ -1,15 +1,13 @@
 import torch
 import torch.nn.functional as F
 
-from src.settings import settings
-
 
 def regret(loss, expert_loss, reduce=True):
     # result = torch.exp(-expert_loss) * loss
     # result = (torch.exp(-expert_loss) / (eps + expert_loss)) * loss
     # result = (torch.exp(-expert_loss) * loss / (eps + expert_loss)) * loss
     # result = torch.exp(-expert_loss) * torch.norm(loss - expert_loss)
-    result = F.relu(loss - expert_loss + settings.margin_regret)
+    result = F.relu(loss - expert_loss)
     if reduce:
         return result.mean()
     return result

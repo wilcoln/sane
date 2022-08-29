@@ -5,6 +5,7 @@ from datetime import datetime as dt
 
 import numpy as np
 import torch
+from icecream import ic
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from sklearn.datasets import fetch_california_housing
@@ -86,11 +87,20 @@ class SimpleSANE(nn.Module):
         self.h = h(x_dim, h_dim)
 
     def forward(self, x, k):
+        # Compute yhat
         x_tilde = self.h(x)
         r, k_tilde = self.g(x, k)
-        x_tilde_plus = x_tilde + r * k_tilde
+        rk_tilde = r * k_tilde
+        x_tilde_plus = x_tilde + rk_tilde
         yhat = self.f(x_tilde_plus)
-        return yhat, r
+
+        # Compute kri
+        ck = torch.norm(rk_tilde, dim=1)**2
+        cx = torch.norm(x_tilde, dim=1)**2
+        c = ck / (ck + cx)
+
+        # Return yhat and kri
+        return yhat, r, c
 
 
 class SimpleSANENoKnowledge(SimpleSANE):
@@ -123,8 +133,9 @@ class Trainer(TorchModuleBaseTrainer):
         # Set split loss values
         split_loss = 0.0
         split_loss_nk = 0.0
-        # Set split knowledge relevance index
+        # Set split knowledge relevance & contribution indices
         split_kri = 0.0
+        split_kci = 0.0
 
         # Reset values for accuracy computation
         correct = 0
@@ -144,7 +155,7 @@ class Trainer(TorchModuleBaseTrainer):
                 self.optimizer_nk.zero_grad()
 
             # forward pass & compute loss without knowledge
-            yhat, _ = self.model_nk(x, k)
+            yhat, _, _ = self.model_nk(x, k)
             # Compute loss knowledge without knowledge
             loss_nk = loss_fn(yhat, y)
 
@@ -169,7 +180,7 @@ class Trainer(TorchModuleBaseTrainer):
                 self.optimizer.zero_grad()
 
             # forward pass
-            yhat, kri = self.model(x, k)
+            yhat, kri, kci = self.model(x, k)
             # Compute loss with knowledge
             loss = loss_fn(yhat, y)
 
@@ -188,6 +199,8 @@ class Trainer(TorchModuleBaseTrainer):
             split_loss += loss.mean().item()
             # Update Split Knowledge relevance
             split_kri += kri.mean().item()
+            # Update Split Knowledge contribution
+            split_kci += kci.mean().item()
             # Update Accuracy
             yhat = yhat.argmax(1)
             correct += yhat.eq(y).sum().item()
@@ -198,6 +211,7 @@ class Trainer(TorchModuleBaseTrainer):
         split_loss /= len(dataloader)
         split_loss_nk /= len(dataloader)
         split_kri /= len(dataloader)
+        split_kci /= len(dataloader)
         split_acc = 100. * correct / total
         split_acc_nk = 100. * correct_nk / total
 
@@ -207,6 +221,7 @@ class Trainer(TorchModuleBaseTrainer):
             f'{split}_loss': split_loss,
             f'{split}_loss_nk': split_loss_nk,
             f'{split}_kri': split_kri,  # knowledge relevance index
+            f'{split}_kci': split_kci,  # knowledge consistency index
         }
 
 
@@ -220,7 +235,7 @@ if __name__ == '__main__':
         'num_runs': settings.num_runs,
         'train_size': 0.8,
         'batch_size': 1024,
-        'lr': 1e-2,
+        'lr': 5e-3,
         'input': 'pca',
     }
 
@@ -261,29 +276,29 @@ if __name__ == '__main__':
         # Create dataset
         dataset = torch.utils.data.TensorDataset(x, k, y)
 
-        knowledge_results = []
+        # Split the data into train and validation sets
+        train_size = int(params['train_size'] * len(dataset))
+        train_set, val_set = random_split(dataset, [train_size, len(dataset) - train_size])
+
+        # Create data loaders
+        train_loader = torch.utils.data.DataLoader(train_set, batch_size=params['batch_size'], shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_set, batch_size=params['batch_size'], shuffle=True)
+
+        # Set the dimensions
+        x_dim = x.shape[1]
+        k_dim = k.shape[1]
+        y_dim = len(torch.unique(y))
+        h_dim = x_dim
+
+        run_results = []
         for _ in range(params['num_runs']):
-            # Split the data into train and validation sets
-            train_size = int(params['train_size'] * len(dataset))
-            train_set, val_set = random_split(dataset, [train_size, len(dataset) - train_size])
-
-            # Create data loaders
-            train_loader = torch.utils.data.DataLoader(train_set, batch_size=params['batch_size'], shuffle=True)
-            val_loader = torch.utils.data.DataLoader(val_set, batch_size=params['batch_size'], shuffle=True)
-
-            # Create the model
-            x_dim = x.shape[1]
-            k_dim = k.shape[1]
-            y_dim = len(torch.unique(y))
-            h_dim = x_dim
-
             # Create the models
             model = SimpleSANE(x_dim, k_dim, y_dim, h_dim).to(settings.device)
             model_nk = SimpleSANENoKnowledge(x_dim, k_dim, y_dim, h_dim).to(settings.device)
 
             # Create the optimizers
-            optimizer = torch.optim.Adam(model.parameters(), lr=params['lr'])
-            optimizer_nk = torch.optim.Adam(model_nk.parameters(), lr=params['lr'])
+            optimizer = torch.optim.AdamW(model.parameters(), lr=params['lr'])
+            optimizer_nk = torch.optim.AdamW(model_nk.parameters(), lr=params['lr'])
 
             # Create the loss functions
             loss_fn = nn.CrossEntropyLoss(reduction='none')
@@ -297,28 +312,28 @@ if __name__ == '__main__':
             trainer.run(val_metric='acc', less_is_more=False)
 
             # Add results to list
-            knowledge_results.append(trainer.results)
+            run_results.append(trainer.results)
 
         if keys is None:
-            keys = knowledge_results[0][0].keys()
+            keys = run_results[0][0].keys()
 
         # Compute mean and std
         means = {
             key: np.array([
-                np.mean([result[epoch_idx][key] for result in knowledge_results])
+                np.mean([result[epoch_idx][key] for result in run_results])
                 for epoch_idx in range(params['num_epochs'])
             ]) for key in keys
         }
 
         stds = {
             key: np.array([
-                np.std([result[epoch_idx][key] for result in knowledge_results])
+                np.std([result[epoch_idx][key] for result in run_results])
                 for epoch_idx in range(params['num_epochs'])
             ]) for key in keys
         }
 
         # Save results
-        results[knowledge] = {'runs': knowledge_results, 'mean': means, 'std': stds}
+        results[knowledge] = {'runs': run_results, 'mean': means, 'std': stds}
 
     # Plot results with shaded region for std
     if settings.use_science:
@@ -350,7 +365,7 @@ if __name__ == '__main__':
         for metric in metrics:
             for knowledge in knowledge_list:
                 for suffix in suffix_style_map.keys():
-                    if metric == 'kri' and suffix == '_nk':
+                    if metric in {'kri', 'kci'} and suffix == '_nk':
                         continue
                     key = f'{split}_{metric}{suffix}'
                     means = results[knowledge]['mean'][key]

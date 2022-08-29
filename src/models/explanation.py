@@ -2,7 +2,8 @@ from torch import nn
 
 from src.settings import settings
 from src.utils.embeddings import frozen_bart_model
-from src.utils.transformers import BartWithKnowledgeForConditionalGeneration, BartForConditionalGeneration
+from src.utils.bart import BartForConditionalGeneration
+from src.utils.bart_with_knowledge import BartWithKnowledgeForConditionalGeneration
 
 
 class Explainer(nn.Module):
