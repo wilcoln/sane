@@ -185,8 +185,8 @@ class SANETrainer(TorchModuleBaseTrainer):
             #####################################
             # (1) Compute loss without knowledge
             #####################################
-            if train:
-                self.optimizer_nk.zero_grad()
+            # zero the parameter gradients
+            self.optimizer_nk.zero_grad()
 
             # forward pass & compute loss without knowledge
             pred_nk, nle_nk = self.model_nk(inputs)[:2]
@@ -204,15 +204,16 @@ class SANETrainer(TorchModuleBaseTrainer):
             # Update Accuracy
             predicted = pred_nk.logits.argmax(1)
             correct_nk += predicted.eq(labels).sum().item()
-            # clean intermediate vars
+
+            # clean vars and gradients after step
+            self.optimizer_nk.zero_grad()
             del predicted, loss_nk
 
             ##################################################
             # (2) Compute regret-augmented loss with knowledge
             ##################################################
-            if train:
-                # reset the gradients
-                self.optimizer.zero_grad()
+            # zero the parameter gradients
+            self.optimizer.zero_grad()
 
             # forward pass & compute loss with knowledge
             pred, nle = self.model(inputs)[:2]
@@ -228,11 +229,12 @@ class SANETrainer(TorchModuleBaseTrainer):
             #
             # # Compute regret-augmented loss with knowledge
             # augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
-            augmented_loss = loss
+            # augmented_loss = loss
 
             if train:
                 # backward pass + optimization step
-                augmented_loss.backward()
+                # augmented_loss.backward()
+                loss.backward()
                 self.optimizer.step()
 
             # Update Split Loss
@@ -246,10 +248,14 @@ class SANETrainer(TorchModuleBaseTrainer):
             predicted = pred.logits.argmax(1)
             correct += predicted.eq(labels).sum().item()
 
+            # clean vars and gradients after step
+            self.optimizer.zero_grad()
+            del predicted, loss
+
             # Update total
             total += len(labels)
 
-        split_time = time.time() - start
+        # split_time = time.time() - start
         split_loss /= len(dataloader)
         split_loss_nk /= len(dataloader)
         split_ekri /= len(dataloader)
