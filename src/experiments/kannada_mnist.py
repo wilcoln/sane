@@ -151,8 +151,8 @@ class Trainer(TorchModuleBaseTrainer):
             #####################################
             # (1) Compute loss without knowledge
             #####################################
-            if train:
-                self.optimizer_nk.zero_grad()
+            # zero the parameter gradients
+            self.optimizer_nk.zero_grad()
 
             # forward pass & compute loss without knowledge
             yhat, _, _ = self.model_nk(x, k)
@@ -169,15 +169,16 @@ class Trainer(TorchModuleBaseTrainer):
             # Update Accuracy
             yhat = yhat.argmax(1)
             correct_nk += yhat.eq(y).sum().item()
-            # clean intermediate vars
+
+            # clean vars and gradients after step
+            self.optimizer_nk.zero_grad()
             del yhat
 
             #################################################
             # (2) Compute regret-augmented loss with knowledge
             ##################################################
-            if train:
-                # reset the gradients
-                self.optimizer.zero_grad()
+            # zero the parameter gradients
+            self.optimizer.zero_grad()
 
             # forward pass
             yhat, kri, kci = self.model(x, k)
@@ -204,6 +205,10 @@ class Trainer(TorchModuleBaseTrainer):
             # Update Accuracy
             yhat = yhat.argmax(1)
             correct += yhat.eq(y).sum().item()
+
+            # clean vars and gradients after step
+            self.optimizer.zero_grad()
+            del yhat, loss, loss_nk
 
             # Update total
             total += len(y)
