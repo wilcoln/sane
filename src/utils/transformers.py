@@ -15,22 +15,17 @@ logger = logging.get_logger(__name__)
 @dataclass
 class BartForConditionalGenerationOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
-    last_hidden_state_nk: Optional[torch.Tensor] = None
     knowledge_relevance: Optional[torch.Tensor] = None
-    loss_nk: Optional[torch.Tensor] = None
 
 
 @dataclass
 class BartModelOutput(Seq2SeqModelOutput):
     knowledge_relevance: Optional[torch.Tensor] = None
-    transformed_encoder_last_hidden_state: Optional[torch.Tensor] = None
-    last_hidden_state_nk: Optional[torch.Tensor] = None
 
 
 class BartModel(BaseBartModel):
     def __init__(self, config: BartConfig):
         super().__init__(config)
-        self.fusion_head = nn.Linear(2 * self.config.d_model, 1)
 
     def forward(
             self,
@@ -108,7 +103,6 @@ class BartModel(BaseBartModel):
 
         return BartModelOutput(
             last_hidden_state=decoder_outputs.last_hidden_state,
-            last_hidden_state_nk=decoder_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
             decoder_attentions=decoder_outputs.attentions,
@@ -122,7 +116,12 @@ class BartModel(BaseBartModel):
 class BartWithKnowledgeModel(BartModel):
     def __init__(self, config: BartConfig):
         super().__init__(config)
-        self.fusion_head = nn.Linear(2 * config.d_model, 1)
+        self.g1 = nn.Sequential(
+            nn.Linear(2 * self.config.d_model, self.config.d_model),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(self.config.d_model, 1)
+        )
 
     def forward(
             self,
@@ -163,20 +162,57 @@ class BartWithKnowledgeModel(BartModel):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )
+        # different to other models, Bart automatically creates decoder_input_ids from
+        # input_ids if no decoder_input_ids are provided
+        if decoder_input_ids is None and decoder_inputs_embeds is None:
+            if input_ids is None:
+                raise ValueError(
+                    "If no `decoder_input_ids` or `decoder_inputs_embeds` are "
+                    "passed, `input_ids` cannot be `None`. Please pass either "
+                    "`input_ids` or `decoder_input_ids` or `decoder_inputs_embeds`."
+                )
 
-        # With knowledge
+            decoder_input_ids = shift_tokens_right(
+                input_ids, self.config.pad_token_id, self.config.decoder_start_token_id
+            )
+
+        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+        output_hidden_states = (
+            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        )
+        use_cache = use_cache if use_cache is not None else self.config.use_cache
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        if encoder_outputs is None:
+            encoder_outputs = self.encoder(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                head_mask=head_mask,
+                inputs_embeds=inputs_embeds,
+                output_attentions=output_attentions,
+                output_hidden_states=output_hidden_states,
+                return_dict=return_dict,
+            )
+        # If the user passed a tuple for encoder_outputs, we wrap it in a BaseModelOutput when return_dict=True
+        elif return_dict and not isinstance(encoder_outputs, BaseModelOutput):
+            encoder_outputs = BaseModelOutput(
+                last_hidden_state=encoder_outputs[0],
+                hidden_states=encoder_outputs[1] if len(encoder_outputs) > 1 else None,
+                attentions=encoder_outputs[2] if len(encoder_outputs) > 2 else None,
+            )
+
         # Fuse knowledge and encoder transformed outputs
         n = init_input_embeds.shape[0] // knowledge_embedding.shape[0]
         m = init_input_embeds.shape[1]
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(n, m, 1)
         input_fusion_head = torch.cat([init_input_embeds, knowledge_embedding], dim=2)
-        r = torch.sigmoid(self.fusion_head(input_fusion_head))
+        r = self.g1(input_fusion_head)
 
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,
             attention_mask=decoder_attention_mask,
-            encoder_hidden_states=bart_outputs.encoder_last_hidden_state + r * knowledge_embedding,
+            encoder_hidden_states=encoder_outputs.last_hidden_state + r * knowledge_embedding,
             encoder_attention_mask=attention_mask,
             head_mask=decoder_head_mask,
             cross_attn_head_mask=cross_attn_head_mask,
@@ -191,7 +227,6 @@ class BartWithKnowledgeModel(BartModel):
         return BartModelOutput(
             knowledge_relevance=r,
             last_hidden_state=decoder_outputs.last_hidden_state,
-            last_hidden_state_nk=bart_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
             decoder_attentions=decoder_outputs.attentions,
@@ -435,23 +470,14 @@ class BartWithKnowledgeForConditionalGeneration(BartForConditionalGeneration):
             loss_fct = CrossEntropyLoss(reduction='none')
             masked_lm_loss = loss_fct(lm_logits.view(-1, self.config.vocab_size), labels.view(-1))
 
-        # Without knowledge
-        lm_logits_nk = self.lm_head(outputs.last_hidden_state_nk) + self.final_logits_bias
-        masked_lm_loss_nk = None
-        if labels is not None:
-            loss_fct = CrossEntropyLoss(reduction='none')
-            masked_lm_loss_nk = loss_fct(lm_logits_nk.view(-1, self.config.vocab_size), labels.view(-1))
-
         if not return_dict:
             output = (lm_logits,) + outputs[1:]
             return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
 
         return BartForConditionalGenerationOutput(
             loss=masked_lm_loss,
-            loss_nk=masked_lm_loss_nk,
             logits=lm_logits,
             last_hidden_state=outputs.last_hidden_state,
-            last_hidden_state_nk=outputs.last_hidden_state_nk,
             past_key_values=outputs.past_key_values,
             decoder_hidden_states=outputs.decoder_hidden_states,
             decoder_attentions=outputs.decoder_attentions,

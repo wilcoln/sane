@@ -109,22 +109,6 @@ class Trainer(TorchModuleBaseTrainer):
         self.model_nk = model_nk
         self.optimizer_nk = optimizer_nk
 
-        # if settings.algo == 1:
-        #     self.step_one_train = {f}
-        #     self.step_two_train = {h, g}
-        #
-        # elif settings.algo == 2:
-        #     self.step_one_train = {f, h}
-        #     self.step_two_train = {f, g, h}
-        #
-        # elif settings.algo == 3:
-        #     self.step_one_train = {f, h}
-        #     self.step_two_train = {g}
-        #
-        # elif settings.algo == 4:
-        #     self.step_one_train = {f}
-        #     self.step_two_train = {f, g, h}
-
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
 
@@ -157,7 +141,7 @@ class Trainer(TorchModuleBaseTrainer):
             # (1) Compute loss without knowledge
             #####################################
             if train:
-                self.optimizer.zero_grad()
+                self.optimizer_nk.zero_grad()
 
             # forward pass & compute loss without knowledge
             yhat, _ = self.model_nk(x, k)

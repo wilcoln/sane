@@ -26,15 +26,15 @@ class SANE(nn.Module):
         return {
             self.encoder,
             self.attention,
-            self.explainer.model.model.fusion_head,
-            self.predictor.fusion_head,
+            self.explainer.model.model.g1,
+            self.predictor.g1,
         }
 
     @property
     def h_modules(self):
         return {
             self.explainer.model.model.encoder,
-            self.predictor.transform,
+            self.predictor.h,
         }
 
     @property
@@ -42,7 +42,7 @@ class SANE(nn.Module):
         return {
             self.explainer.model.model.decoder,
             self.explainer.model.lm_head,
-            self.predictor.pred_head,
+            self.predictor.f,
         }
 
 

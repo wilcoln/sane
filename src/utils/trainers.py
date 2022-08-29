@@ -15,7 +15,6 @@ from tqdm import tqdm
 
 from src.settings import settings
 from src.utils.format import fmt_stats_dict, capitalize
-from src.utils.nn import freeze_modules, unfreeze_modules
 from src.utils.regret import regret
 
 
@@ -148,24 +147,12 @@ class TorchModuleBaseTrainer(ABC):
 
 
 class SANETrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, train_loader, val_loader):
-        super().__init__(model, optimizer, train_loader, val_loader, params=settings.exp)
-
-        if settings.algo == 1:
-            self.step_one_train = self.model.f_modules
-            self.step_two_train = self.model.h_modules | self.model.g_modules
-
-        elif settings.algo == 2:
-            self.step_one_train = self.model.f_modules | self.model.h_modules
-            self.step_two_train = self.model.f_modules | self.model.g_modules | self.model.h_modules
-
-        elif settings.algo == 3:
-            self.step_one_train = self.model.f_modules | self.model.h_modules
-            self.step_two_train = self.model.g_modules
-
-        elif settings.algo == 4:
-            self.step_one_train = self.model.f_modules
-            self.step_two_train = self.model.f_modules | self.model.g_modules | self.model.h_modules
+    def __init__(self, model, model_nk, optimizer, optimizer_nk, train_loader, val_loader, loss_fn, loss_fn_nk, params):
+        super().__init__(model, optimizer, train_loader, val_loader, params)
+        self.loss_fn = loss_fn
+        self.loss_fn_nk = loss_fn_nk
+        self.model_nk = model_nk
+        self.optimizer_nk = optimizer_nk
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
@@ -193,36 +180,31 @@ class SANETrainer(TorchModuleBaseTrainer):
         pbar.set_description(self.split_descriptions[split])
         start = time.time()
         for i, inputs in pbar:
+            labels = inputs['gold_label'].to(settings.device)
+
             #####################################
             # (1) Compute loss without knowledge
             #####################################
             if train:
-                self.optimizer.zero_grad()
-
-            # freeze in first step
-            freeze_modules(self.step_two_train)
-            # unfreeze in first step
-            unfreeze_modules(self.step_one_train)
+                self.optimizer_nk.zero_grad()
 
             # forward pass & compute loss without knowledge
-            outputs = self.model(inputs)
-            pred1, nle1 = outputs[:2]
-            loss_nk = (settings.alpha * nle1.loss_nk.mean()
-                       + (1 - settings.alpha) * pred1.loss_nk.mean())
+            outputs = self.model_nk(inputs)
+            pred_nk, nle_nk = outputs[:2]
+            loss_nk = settings.alpha * nle_nk.loss + (1 - settings.alpha) * pred_nk.loss
 
             if train:
                 # backward pass + optimization step
-                loss_nk.backward()
-                self.optimizer.step()
-                self.optimizer.zero_grad()
+                loss_nk.mean().backward()
+                self.optimizer_nk.step()
 
             # Update Split Loss no knowledge
-            split_loss_nk += loss_nk.item()
+            split_loss_nk += loss_nk.mean().item()
             # Update split nle loss no knowledge
-            split_nle_loss_nk += nle1.loss_nk.mean().item()
+            split_nle_loss_nk += nle_nk.loss.mean().item()
             # Update Accuracy
-            predicted = pred1.logits_nk.argmax(1)
-            correct_nk += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
+            predicted = pred_nk.logits.argmax(1)
+            correct_nk += predicted.eq(labels).sum().item()
             # clean intermediate vars
             del outputs, predicted, loss_nk
 
@@ -233,34 +215,29 @@ class SANETrainer(TorchModuleBaseTrainer):
                 # reset the gradients
                 self.optimizer.zero_grad()
 
-            # freeze in second step
-            freeze_modules(self.step_one_train)
-            # unfreeze in second step
-            unfreeze_modules(self.step_two_train)
             # forward pass & compute loss
             outputs = self.model(inputs)
             pred, nle = outputs[:2]
 
             # Compute exact loss with knowledge
-            loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
+            loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
 
             # Compute regret loss
-            pred_regret = regret(pred.loss, pred1.loss_nk.detach(), reduce=False)
-            nle_regret = regret(nle.loss, nle1.loss_nk.detach(), reduce=False)
+            pred_regret = regret(pred.loss, pred_nk.loss.detach(), reduce=False)
+            nle_regret = regret(nle.loss, nle_nk.loss.detach(), reduce=False)
 
-            regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
+            regret_loss = settings.alpha_regret * nle_regret + (1 - settings.alpha_regret) * pred_regret
 
             # Compute regret-augmented loss with knowledge
             augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
 
             if train:
                 # backward pass + optimization step
-                augmented_loss.backward()
+                augmented_loss.mean().backward()
                 self.optimizer.step()
 
             # Update Split Loss
-            split_loss += loss.item()
-            # Update split pred loss
+            split_loss += loss.mean().item()
             # Update split nle loss
             split_nle_loss += nle.loss.mean().item()
             # Update Split Knowledge relevance
@@ -268,10 +245,10 @@ class SANETrainer(TorchModuleBaseTrainer):
             split_pkri += pred.knowledge_relevance.mean().item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
-            correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
+            correct += predicted.eq(labels).sum().item()
 
             # Update total
-            total += inputs['gold_label'].size(0)
+            total += len(labels)
 
         split_time = time.time() - start
         split_loss /= len(dataloader)
@@ -295,8 +272,8 @@ class SANETrainer(TorchModuleBaseTrainer):
 
 
 class SANENoKnowledgeTrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, optimizer, train_loader, val_loader):
-        super().__init__(model, optimizer, train_loader, val_loader, params=settings.exp)
+    def __init__(self, model, optimizer, train_loader, val_loader, params):
+        super().__init__(model, optimizer, train_loader, val_loader, params)
 
     def evaluate(self, dataloader, split):
         """Train, Evaluate, and Test the Model"""
