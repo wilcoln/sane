@@ -168,6 +168,7 @@ class SANETrainer(TorchModuleBaseTrainer):
         # Set split loss values
         split_loss, split_loss_nk = 0.0, 0.0
         split_nle_loss, split_nle_loss_nk = 0.0, 0.0
+        regret_loss = 0.0
         # Set split knowledge relevance indices
         split_ekri, split_pkri = 0.0, 0.0
 
@@ -181,29 +182,30 @@ class SANETrainer(TorchModuleBaseTrainer):
         start = time.time()
         for i, inputs in pbar:
             labels = inputs['gold_label'].to(settings.device)
-            #####################################
-            # (1) Compute loss without knowledge
-            #####################################
-            if train:
-                # zero the parameter gradients
-                self.optimizer_nk.zero_grad()
+            if self.model_nk is not None:
+                #####################################
+                # (1) Compute loss without knowledge
+                #####################################
+                if train:
+                    # zero the parameter gradients
+                    self.optimizer_nk.zero_grad()
 
-            # forward pass & compute loss without knowledge
-            pred_nk, nle_nk = self.model_nk(inputs)[:2]
-            loss_nk = settings.alpha * nle_nk.loss.mean() + (1 - settings.alpha) * pred_nk.loss.mean()
+                # forward pass & compute loss without knowledge
+                pred_nk, nle_nk = self.model_nk(inputs)[:2]
+                loss_nk = settings.alpha * nle_nk.loss.mean() + (1 - settings.alpha) * pred_nk.loss.mean()
 
-            if train:
-                # backward pass + optimization step
-                loss_nk.backward()
-                self.optimizer_nk.step()
+                if train:
+                    # backward pass + optimization step
+                    loss_nk.backward()
+                    self.optimizer_nk.step()
 
-            # Update Split Loss no knowledge
-            split_loss_nk += loss_nk.item()
-            # Update split nle loss no knowledge
-            split_nle_loss_nk += nle_nk.loss.mean().item()
-            # Update Accuracy
-            predicted = pred_nk.logits.argmax(1)
-            correct_nk += predicted.eq(labels).sum().item()
+                # Update Split Loss no knowledge
+                split_loss_nk += loss_nk.item()
+                # Update split nle loss no knowledge
+                split_nle_loss_nk += nle_nk.loss.mean().item()
+                # Update Accuracy
+                predicted = pred_nk.logits.argmax(1)
+                correct_nk += predicted.eq(labels).sum().item()
 
             ##################################################
             # (2) Compute regret-augmented loss with knowledge
@@ -218,11 +220,12 @@ class SANETrainer(TorchModuleBaseTrainer):
             # Compute exact loss with knowledge
             loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
 
-            # Compute regret loss
-            pred_regret = regret(pred.loss, pred_nk.loss.detach(), reduce=False)
-            nle_regret = regret(nle.loss, nle_nk.loss.detach(), reduce=False)
+            if self.model_nk is not None:
+                # Compute regret loss
+                pred_regret = regret(pred.loss, pred_nk.loss.detach(), reduce=False)
+                nle_regret = regret(nle.loss, nle_nk.loss.detach(), reduce=False)
 
-            regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
+                regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
 
             # Compute regret-augmented loss with knowledge
             augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
