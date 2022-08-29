@@ -62,8 +62,10 @@ class Conceptnet:
         # corrupt relation embedding with knowledge noise
         self.relation_embedding = corrupt(self.relation_embedding, settings.knowledge_noise_prop).detach()
 
-        # self loop embedding
-        self.self_loop_embedding = bart(['IdenticalTo'])[0].view(1, -1)
+        # Add self loop
+        self.self_loop, self.self_loop_id = 'IdenticalTo', -1
+        self.self_loop_embedding = bart([self.self_loop])[0].view(1, -1)
+        self.relation_dict[self.self_loop] = self.self_loop_id
 
     @property
     def size(self) -> Tuple[int, int]:

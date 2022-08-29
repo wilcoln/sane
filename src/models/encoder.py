@@ -27,17 +27,18 @@ class Encoder(nn.Module):
 
         # Get initial node embeddings from conceptnet
         x = conceptnet.concept_embedding[nodes]
-        # edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
-        edge_attr = conceptnet.relation_embedding[edge_relation]  # ignore precomputed edge_weight
+        edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
+        # edge_attr = conceptnet.relation_embedding[edge_relation]  # ignore precomputed edge_weight
 
         # Apply GNN
-        x = self.gnn(x, edge_index, edge_attr)
+        if not settings.no_gnn:
+            x = self.gnn(x, edge_index, edge_attr)
 
         # Add self-loops
         self_loop_index = torch.arange(len(nodes)).view(-1, 1).repeat(1, 2).T
         edge_index = torch.hstack((edge_index, self_loop_index))
         self_loop_attr = conceptnet.self_loop_embedding.repeat(len(nodes), 1)
-        self_loops = torch.Tensor([-1]).repeat(len(nodes))
+        self_loops = torch.Tensor([conceptnet.self_loop_id]).repeat(len(nodes))
         edge_relation = torch.cat([edge_relation, self_loops])
         edge_attr = torch.vstack((edge_attr.to(settings.device), self_loop_attr))
 

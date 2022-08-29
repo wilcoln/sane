@@ -24,6 +24,7 @@ _exp_settings = [
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
     ('no_knowledge', 'Disable Knowledge attention', bool, False),
     ('train_nk', 'Train No Knowledge model', bool, True),
+    ('no_gnn', 'Disable GNN', bool, False),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
     ('num_runs', 'Number of runs', int, 10),
     ('desc', 'Additional description', str, None)
