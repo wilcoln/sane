@@ -189,8 +189,7 @@ class SANETrainer(TorchModuleBaseTrainer):
                 self.optimizer_nk.zero_grad()
 
             # forward pass & compute loss without knowledge
-            outputs = self.model_nk(inputs)
-            pred_nk, nle_nk = outputs[:2]
+            pred_nk, nle_nk = self.model_nk(inputs)[:2]
             loss_nk = settings.alpha * nle_nk.loss.mean() + (1 - settings.alpha) * pred_nk.loss.mean()
 
             if train:
@@ -206,7 +205,7 @@ class SANETrainer(TorchModuleBaseTrainer):
             predicted = pred_nk.logits.argmax(1)
             correct_nk += predicted.eq(labels).sum().item()
             # clean intermediate vars
-            del outputs, predicted, loss_nk
+            del predicted, loss_nk
 
             ##################################################
             # (2) Compute regret-augmented loss with knowledge
@@ -215,21 +214,21 @@ class SANETrainer(TorchModuleBaseTrainer):
                 # reset the gradients
                 self.optimizer.zero_grad()
 
-            # forward pass & compute loss
-            outputs = self.model(inputs)
-            pred, nle = outputs[:2]
+            # forward pass & compute loss with knowledge
+            pred, nle = self.model(inputs)[:2]
 
             # Compute exact loss with knowledge
             loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
 
             # Compute regret loss
-            pred_regret = regret(pred.loss, pred_nk.loss.detach(), reduce=False)
-            nle_regret = regret(nle.loss, nle_nk.loss.detach(), reduce=False)
-
-            regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
-
-            # Compute regret-augmented loss with knowledge
-            augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
+            # pred_regret = regret(pred.loss, pred_nk.loss.detach(), reduce=False)
+            # nle_regret = regret(nle.loss, nle_nk.loss.detach(), reduce=False)
+            #
+            # regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
+            #
+            # # Compute regret-augmented loss with knowledge
+            # augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
+            augmented_loss = loss
 
             if train:
                 # backward pass + optimization step
