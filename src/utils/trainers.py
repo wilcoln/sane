@@ -15,7 +15,6 @@ from tqdm import tqdm
 
 from src.settings import settings
 from src.utils.format import fmt_stats_dict, capitalize
-from src.utils.regret import regret
 
 
 class TorchModuleBaseTrainer(ABC):
