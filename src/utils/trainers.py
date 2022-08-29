@@ -249,7 +249,7 @@ class SANETrainer(TorchModuleBaseTrainer):
 
             # clean vars and gradients after step
             self.optimizer.zero_grad()
-            del predicted, loss, loss_nk
+            del predicted, loss
 
             # Update total
             total += len(labels)
