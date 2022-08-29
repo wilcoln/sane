@@ -44,7 +44,6 @@ class BartWithKnowledgeModel(BartModel):
             *,
             knowledge_embedding=None,
             init_input_embeds=None,
-
     ) -> Union[Tuple, BartModelOutput]:
         # different to other models, Bart automatically creates decoder_input_ids from
         # input_ids if no decoder_input_ids are provided
@@ -157,6 +156,8 @@ class BartWithKnowledgeForConditionalGeneration(BartForConditionalGeneration):
 
         # Returns:
         # """
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
         if labels is not None:
             if use_cache:
                 logger.warning("The `use_cache` argument is changed to `False` since `labels` is provided.")
@@ -186,7 +187,6 @@ class BartWithKnowledgeForConditionalGeneration(BartForConditionalGeneration):
             init_input_embeds=init_input_embeds,
         )
 
-        # With knowledge
         lm_logits = self.lm_head(outputs.last_hidden_state) + self.final_logits_bias
 
         masked_lm_loss = None

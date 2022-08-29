@@ -239,7 +239,7 @@ if __name__ == '__main__':
         'num_epochs': settings.num_epochs,
         'num_runs': settings.num_runs,
         'train_size': 0.8,
-        'batch_size': 1024,
+        'batch_size': 4096,
         'lr': 1e-2,
         'input': 'pca',
     }
@@ -266,6 +266,11 @@ if __name__ == '__main__':
     data_dir = osp.join(settings.data_dir, 'kannada_mnist_2d_pca_tsne_umap')
     x_k = torch.from_numpy(np.load(osp.join(data_dir, 'x.npy'))).float()
     y = torch.from_numpy(np.load(osp.join(data_dir, 'y.npy')))
+
+    # Truncate dataset to 5000 random samples
+    idx = torch.randperm(len(x_k))[:5000]
+    x_k = x_k[idx]
+    y = y[idx]
     # Set input features
     x = x_k[:, _slice[params['input']]]
 
