@@ -191,15 +191,15 @@ class SANETrainer(TorchModuleBaseTrainer):
             # forward pass & compute loss without knowledge
             outputs = self.model_nk(inputs)
             pred_nk, nle_nk = outputs[:2]
-            loss_nk = settings.alpha * nle_nk.loss + (1 - settings.alpha) * pred_nk.loss
+            loss_nk = settings.alpha * nle_nk.loss.mean() + (1 - settings.alpha) * pred_nk.loss.mean()
 
             if train:
                 # backward pass + optimization step
-                loss_nk.mean().backward()
+                loss_nk.backward()
                 self.optimizer_nk.step()
 
             # Update Split Loss no knowledge
-            split_loss_nk += loss_nk.mean().item()
+            split_loss_nk += loss_nk.item()
             # Update split nle loss no knowledge
             split_nle_loss_nk += nle_nk.loss.mean().item()
             # Update Accuracy
@@ -220,24 +220,24 @@ class SANETrainer(TorchModuleBaseTrainer):
             pred, nle = outputs[:2]
 
             # Compute exact loss with knowledge
-            loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
+            loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
 
             # Compute regret loss
             pred_regret = regret(pred.loss, pred_nk.loss.detach(), reduce=False)
             nle_regret = regret(nle.loss, nle_nk.loss.detach(), reduce=False)
 
-            regret_loss = settings.alpha_regret * nle_regret + (1 - settings.alpha_regret) * pred_regret
+            regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
 
             # Compute regret-augmented loss with knowledge
             augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss
 
             if train:
                 # backward pass + optimization step
-                augmented_loss.mean().backward()
+                augmented_loss.backward()
                 self.optimizer.step()
 
             # Update Split Loss
-            split_loss += loss.mean().item()
+            split_loss += loss.item()
             # Update split nle loss
             split_nle_loss += nle.loss.mean().item()
             # Update Split Knowledge relevance
