@@ -120,7 +120,8 @@ class BartWithKnowledgeModel(BartModel):
             nn.Linear(2 * self.config.d_model, self.config.d_model),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(self.config.d_model, 1)
+            nn.Linear(self.config.d_model, 1),
+            nn.Sigmoid()
         )
 
     def forward(

@@ -27,7 +27,8 @@ class Predictor(nn.Module):
             nn.Linear(2 * settings.sent_dim, settings.sent_dim),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(settings.sent_dim, 1)
+            nn.Linear(settings.sent_dim, 1),
+            nn.Sigmoid()
         )
         self.h = nn.Sequential(
             nn.Linear(settings.sent_dim, settings.sent_dim),
