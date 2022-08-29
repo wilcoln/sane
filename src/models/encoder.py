@@ -34,7 +34,7 @@ class Encoder(nn.Module):
         x = self.gnn(x, edge_index, edge_attr)
 
         # Add self-loops
-        self_loop_index = torch.stack([nodes, nodes], dim=1)
+        self_loop_index = torch.hstack((nodes, nodes))
         edge_index = torch.vstack((edge_index, self_loop_index))
         self_loop_attr = conceptnet.self_loop_embedding.repeat(len(nodes), 1)
         edge_attr = torch.vstack((edge_attr, self_loop_attr))
