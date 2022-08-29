@@ -16,7 +16,7 @@ class SANE(nn.Module):
 
     def forward(self, inputs):
         knwl = self.encoder(inputs)
-        att_knwl = self.attention(inputs, knwl.output)
+        att_knwl = self.attention(inputs, knwl)
         nle = self.explainer(inputs, att_knwl.output)
         pred = self.predictor(inputs, att_knwl.output, nle)
         return pred, nle, att_knwl, knwl
