@@ -81,6 +81,7 @@
 # python src/experiments/train.py --dataset=comve --num_epochs=15 --algo=2
 # python src/experiments/train.py --dataset=comve --num_epochs=15 --algo=3
 
-python src/experiments/train.py --dataset=comve --num_epochs=15
+python src/experiments/train.py --dataset=comve --num_epochs=15 --beta=0
 # python src/experiments/train.py --dataset=cose --num_epochs=20 --hidden_dim=256 --max_concepts_per_sent=20 --algo=4
 # python src/experiments/train.py --dataset=cose --num_epochs=15 --no_knowledge --chunk_size=5000
+# python src/experiments/train.py --dataset=esnli --num_epochs=5 --beta=0 --batch_size=64
