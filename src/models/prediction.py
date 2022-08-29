@@ -57,16 +57,29 @@ class Predictor(nn.Module):
 class PredictorNoKnowledge(nn.Module):
     def __init__(self):
         super().__init__()
-        self.foh = nn.Linear(2 * settings.sent_dim, settings.num_classes)
+        self.f = nn.Sequential(
+            nn.Linear(2 * settings.sent_dim, settings.sent_dim),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(settings.sent_dim, settings.num_classes),
+        )
+        self.h = nn.Sequential(
+            nn.Linear(settings.sent_dim, settings.sent_dim),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(settings.sent_dim, settings.sent_dim),
+        )
         self.loss_fn = nn.CrossEntropyLoss(reduction='none')
 
     def forward(self, inputs, nle):
         sent_embed, labels = inputs['Sentences_embedding'].to(settings.device), inputs['gold_label'].to(settings.device)
         nle_embed = transformer_sentence_pool(nle.last_hidden_state)
 
+        sent_embed = self.h(sent_embed)
+
         # Prediction
         input_pred = torch.hstack((sent_embed, nle_embed))
-        logits = self.foh(input_pred)
+        logits = self.f(input_pred)
         loss = self.loss_fn(logits, labels)
 
         return PredictorOutput(logits=logits, loss=loss)
