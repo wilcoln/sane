@@ -1,7 +1,7 @@
 import os.path as osp
-import random
+
 import string
-from typing import Tuple, List, Union
+from typing import Tuple
 
 import networkx as onx
 import pandas as pd
