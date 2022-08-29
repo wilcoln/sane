@@ -9,7 +9,7 @@ import torch
 from torch_geometric.data import Data
 
 from src.settings import settings
-from src.utils.embeddings import corrupt
+from src.utils.embeddings import corrupt, bart
 from src.utils.nltk import all_grams
 from src.utils.types import ChunkedList
 
@@ -61,6 +61,9 @@ class Conceptnet:
         self.relation_embedding = torch.cat(relation_embedding.get_chunks(), dim=0)
         # corrupt relation embedding with knowledge noise
         self.relation_embedding = corrupt(self.relation_embedding, settings.knowledge_noise_prop).detach()
+
+        # self loop embedding
+        self.self_loop_embedding = bart(['IdenticalTo'])[0].view(1, -1)
 
     @property
     def size(self) -> Tuple[int, int]:

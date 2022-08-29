@@ -25,10 +25,21 @@ class Encoder(nn.Module):
         nodes, edge_index, edge_attr = inputs['concept_ids'], inputs['edge_index'], inputs['edge_attr']
         edge_relation, edge_weight = edge_attr[:, 0].long(), edge_attr[:, 1]
 
-        # Encode triples
+        # Get initial node embeddings from conceptnet
         x = conceptnet.concept_embedding[nodes]
-        edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
-        x, edge_index, edge_attr = self.gnn(x, edge_index, edge_attr)
+        # edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
+        edge_attr = conceptnet.relation_embedding[edge_relation]  # ignore precomputed edge_weight
+
+        # Apply GNN
+        x = self.gnn(x, edge_index, edge_attr)
+
+        # Add self-loops
+        self_loop_index = torch.stack([nodes, nodes], dim=1)
+        edge_index = torch.vstack((edge_index, self_loop_index))
+        self_loop_attr = conceptnet.self_loop_embedding.repeat(len(nodes), 1)
+        edge_attr = torch.vstack((edge_attr, self_loop_attr))
+
+        # Convert to triples and project to sentence dimension
         encoded_triples = self.lin(singles_to_triples(x, edge_index, edge_attr))
 
         if self.training:
