@@ -94,8 +94,8 @@ class SimpleSANE(nn.Module):
         yhat = self.f(x_tilde_plus)
 
         # Compute kri
-        ck = torch.norm(rk_tilde, dim=1)**2
-        cx = torch.norm(x_tilde, dim=1)**2
+        ck = torch.norm(rk_tilde, dim=1) ** 2
+        cx = torch.norm(x_tilde, dim=1) ** 2
         c = ck / (ck + cx)
 
         # Return yhat and kri

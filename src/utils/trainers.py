@@ -234,7 +234,8 @@ class SANETrainer(TorchModuleBaseTrainer):
                 pred_regret = regret(pred.loss, pred_nk.loss.detach(), reduce=False)
                 nle_regret = regret(nle.loss, nle_nk.loss.detach(), reduce=False)
 
-                regret_loss = settings.alpha_regret * nle_regret.mean() + (1 - settings.alpha_regret) * pred_regret.mean()
+                regret_loss = settings.alpha_regret * nle_regret.mean() + (
+                        1 - settings.alpha_regret) * pred_regret.mean()
 
             # Compute regret-augmented loss with knowledge
             augmented_loss = (1 - settings.beta) * loss + settings.beta * regret_loss

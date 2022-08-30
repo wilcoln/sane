@@ -1,8 +1,8 @@
 from torch import nn
 
 from src.models.attention import Attention
-from src.models.explanation import Explainer, ExplainerNoKnowledge
 from src.models.encoder import Encoder
+from src.models.explanation import Explainer, ExplainerNoKnowledge
 from src.models.prediction import Predictor, PredictorNoKnowledge
 
 

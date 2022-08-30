@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-from icecream import ic
 from torch import nn
+
 from src.settings import settings
 from src.utils.embeddings import corrupt
 
@@ -29,10 +29,6 @@ if __name__ == '__main__':
 
     # Plot results
     import matplotlib.pyplot as plt
+
     plt.plot(sigma2s, accuracies)
     plt.show()
-
-
-
-
-

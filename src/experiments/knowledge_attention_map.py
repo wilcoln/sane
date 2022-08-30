@@ -14,7 +14,8 @@ def compute_knowledge_attention_map(inputs, model):
     # run model
     pred, nle, att_knwl, knwl = model(inputs)
     triples = conceptnet.ids2triples(knwl.id.tolist())
-    sentences = frozen_bart_tokenizer.batch_decode(inputs['Sentences']['input_ids'].to(settings.device), skip_special_tokens=True)
+    sentences = frozen_bart_tokenizer.batch_decode(inputs['Sentences']['input_ids'].to(settings.device),
+                                                   skip_special_tokens=True)
     triples = [' '.join(t) for t in triples]
 
     # Get top k triples and their attention weightstopk_triples = []
@@ -29,7 +30,8 @@ def compute_knowledge_attention_map(inputs, model):
     for i in range(settings.num_attn_heads):
         np_attention = att_knwl.weights.cpu().detach().numpy()
         df = pd.DataFrame(np_attention, index=sentences, columns=triples)
-        csv_path = osp.join(results_path, f'knowledge_attention_map_{settings.batch_size}x{settings.max_concepts_per_sent}_{i + 1}.csv')
+        csv_path = osp.join(results_path,
+                            f'knowledge_attention_map_{settings.batch_size}x{settings.max_concepts_per_sent}_{i + 1}.csv')
         df.to_csv(csv_path)
 
 

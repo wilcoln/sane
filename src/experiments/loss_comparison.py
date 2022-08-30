@@ -1,8 +1,9 @@
 import json
 import os.path as osp
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from src.settings import settings
 from src.utils.format import capitalize
 

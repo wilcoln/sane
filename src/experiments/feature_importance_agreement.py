@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch import nn
+
 from src.settings import settings
 
 
@@ -72,8 +73,3 @@ if __name__ == '__main__':
     plt.plot(percentiles, influential_occluded_accuracies)
     plt.plot(percentiles, random_occluded_accuracies)
     plt.show()
-
-
-
-
-

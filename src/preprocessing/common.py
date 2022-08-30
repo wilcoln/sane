@@ -1,13 +1,12 @@
 import math
 import os
 import os.path as osp
-import string
 
 from icecream import ic
 from tqdm import tqdm
 
-from src.settings import settings
 from src.conceptnet import conceptnet as cn
+from src.settings import settings
 from src.utils.embeddings import bart
 from src.utils.types import ChunkedList
 
