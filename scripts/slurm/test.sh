@@ -59,5 +59,5 @@
 # input_dir='results/trainers/2022-08-23_07-54-20_381813_model=SANE_dataset=esnli_num_epochs=5_batch_size=64_algo=2_lr=0.0001_weight_decay=0.01_sent_dim=768_hidden_dim=64_max_concepts_per_sent=200_sentence_pool=mean_data_frac=0.05_alpha=0.4_beta=0.5_num_attn_heads=1'
 # python src/experiments/test.py --input_dir=$input_dir
 
-input_dir='results/trainers/2022-08-24_13-25-31_395101_model=SANE_dataset=comve_num_epochs=15_batch_size=128_algo=1_lr=0.0001_weight_decay=0.01_sent_'
-python src/experiments/test.py --input_dir=$input_dir --dataset=comve
+input_dir='results/trainers/2022-08-30_00-05-18_045562_model=SANE_dataset=comve_num_epochs=15_batch_size=128_algo=2_lr=0.0001_weight_decay=0.01_sent_'
+python src/experiments/test.py --input_dir=$input_dir --dataset=comve --no_gnn
