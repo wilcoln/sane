@@ -16,11 +16,13 @@ logger = logging.get_logger(__name__)
 class BartForConditionalGenerationOutput(Seq2SeqLMOutput):
     last_hidden_state: Optional[torch.Tensor] = None
     knowledge_relevance: Optional[torch.Tensor] = None
+    knowledge_contribution: Optional[torch.Tensor] = None
 
 
 @dataclass
 class BartModelOutput(Seq2SeqModelOutput):
     knowledge_relevance: Optional[torch.Tensor] = None
+    knowledge_contribution: Optional[torch.Tensor] = None
 
 
 class BartModel(BaseBartModel):

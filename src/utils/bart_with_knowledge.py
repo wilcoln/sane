@@ -99,11 +99,19 @@ class BartWithKnowledgeModel(BartModel):
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, m, 1)
         input_fusion_head = torch.cat([init_input_embeds, knowledge_embedding], dim=2)
 
+        # Knowledge relevance
         r = self.g1(input_fusion_head)
-        encoder_last_hidden_state += r * knowledge_embedding
+        rk_tilde = r * knowledge_embedding
+
+        # Knowledge integration
+        encoder_last_hidden_state += rk_tilde
+
+        # Knowledge contribution
+        ck = torch.norm(rk_tilde, dim=2) ** 2
+        cx = torch.norm(encoder_outputs.last_hidden_state, dim=2) ** 2
+        c = ck / (ck + cx)
 
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
-
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,
             attention_mask=decoder_attention_mask,
@@ -121,6 +129,7 @@ class BartWithKnowledgeModel(BartModel):
 
         return BartModelOutput(
             knowledge_relevance=r,
+            knowledge_contribution=c,
             last_hidden_state=decoder_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
@@ -220,6 +229,7 @@ class BartWithKnowledgeForConditionalGeneration(BartForConditionalGeneration):
             encoder_hidden_states=outputs.encoder_hidden_states,
             encoder_attentions=outputs.encoder_attentions,
             knowledge_relevance=outputs.knowledge_relevance,
+            knowledge_contribution=outputs.knowledge_contribution,
         )
 
     def _prepare_encoder_decoder_kwargs_for_generation(

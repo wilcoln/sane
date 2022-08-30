@@ -12,6 +12,7 @@ class PredictorOutput:
     loss: torch.Tensor
     logits: torch.Tensor
     knowledge_relevance: torch.Tensor = None
+    knowledge_contribution: torch.Tensor = None
 
 
 class Predictor(nn.Module):
@@ -41,17 +42,26 @@ class Predictor(nn.Module):
     def forward(self, inputs, knwl, nle):
         sent_embed, labels = inputs['Sentences_embedding'].to(settings.device), inputs['gold_label'].to(settings.device)
         nle_embed = transformer_sentence_pool(nle.last_hidden_state)
+        x_tilde = self.h(sent_embed)
+
+        # Knowledge relevance
+        r = self.g1(torch.hstack((sent_embed, knwl)))
 
         # Knowledge integration
-        r = self.g1(torch.hstack((sent_embed, knwl)))
-        sent_embed = self.h(sent_embed) + r * knwl
+        rk_tilde = r * knwl
+        sent_embed = x_tilde + rk_tilde
+
+        # Knowledge contribution
+        ck = torch.norm(rk_tilde, dim=1) ** 2
+        cx = torch.norm(x_tilde, dim=1) ** 2
+        c = ck / (ck + cx)
 
         # Prediction
         input_pred = torch.hstack((sent_embed, nle_embed))
         logits = self.f(input_pred)
         loss = self.loss_fn(logits, labels)
 
-        return PredictorOutput(logits=logits, loss=loss, knowledge_relevance=r)
+        return PredictorOutput(logits=logits, loss=loss, knowledge_relevance=r, knowledge_contribution=c)
 
 
 class PredictorNoKnowledge(nn.Module):

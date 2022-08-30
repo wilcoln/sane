@@ -93,12 +93,12 @@ class SimpleSANE(nn.Module):
         x_tilde_plus = x_tilde + rk_tilde
         yhat = self.f(x_tilde_plus)
 
-        # Compute kri
+        # Compute kci
         ck = torch.norm(rk_tilde, dim=1) ** 2
         cx = torch.norm(x_tilde, dim=1) ** 2
         c = ck / (ck + cx)
 
-        # Return yhat and kri
+        # Return yhat kri & kci
         return yhat, r, c
 
 

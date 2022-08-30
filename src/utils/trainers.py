@@ -178,8 +178,9 @@ class SANETrainer(TorchModuleBaseTrainer):
         split_loss, split_loss_nk = 0.0, 0.0
         split_nle_loss, split_nle_loss_nk = 0.0, 0.0
         regret_loss = 0.0
-        # Set split knowledge relevance indices
+        # Set split knowledge relevance & contribution indices
         split_ekri, split_pkri = 0.0, 0.0
+        split_ekci, split_pkci = 0.0, 0.0
 
         # Reset values for accuracy computation
         correct, correct_nk = 0, 0
@@ -252,6 +253,8 @@ class SANETrainer(TorchModuleBaseTrainer):
             # Update Split Knowledge relevance
             split_ekri += nle.knowledge_relevance.mean().item()
             split_pkri += pred.knowledge_relevance.mean().item()
+            split_ekci += nle.knowledge_contribution.mean().item()
+            split_pkci += pred.knowledge_contribution.mean().item()
             # Update Accuracy
             predicted = pred.logits.argmax(1)
             correct += predicted.eq(labels).sum().item()
@@ -264,6 +267,8 @@ class SANETrainer(TorchModuleBaseTrainer):
         split_loss_nk /= len(dataloader)
         split_ekri /= len(dataloader)
         split_pkri /= len(dataloader)
+        split_ekci /= len(dataloader)
+        split_pkci /= len(dataloader)
         split_acc = 100. * correct / total
         split_acc_nk = 100. * correct_nk / total
 
@@ -277,6 +282,8 @@ class SANETrainer(TorchModuleBaseTrainer):
             f'{split}_time': split_time,
             f'{split}_ekri': split_ekri,  # explanation knowledge relevance
             f'{split}_pkri': split_pkri,  # prediction knowledge relevance
+            f'{split}_ekci': split_ekci,  # explanation knowledge contribution
+            f'{split}_pkci': split_pkci,  # prediction knowledge contribution
         }
 
 
