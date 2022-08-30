@@ -36,15 +36,16 @@ def test(model, results_path, dataloader):
         att_knwl = None if settings.no_knowledge else outputs[2]
 
         # Compute loss
-        loss = settings.alpha * nle.loss + (1 - settings.alpha) * pred.loss
+        loss = settings.alpha * nle.loss.mean() + (1 - settings.alpha) * pred.loss.mean()
 
         # Update Loss
-        test_loss += loss.mean().item()
+        test_loss += loss.item()
 
         # Update Accuracy
         predicted = pred.logits.argmax(1)
-        total += inputs['gold_label'].size(0)
-        correct += predicted.eq(inputs['gold_label'].to(settings.device)).sum().item()
+        labels = inputs['gold_label'].to(settings.device)
+        total += len(labels)
+        correct += predicted.eq(labels).sum().item()
         test_time += time.time() - batch_start
 
         # Get predictions and explanations
