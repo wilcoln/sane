@@ -1,5 +1,4 @@
 import os.path as osp
-import random
 
 import pandas as pd
 
@@ -26,9 +25,12 @@ def reduce_dataset(splits, frac):
         for i, (correct, incorrect) in enumerate(sentence_pairs):
             label = i % 2
             if label:
-                sentence = correct + ' ' + frozen_bart_tokenizer.sep_token + ' ' + incorrect
+                sentence = correct + '. ' + frozen_bart_tokenizer.sep_token + ' ' + incorrect
             else:
-                sentence = incorrect + ' ' + frozen_bart_tokenizer.sep_token + ' ' + correct
+                sentence = incorrect + '. ' + frozen_bart_tokenizer.sep_token + ' ' + correct
+
+            # remove double periods
+            sentence = sentence.replace('..', '.')
 
             sentences.append(sentence)
             gold_labels.append(label)

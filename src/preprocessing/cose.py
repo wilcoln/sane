@@ -9,6 +9,9 @@ from src.settings import settings
 from src.utils.embeddings import frozen_bart_tokenizer
 
 
+choice_id_dict = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4}
+
+
 def jsonl_to_dataframe(jsonl_file):
     data = []
     with open(jsonl_file, 'r') as f:
@@ -31,10 +34,9 @@ def add_choices_and_label_columns(extracted_data):
     choices = choices.astype('str')
     for c in choices:
         extracted_data['choice_' + c] = extracted_data['choices'].apply(lambda x: get_choices(x, c))
-    answer_match = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4}
 
-    def get_label(answer):
-        return answer_match.get(answer)
+    def get_label(choice):
+        return choice_id_dict.get(choice)
 
     extracted_data['label'] = extracted_data['answerKey'].apply(lambda x: get_label(x))
 
@@ -60,8 +62,13 @@ def reduce_dataset(splits, frac):
     for split, split_set in splits.items():
         # Concatenate question and choice_i columns into one column 'Sentences'
         split_set['Sentences'] = split_set['stem'] + '?'
-        for i in range(5):
-            split_set['Sentences'] += ' ' + frozen_bart_tokenizer.sep_token + ' ' + split_set[f'choice_{i}']
+        for choice, id_ in choice_id_dict.items():
+            split_set['Sentences'] += ('. ' + frozen_bart_tokenizer.sep_token
+                                       + f' {choice})' + split_set[f'choice_{id_}'])
+
+        # remove double periods and double question marks
+        split_set['Sentences'] = split_set['Sentences'].str.replace('..', '.', regex=False)
+        split_set['Sentences'] = split_set['Sentences'].str.replace('??', '?', regex=False)
 
         # Drop useless columns
         useless_columns = [

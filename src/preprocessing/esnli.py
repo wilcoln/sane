@@ -25,7 +25,12 @@ def reduce_dataset(splits, frac):
     for split, split_set in splits.items():
         split_set = split_set.sample(int(len(split_set) * frac), random_state=0)
         # Replace Sentence1 and Sentence2 with Sentences
-        split_set['Sentences'] = split_set['Sentence1'] + ' ' + frozen_bart_tokenizer.sep_token + ' ' + split_set['Sentence2']
+        split_set['Sentences'] = (split_set['Sentence1'] + '. ' +
+                                  frozen_bart_tokenizer.sep_token + ' ' + split_set['Sentence2'])
+
+        # remove double periods
+        split_set['Sentences'] = split_set['Sentences'].replace('..', '.', regex=False)
+
         # Drop useless columns
         useless_columns = [
             'pairID', 'WorkerId',
