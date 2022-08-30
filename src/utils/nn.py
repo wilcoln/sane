@@ -56,7 +56,6 @@ class GNN(nn.Module):
         self.conv2 = GATConv((-1, -1), out_channels, edge_dim=hidden_channels).to(settings.device)
 
     def forward(self, x, edge_index, edge_attr):
-        x, edge_index, edge_attr = x.to(settings.device), edge_index.to(settings.device), edge_attr.to(settings.device)
         x = self.conv1(x, edge_index, edge_attr)
         x = F.relu(x)
         x = F.dropout(x, p=0.1, training=self.training)

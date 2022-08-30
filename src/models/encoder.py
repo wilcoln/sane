@@ -23,14 +23,17 @@ class Encoder(nn.Module):
         self.lin = nn.Linear(3 * settings.sent_dim, settings.sent_dim)
 
     def forward(self, inputs):
-        # trainable gnn encoder
+        # Get subgraph
         nodes, edge_index, edge_attr = inputs['concept_ids'], inputs['edge_index'], inputs['edge_attr']
-        edge_relation, edge_weight = edge_attr[:, 0].long(), edge_attr[:, 1].to(settings.device)
+        edge_relation, edge_weight = edge_attr[:, 0].long(), edge_attr[:, 1]
 
-        # Get initial node embeddings from conceptnet
-        x = conceptnet.concept_embedding[nodes].to(settings.device)
-        edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation].to(settings.device)
+        # Get initial embeddings from conceptnet
+        x = conceptnet.concept_embedding[nodes]
+        edge_attr = edge_weight.view(-1, 1) * conceptnet.relation_embedding[edge_relation]
         # edge_attr = conceptnet.relation_embedding[edge_relation]  # ignore precomputed edge_weight
+
+        # Send tensors to device
+        x, edge_index, edge_attr = x.to(settings.device), edge_index.to(settings.device), edge_attr.to(settings.device)
 
         if not settings.no_gnn:
             # Apply GNN
