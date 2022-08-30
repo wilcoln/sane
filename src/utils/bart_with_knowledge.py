@@ -23,6 +23,7 @@ class BartWithKnowledgeModel(BartModel):
             nn.Linear(self.config.d_model, 1),
             nn.Sigmoid()
         )
+        self.sent_id = None
 
     def forward(
             self,
@@ -87,12 +88,21 @@ class BartWithKnowledgeModel(BartModel):
 
         # Fuse knowledge and encoder transformed outputs
         encoder_last_hidden_state = encoder_outputs.last_hidden_state
-        if encoder_outputs.last_hidden_state.shape[0] == init_input_embeds.shape[0]:
-            m = encoder_outputs.last_hidden_state.shape[1]
-            knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, m, 1)
-            input_fusion_head = torch.cat([init_input_embeds, knowledge_embedding], dim=2)
-            self.r = self.g1(input_fusion_head)
-            encoder_last_hidden_state += self.r * knowledge_embedding
+        n = encoder_last_hidden_state.shape[0]
+        m = encoder_outputs.last_hidden_state.shape[1]
+        if n == init_input_embeds.shape[0]: # training (batch-level)
+            self.sent_id = -1
+        else: # text generation (sentence-level)
+            self.sent_id += 1
+            knowledge_embedding = knowledge_embedding[self.sent_id].view(1, -1)
+            init_input_embeds = torch.unsqueeze(init_input_embeds[self.sent_id], dim=0)
+            
+        knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, m, 1)
+        input_fusion_head = torch.cat([init_input_embeds, knowledge_embedding], dim=2)
+        
+        
+        r = self.g1(input_fusion_head)
+        encoder_last_hidden_state += r * knowledge_embedding
 
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
 
@@ -112,7 +122,7 @@ class BartWithKnowledgeModel(BartModel):
         )
 
         return BartModelOutput(
-            knowledge_relevance=self.r,
+            knowledge_relevance=r,
             last_hidden_state=decoder_outputs.last_hidden_state,
             past_key_values=decoder_outputs.past_key_values,
             decoder_hidden_states=decoder_outputs.hidden_states,
