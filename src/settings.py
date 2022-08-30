@@ -25,7 +25,7 @@ _exp_settings = [
     ('no_train_nk', 'Train No Knowledge model', bool, False),
     ('no_gnn', 'Disable GNN', bool, False),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
-    ('patience', 'Maximum num epochs with no progress on the val set', int, 5),
+    ('patience', 'Maximum num epochs with no progress on the val set', int, 3),
     ('num_runs', 'Number of runs', int, 10),
     ('desc', 'Additional description', str, None)
 ]

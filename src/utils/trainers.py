@@ -94,8 +94,8 @@ class TorchModuleBaseTrainer(ABC):
             # Save epoch results
             epoch_results = {**train_results, **eval_results, **test_results}
 
-            # Save best model epoch
             if self.are_best_results(epoch_results, f'val_{val_metric}', less_is_more):
+                # Save best model epoch & reset patience
                 self.best_epoch = epoch
                 self.best_model_state_dict = self.model.state_dict()
                 self.patience = self.params['patience']
@@ -115,6 +115,11 @@ class TorchModuleBaseTrainer(ABC):
             # print epoch and results
             self.print_epoch(epoch)
 
+            # Early stopping
+            if self.patience == 0:
+                print('Early stopping')
+                break
+
         # Print best epoch and results
         print(f'*** BEST ***')
         self.print_epoch(self.best_epoch)
@@ -122,11 +127,6 @@ class TorchModuleBaseTrainer(ABC):
         # Print path to the results directory
         if not settings.no_save:
             print(f'Results saved to {self.results_path}')
-
-        # Early stopping
-        if self.patience == 0:
-            print('Early stopping')
-            return
 
     def print_epoch(self, epoch):
         stats_dict = self.results[epoch - 1]
