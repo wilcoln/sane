@@ -8,7 +8,7 @@ from tqdm import tqdm
 from src.datasets.nl import get_loader
 from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
-from src.utils.embeddings import frozen_bart_tokenizer
+from src.utils.embeddings import frozen_bart_tokenizer, frozen_bart_model
 from src.utils.format import fmt_stats_dict
 
 
@@ -49,7 +49,9 @@ def test(model, results_path, dataloader):
 
         # Get predictions and explanations
         encoded_inputs = {k: v.to(settings.device) for k, v in inputs['Sentences'].items()}
-        encoded_knowledge = {} if settings.no_knowledge else {'knowledge_embedding': att_knwl.output}
+        init_input_embeds = frozen_bart_model(**encoded_inputs).last_hidden_state
+        encoded_knowledge = {} if settings.no_knowledge else {'knowledge_embedding': att_knwl.output,
+                                                              'init_input_embeds': init_input_embeds}
         nles_tokens = model.explainer.model.generate(**encoded_inputs, **encoded_knowledge, do_sample=False,
                                                      max_length=30)
         sentences.extend(frozen_bart_tokenizer.batch_decode(encoded_inputs['input_ids'], skip_special_tokens=True))
