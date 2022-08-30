@@ -67,6 +67,11 @@ class Encoder(nn.Module):
             mask[i] = torch.any(head_ids == sent_concept_ids.view(-1, 1), dim=0) | torch.any(tail_ids == sent_concept_ids.view(-1, 1), dim=0)
         mask = mask.to(settings.device)
 
+        # mask[i] = torch.logical_or(
+        #     torch.isin(head_ids, sent_concept_ids),
+        #     torch.isin(tail_ids, sent_concept_ids)
+        # )
+
         if self.training:
             return EncoderOutput(output=encoded_triples, mask=mask)
         else:

@@ -8,6 +8,7 @@ from src.datasets.nl import get_loader
 from src.models.sane import SANE
 from src.settings import settings
 from src.utils.embeddings import frozen_bart_tokenizer
+from icecream import ic
 
 
 def compute_knowledge_attention_map(inputs, model):
@@ -29,7 +30,8 @@ def compute_knowledge_attention_map(inputs, model):
     for i in range(settings.num_attn_heads):
         np_attention = att_knwl.weights.cpu().detach().numpy()
         df = pd.DataFrame(np_attention, index=sentences, columns=triples)
-        csv_path = osp.join(results_path, f'knowledge_attention_map_{settings.batch_size}x{settings.max_concepts_per_sent}_{i + 1}.csv')
+        suffix = f'{settings.batch_size}x{settings.max_concepts_per_sent}_{i + 1}'
+        csv_path = osp.join(results_path, f'knowledge_attention_map_{suffix}.csv')
         df.to_csv(csv_path)
 
 

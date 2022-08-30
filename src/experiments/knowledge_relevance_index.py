@@ -24,9 +24,9 @@ def compute_knowledge_relevance_index(model, inputs, results_path):
     if settings.use_science:
         plt.style.use('science')
 
-    plt.hist(pkr, bins=np.arange(0, 1.1, 0.05), alpha=0.5, label='Pred KRI', edgecolor='black', linewidth=1.)
-    plt.hist(ekr, bins=np.arange(0, 1.1, 0.05), alpha=0.5, weights=ekr_factor*np.ones_like(ekr), label='NLE KRI',
-             edgecolor='black', linewidth=1.)
+    plt.hist(pkr, bins=np.arange(0, 1.1, 1./60), alpha=0.5, label='Pred KRI', edgecolor='black', linewidth=1.)
+    plt.hist(ekr, bins=np.arange(0, 1.1, 1./60), alpha=0.5, weights=ekr_factor*np.ones_like(ekr), label='NLE (Token) KRI',
+             edgecolor='black', linewidth=1.)        
     plt.legend(loc='upper right')
     plt.tight_layout()
     # Save the plot in the results directory

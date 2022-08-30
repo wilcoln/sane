@@ -10,7 +10,6 @@ _exp_settings = [
     ('dataset', 'Dataset', str, 'esnli'),
     ('num_epochs', 'Number of epochs', int, 5),
     ('batch_size', 'Batch size', int, 128),
-    ('algo', 'Train algo variant', int, 2),
     ('lr', 'Learning rate', float, 1e-4),
     ('weight_decay', 'Weight Decay', float, 1e-2),
     ('sent_dim', 'Sentence dimension', int, 768),  # Bart-base d_model = 768

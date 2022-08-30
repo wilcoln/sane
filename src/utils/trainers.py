@@ -42,7 +42,7 @@ class TorchModuleBaseTrainer(ABC):
         self.val_loader = val_loader
         self.test_loader = test_loader
         self.split_descriptions = {'train': 'Training', 'val': 'Validation', 'test': 'Testing'}
-        self.no_improvement_counter = 0
+        self.patience = params['patience']
 
     def save_params_and_prepare_to_save_results(self):
         # Create dictionary with all the parameters
@@ -98,9 +98,9 @@ class TorchModuleBaseTrainer(ABC):
             if self.are_best_results(epoch_results, f'val_{val_metric}', less_is_more):
                 self.best_epoch = epoch
                 self.best_model_state_dict = self.model.state_dict()
-                self.no_improvement_counter = 0
+                self.patience = self.params['patience']
             else:
-                self.no_improvement_counter += 1
+                self.patience -= 1
 
             # Clean epoch results
             epoch_results = {k: v for k, v in epoch_results.items() if v is not None}
@@ -124,7 +124,7 @@ class TorchModuleBaseTrainer(ABC):
             print(f'Results saved to {self.results_path}')
 
         # Early stopping
-        if self.no_improvement_counter >= self.params['patience']:
+        if self.patience == 0:
             print('Early stopping')
             return
 

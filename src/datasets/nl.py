@@ -15,7 +15,6 @@ from src.utils.semantic_search import semantic_search
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
 
-
 class NLDataset(Dataset):
     """
     A Natural Language dataset
@@ -53,7 +52,7 @@ class NLDataset(Dataset):
                 try:
                     self.nl[k] = pickle.load(open(key_path, 'rb'))
                     if isinstance(self.nl[k], torch.Tensor):
-                        self.nl[k] = self.nl[k].detach()
+                        self.nl[k] = self.nl[k].detach().cpu()
                 except Exception as e:
                     ic(e, key_path)
 
@@ -104,6 +103,11 @@ def collate_fn(batch):
             torch.cat([exact_sent_concept_ids[i], neighboring_concept_ids[i]])
             for i in range(len(batch))
         ]
+        # exact_sent_concept_ids = torch.cat(exact_sent_concept_ids, dim=1)
+        # neighboring_sent_concept_ids = torch.cat(neighboring_sent_concept_ids, dim=1)
+        # ic(exact_sent_concept_ids.shape, neighboring_sent_concept_ids.shape)
+        # sent_concept_ids = torch.hstack((exact_sent_concept_ids, neighboring_sent_concept_ids))
+
         # Merge exact and neighboring concept ids and filter out duplicates at batch-level
         concept_ids = torch.cat([exact_concept_ids.flatten(), neighboring_concept_ids.flatten()], dim=0)
         concept_ids = torch.unique(concept_ids)
