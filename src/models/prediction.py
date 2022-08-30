@@ -18,16 +18,16 @@ class Predictor(nn.Module):
     def __init__(self):
         super().__init__()
         self.f = nn.Sequential(
-            nn.Linear(2 * settings.sent_dim, settings.sent_dim),
+            nn.Linear(2 * settings.sent_dim, settings.hidden_dim),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(settings.sent_dim, settings.num_classes),
+            nn.Linear(settings.hidden_dim, settings.num_classes),
         )
         self.g1 = nn.Sequential(
-            nn.Linear(2 * settings.sent_dim, settings.sent_dim),
+            nn.Linear(2 * settings.sent_dim, settings.hidden_dim),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(settings.sent_dim, 1),
+            nn.Linear(settings.hidden_dim, 1),
             nn.Sigmoid()
         )
         self.h = nn.Sequential(
@@ -58,10 +58,10 @@ class PredictorNoKnowledge(nn.Module):
     def __init__(self):
         super().__init__()
         self.f = nn.Sequential(
-            nn.Linear(2 * settings.sent_dim, settings.sent_dim),
+            nn.Linear(2 * settings.sent_dim, settings.hidden_dim),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(settings.sent_dim, settings.num_classes),
+            nn.Linear(settings.hidden_dim, settings.num_classes),
         )
         self.h = nn.Sequential(
             nn.Linear(settings.sent_dim, settings.sent_dim),

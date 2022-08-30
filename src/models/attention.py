@@ -28,11 +28,9 @@ class Attention(nn.Module):
             for _ in range(settings.num_attn_heads)
         ])
 
-        self.transform = nn.Sequential(
-            nn.Linear(settings.num_attn_heads * settings.sent_dim, settings.sent_dim),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(settings.sent_dim, settings.sent_dim),
+        self.combine_heads = (
+            nn.Linear(settings.num_attn_heads * settings.sent_dim, settings.sent_dim)
+            if settings.num_attn_heads > 1 else nn.Identity()
         )
 
     def forward(self, inputs, knowledge):
@@ -57,7 +55,7 @@ class Attention(nn.Module):
             attention_output_list.append(attention_output)  # (batch_size, hidden_dim)
 
         # (num_heads, batch_size, knowledge_size), (batch_size, hidden_dim)
-        weights, output = torch.cat(attention_weights_list, dim=0), self.transform(
+        weights, output = torch.cat(attention_weights_list, dim=0), self.combine_heads(
             torch.cat(attention_output_list, dim=1))
 
         if self.training:

@@ -53,7 +53,7 @@ class GNN(nn.Module):
         out_channels = out_channels if out_channels is not None else hidden_channels
 
         self.conv1 = GATConv((-1, -1), hidden_channels, edge_dim=settings.sent_dim).to(settings.device)
-        self.conv2 = GATConv((-1, -1), out_channels, edge_dim=hidden_channels).to(settings.device)
+        self.conv2 = GATConv((-1, -1), out_channels, edge_dim=settings.sent_dim).to(settings.device)
 
     def forward(self, x, edge_index, edge_attr):
         x = self.conv1(x, edge_index, edge_attr)
