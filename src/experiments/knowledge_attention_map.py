@@ -8,7 +8,6 @@ from src.datasets.nl import get_loader
 from src.models.sane import SANE
 from src.settings import settings
 from src.utils.embeddings import frozen_bart_tokenizer
-from icecream import ic
 
 
 def compute_knowledge_attention_map(inputs, model):
