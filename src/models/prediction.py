@@ -13,6 +13,7 @@ class PredictorOutput:
     logits: torch.Tensor
     knowledge_relevance: torch.Tensor = None
     knowledge_contribution: torch.Tensor = None
+    floss: torch.Tensor = None
 
 
 class Predictor(nn.Module):
@@ -68,7 +69,7 @@ class PredictorNoKnowledge(nn.Module):
     def __init__(self):
         super().__init__()
         self.f = nn.Sequential(
-            nn.Linear(2 * settings.sent_dim, settings.hidden_dim),
+            nn.Linear(settings.sent_dim, settings.hidden_dim),
             nn.ReLU(),
             nn.Dropout(0.1),
             nn.Linear(settings.hidden_dim, settings.num_classes),
@@ -88,8 +89,8 @@ class PredictorNoKnowledge(nn.Module):
         sent_embed = self.h(sent_embed)
 
         # Prediction
-        input_pred = torch.hstack((sent_embed, nle_embed))
-        logits = self.f(input_pred)
+        floss = torch.norm(sent_embed - nle_embed, dim=1) ** 2
+        logits = self.f(sent_embed)
         loss = self.loss_fn(logits, labels)
 
-        return PredictorOutput(logits=logits, loss=loss)
+        return PredictorOutput(logits=logits, loss=loss, floss=floss)
