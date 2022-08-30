@@ -8,7 +8,6 @@ from src.preprocessing.common import preprocess
 from src.settings import settings
 from src.utils.embeddings import frozen_bart_tokenizer
 
-
 choice_id_dict = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4}
 
 

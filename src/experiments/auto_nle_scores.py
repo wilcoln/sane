@@ -1,12 +1,13 @@
 import os.path as osp
-import torch
+
+import evaluate
 import pandas as pd
+import torch
 from bert_score import score as bert_score
 from bleurt import score as bleurt_score
 
 from src.datasets.nl import get_dataset
 from src.settings import settings
-import evaluate
 
 
 def compute_auto_nle_scores(results_path, test_dataset):
@@ -34,11 +35,11 @@ def compute_auto_nle_scores(results_path, test_dataset):
     # Compute bert score
     (P, R, F), hashname = bert_score(candidates, refs, lang='en', return_hash=True)
     bert_score_result = f'BERT_SCORE: P={P.mean().item():.6f} R={R.mean().item():.6f} F={F.mean().item():.6f}\n'
-    
+
     # Compute bleurt score
     bleurt_scorer = bleurt_score.BleurtScorer()
     bleurt_scores = [
-        bleurt_scorer.score(candidates=candidates, references=get_explanations(i+1))
+        bleurt_scorer.score(candidates=candidates, references=get_explanations(i + 1))
         for i in range(num_refs)
     ]
     bleurt_scores = torch.Tensor(bleurt_scores).max(0)[0]
@@ -47,13 +48,12 @@ def compute_auto_nle_scores(results_path, test_dataset):
     # Compute meteor score
     meteor = evaluate.load('meteor', module_type='metric')
     meteor_scores = [
-        meteor.compute(predictions=candidates, references=get_explanations(i+1))['meteor']
+        meteor.compute(predictions=candidates, references=get_explanations(i + 1))['meteor']
         for i in range(num_refs)
     ]
     meteor_scores = torch.Tensor(meteor_scores).max(0)[0]
     meteor_score_result = f'METEOR: {meteor_scores.mean().item():.6f}\n'
-   
-   
+
     # Print auto nle scores
     print(bert_score_result, bleurt_score_result, meteor_score_result)
 

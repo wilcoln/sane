@@ -83,4 +83,3 @@ class PredictorNoKnowledge(nn.Module):
         loss = self.loss_fn(logits, labels)
 
         return PredictorOutput(logits=logits, loss=loss)
-

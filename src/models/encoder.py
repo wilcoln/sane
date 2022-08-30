@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import torch
-from icecream import ic
 from torch import nn
 
 from src.conceptnet import conceptnet
@@ -64,7 +63,8 @@ class Encoder(nn.Module):
         # 'sent_concept_ids'][i] else 0
         mask = torch.zeros((len(inputs['sent_concept_ids']), len(triple_ids)), dtype=torch.bool)
         for i, sent_concept_ids in enumerate(inputs['sent_concept_ids']):
-            mask[i] = torch.any(head_ids == sent_concept_ids.view(-1, 1), dim=0) | torch.any(tail_ids == sent_concept_ids.view(-1, 1), dim=0)
+            mask[i] = torch.any(head_ids == sent_concept_ids.view(-1, 1), dim=0) | torch.any(
+                tail_ids == sent_concept_ids.view(-1, 1), dim=0)
         mask = mask.to(settings.device)
 
         # mask[i] = torch.logical_or(

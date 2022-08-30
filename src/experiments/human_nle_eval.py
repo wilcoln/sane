@@ -1,9 +1,10 @@
-import pandas as pd
+import os.path as osp
+
 import numpy as np
-from icecream import ic
+import pandas as pd
 
 from src.settings import settings
-import os.path as osp
+
 # Load esnli_human eval for rexc and sane in two different dataframes
 rexc_df = pd.read_csv(osp.join(settings.data_dir, 'esnli_human_eval_rexc.csv'))
 sane_df = pd.read_csv(osp.join(settings.data_dir, 'esnli_human_eval_sane.csv'))

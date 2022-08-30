@@ -1,8 +1,8 @@
 import os.path as osp
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
 
 from src.datasets.nl import get_loader
 from src.models.sane import SANE
@@ -17,7 +17,7 @@ def compute_knowledge_relevance_index(model, inputs, results_path):
 
     pkr = pkr.cpu().detach().numpy()
 
-    ekr_factor = 1/ekr.shape[1]
+    ekr_factor = 1 / ekr.shape[1]
     ekr = ekr.flatten().cpu().detach().numpy()
 
     # Plot histogram of pkr and ekr
@@ -26,7 +26,8 @@ def compute_knowledge_relevance_index(model, inputs, results_path):
 
     plt.hist(pkr, bins=np.arange(0, 1.1, 1./60), alpha=0.5, label='Pred KRI', edgecolor='black', linewidth=1.)
     plt.hist(ekr, bins=np.arange(0, 1.1, 1./60), alpha=0.5, weights=ekr_factor*np.ones_like(ekr), label='NLE (Token) KRI',
-             edgecolor='black', linewidth=1.)        
+             edgecolor='black', linewidth=1.)
+ 
     plt.legend(loc='upper right')
     plt.tight_layout()
     # Save the plot in the results directory

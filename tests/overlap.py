@@ -19,4 +19,3 @@ def test_overlap(name):
 
 if __name__ == '__main__':
     test_overlap(settings.dataset)
-

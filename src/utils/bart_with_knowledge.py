@@ -7,7 +7,7 @@ from transformers import BartConfig
 from transformers.modeling_outputs import Seq2SeqLMOutput, BaseModelOutput
 from transformers.models.bart.modeling_bart import shift_tokens_right
 from transformers.utils import logging, ModelOutput
-from icecream import ic
+
 from src.utils.bart import BartForConditionalGeneration, BartModel, BartModelOutput, BartForConditionalGenerationOutput
 
 logger = logging.get_logger(__name__)
@@ -85,22 +85,20 @@ class BartWithKnowledgeModel(BartModel):
                 attentions=encoder_outputs[2] if len(encoder_outputs) > 2 else None,
             )
 
-
         # Fuse knowledge and encoder transformed outputs
         encoder_last_hidden_state = encoder_outputs.last_hidden_state
         n = encoder_last_hidden_state.shape[0]
         m = encoder_outputs.last_hidden_state.shape[1]
-        if n == init_input_embeds.shape[0]: # training (batch-level)
+        if n == init_input_embeds.shape[0]:  # training (batch-level)
             self.sent_id = -1
-        else: # text generation (sentence-level)
+        else:  # text generation (sentence-level)
             self.sent_id += 1
             knowledge_embedding = knowledge_embedding[self.sent_id].view(1, -1)
             init_input_embeds = torch.unsqueeze(init_input_embeds[self.sent_id], dim=0)
-            
+
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, m, 1)
         input_fusion_head = torch.cat([init_input_embeds, knowledge_embedding], dim=2)
-        
-        
+
         r = self.g1(input_fusion_head)
         encoder_last_hidden_state += r * knowledge_embedding
 
