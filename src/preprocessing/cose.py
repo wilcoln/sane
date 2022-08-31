@@ -63,7 +63,7 @@ def reduce_dataset(splits, frac):
         split_set['Sentences'] = split_set['stem'] + '?'
         for choice, id_ in choice_id_dict.items():
             split_set['Sentences'] += ('. ' + frozen_bart_tokenizer.sep_token
-                                       + f' {choice})' + split_set[f'choice_{id_}'])
+                                       + f' {choice}) ' + split_set[f'choice_{id_}'])
 
         # remove double periods and double question marks
         split_set['Sentences'] = split_set['Sentences'].str.replace('..', '.', regex=False)

@@ -3,22 +3,30 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from src.datasets.nl import get_loader
 from src.models.sane import SANE
 from src.settings import settings
 
 
-def compute_knowledge_indices(model, inputs, results_path):
+def compute_knowledge_indices(model, results_path, dataloader):
     # run model
-    pred, nle, att_knwl, knwl = model(inputs)
-    for index in ['relevance', 'contribution']:
-        pki = getattr(pred, f'knowledge_{index}')
-        eki = getattr(nle, f'knowledge_{index}')
-        pki = pki.cpu().detach().numpy()
+    pki_dict = {'relevance': [], 'contribution': []}
+    eki_dict = {'relevance': [], 'contribution': []}
+    for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
+        pred, nle, _, _ = model(inputs)
+        for index in {'relevance', 'contribution'}:
+            pki_dict[index].append(getattr(pred, f'knowledge_{index}'))
+            eki_dict[index].append(getattr(nle, f'knowledge_{index}'))
 
-        eki_factor = 1 / eki.shape[1]
-        eki = eki.flatten().cpu().detach().numpy()
+    pki_dict = {k: torch.cat(v, dim=0) for k, v in pki_dict.items()}
+    eki_dict = {k: torch.cat(v, dim=0) for k, v in eki_dict.items()}
+
+    for index in {'relevance', 'contribution'}:
+        pki = pki_dict[index].cpu().detach().numpy()
+        eki_factor = 1 / eki_dict[index].shape[1]
+        eki = eki_dict[index].flatten().cpu().detach().numpy()
 
         # Plot histogram of pki and eki
         if settings.use_science:

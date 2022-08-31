@@ -33,8 +33,7 @@ def run_suite(results_path):
         # 4. Knowledge Indices
         print('Running knowledge indices...')
         # Load model
-        inputs = next(iter(dataloader))
-        compute_knowledge_indices(model, inputs, results_path)
+        compute_knowledge_indices(model, results_path, dataloader)
     print('Done.')
 
 
