@@ -14,6 +14,12 @@ from src.utils.format import fmt_stats_dict
 
 @torch.no_grad()
 def test(model, results_path, dataloader):
+    # Check if results already exist
+    csv_path = osp.join(results_path, f'test_results.csv')
+    txt_path = osp.join(results_path, f'test_stats.txt')
+    if osp.exists(csv_path) and osp.exists(txt_path):
+        return
+
     sentences = []
     gold_labels = []
     predictions = []
@@ -71,8 +77,8 @@ def test(model, results_path, dataloader):
     # Save results
     results = {'sentence': sentences, 'gold_label': gold_labels, 'prediction': predictions, 'explanation': explanations}
     results = pd.DataFrame(results)
-    results.to_csv(osp.join(results_path, f'test_results{settings.out_suffix}.csv'), index=False)
-    with open(osp.join(results_path, f'test_stats{settings.out_suffix}.txt'), 'w') as f:
+    results.to_csv(csv_path, index=False)
+    with open(txt_path, 'w') as f:
         f.write(test_stats)
 
 

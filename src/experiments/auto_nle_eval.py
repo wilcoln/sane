@@ -11,9 +11,14 @@ from src.settings import settings
 
 
 def compute_auto_nle_scores(results_path):
+    # Check if results already exist
+    txt_path = osp.join(results_path, f'auto_nle_eval.txt')
+    if osp.exists(txt_path):
+        return
+
     # Load test results
     test_dataset = get_dataset('test', settings.dataset)
-    test_results_df = pd.read_csv(osp.join(results_path, f'test_results{settings.in_suffix}.csv'))
+    test_results_df = pd.read_csv(osp.join(results_path, f'test_results.csv'))
 
     assert len(test_results_df) == len(
         test_dataset), 'test_results and test_dataset must be of equal size, try checking data_frac.'
@@ -59,7 +64,7 @@ def compute_auto_nle_scores(results_path):
     print(bert_score_result, bleurt_score_result, meteor_score_result)
 
     # Save bert score result
-    with open(osp.join(results_path, f'auto_nle_scores{settings.out_suffix}.txt'), 'w') as f:
+    with open(txt_path, 'w') as f:
         f.write(bert_score_result)
         f.write(bleurt_score_result)
         f.write(meteor_score_result)
