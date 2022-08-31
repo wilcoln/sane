@@ -33,6 +33,7 @@ class NLDataset(Dataset):
             assert path is not None
             assert split in {'train', 'val', 'test'}, 'split must be one of train, val, test'
             assert 0.0 <= frac <= 1.0, 'frac must be between 0 and 1'
+            split = 'val' if (settings.dataset == 'cose' and split == 'test') else split
 
             super().__init__()
 
