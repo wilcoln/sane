@@ -140,10 +140,10 @@ def get_dataset(split: str, name: str):
     return ConcatDataset(datasets)
 
 
-def get_loader(split):
+def get_loader(split, batch_size=settings.batch_size):
     dataset = get_dataset(split, name=settings.dataset)
     return DataLoader(dataset,
-                      batch_size=settings.batch_size, shuffle=False,
+                      batch_size=batch_size, shuffle=False,
                       num_workers=settings.num_workers,
                       collate_fn=collate_fn)
 

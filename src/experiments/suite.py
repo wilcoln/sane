@@ -26,11 +26,12 @@ def run_suite(results_path):
     print('Running auto NLE evaluation...')
     try:
         compute_auto_nle_scores(results_path)
-    except:
+    except Exception as e:
+        print(e)
         print('Auto NLE evaluation Failed')
     # 3. Knowledge Attention Map
     print('Running knowledge attention map...')
-    inputs = batch[:5]  # Get first 5 inputs
+    inputs = next(iter(get_loader('test', batch_size=5)))
     tmp = settings.max_concepts_per_sentence
     settings.max_concepts_per_sentence = 5  # Set max concepts per sentence to 5
     csv_name = compute_knowledge_attention_map(inputs, model)
