@@ -129,7 +129,7 @@ def get_dataset(split: str, name: str):
     elif name == 'comve':
         og_sizes = {'train': 10000, 'val': 1000, 'test': 1000}
     elif name == 'cose':
-        og_sizes = {'train': 9741, 'val': 1221}
+        og_sizes = {'train': 9741, 'val': 1221, 'test': 1221}
     else:
         raise ValueError(f'{name} is not a valid dataset name')
 
