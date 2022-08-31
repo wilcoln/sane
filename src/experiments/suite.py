@@ -5,7 +5,7 @@ from src.experiments.auto_nle_eval import compute_auto_nle_scores
 from src.experiments.knowledge_attention_map import compute_knowledge_attention_map, plot_knowledge_attention_map
 from src.experiments.knowledge_indices import compute_knowledge_indices
 from src.experiments.test import test
-from src.models.sane import SANE
+from src.models.sane import SANE, SANENoKnowledge
 from src.settings import settings
 import os.path as osp
 
@@ -13,7 +13,7 @@ import os.path as osp
 def run_suite(results_path):
     # Setup model and loader
     dataloader = get_loader('test')
-    model = SANE()
+    model = SANE() if not settings.no_knowledge else SANENoKnowledge()
     model.load_state_dict(torch.load(osp.join(results_path, 'model.pt'), map_location=settings.device))
     model = model.to(settings.device)
     model.eval()
