@@ -14,7 +14,7 @@ def run_suite(results_path):
     # Setup model and loader
     dataloader = get_loader('test')
     model = SANE()
-    model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
+    model.load_state_dict(torch.load(osp.join(results_path, 'model.pt'), map_location=settings.device))
     model = model.to(settings.device)
     model.eval()
 

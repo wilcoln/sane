@@ -33,3 +33,4 @@ if __name__ == '__main__':
     plt.plot(sigma2s, accuracies)
     if settings.show_plots:
         plt.show()
+    plt.close()

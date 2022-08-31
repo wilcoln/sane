@@ -46,6 +46,7 @@ def plot_loss_comparison(results):
     # Show the plot
     if settings.show_plots:
         plt.show()
+    plt.close()
 
 
 if __name__ == '__main__':
