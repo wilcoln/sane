@@ -52,7 +52,7 @@ parser.add_argument('--monitor_test', action='store_true', default=False)
 parser.add_argument('--frozen', action='store_true', help='freeze model during train', default=False)
 parser.add_argument('--use_science', action='store_true', help='Whether to use scientific plots style', default=False)
 settings, unknown = parser.parse_known_args()
-setattr(settings, 'device', torch.device('cuda'))
+setattr(settings, 'device', torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
 setattr(settings, 'exp', {k: v for k, v in vars(settings).items() if k in [s[0] for s in _exp_settings] and v})
 
 # Print Experimental Settings
