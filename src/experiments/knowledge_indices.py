@@ -10,12 +10,11 @@ from src.settings import settings
 
 
 def compute_knowledge_indices(model, inputs, results_path):
+    # run model
+    pred, nle, att_knwl, knwl = model(inputs)
     for index in ['relevance', 'contribution']:
-        # run model
-        pred, nle, att_knwl, knwl = model(inputs)
         pki = getattr(pred, f'knowledge_{index}')
         eki = getattr(nle, f'knowledge_{index}')
-
         pki = pki.cpu().detach().numpy()
 
         eki_factor = 1 / eki.shape[1]
@@ -28,8 +27,11 @@ def compute_knowledge_indices(model, inputs, results_path):
         abbr = f'k{index[0]}i'.upper()
         p_label = f'Pred {abbr}'
         e_label = f'NLE (Token) {abbr}'
-        plt.hist(pki, bins=np.arange(0, 1.1, 1./60), alpha=0.5, label=p_label, edgecolor='black', linewidth=1.)
-        plt.hist(eki, bins=np.arange(0, 1.1, 1./60), alpha=0.5, weights=eki_factor*np.ones_like(eki), label=e_label,
+        min_ = min(pki.min(), eki.min())
+        max_ = max(pki.max(), eki.max())
+        bins = np.arange(0, 1.1, 1./60) if index == 'relevance' else np.linspace(min_, max_, 60)
+        plt.hist(pki, bins=bins, alpha=0.5, label=p_label, edgecolor='black', linewidth=1.)
+        plt.hist(eki, bins=bins, alpha=0.5, weights=eki_factor*np.ones_like(eki), label=e_label,
                  edgecolor='black', linewidth=1.)
 
         plt.legend(loc='upper right')
