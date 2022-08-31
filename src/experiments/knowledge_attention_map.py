@@ -23,7 +23,7 @@ def compute_knowledge_attention_map(inputs, model):
     # Save attention maps
     np_attention = att_knwl.weights.cpu().detach().numpy()
     df = pd.DataFrame(np_attention, index=sentences, columns=triples)
-    suffix = f'{settings.batch_size}x{settings.max_concepts_per_sent}'
+    suffix = f'{len(sentences)}x{len(triples)}'
     csv_name = f'knowledge_attention_map_{suffix}.csv'
     csv_path = osp.join(results_path, csv_name)
     df.to_csv(csv_path)

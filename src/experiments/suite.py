@@ -32,8 +32,8 @@ def run_suite(results_path):
     # 3. Knowledge Attention Map
     print('Running knowledge attention map...')
     inputs = next(iter(get_loader('test', batch_size=5)))
-    tmp = settings.max_concepts_per_sentence
-    settings.max_concepts_per_sentence = 5  # Set max concepts per sentence to 5
+    tmp = settings.max_concepts_per_sent
+    settings.max_concepts_per_sent = 5  # Set max concepts per sentence to 5
     csv_name = compute_knowledge_attention_map(inputs, model)
     plot_knowledge_attention_map(results_path, csv_name)
     settings.max_concepts_per_sentence = tmp  # Reset max concepts per sentence
