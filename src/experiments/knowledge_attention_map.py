@@ -60,6 +60,7 @@ def plot_knowledge_attention_map(results_path):
     plt.savefig(pdf_path)
     plt.savefig(png_path)
     plt.show()
+    plt.close()
 
 
 if __name__ == '__main__':

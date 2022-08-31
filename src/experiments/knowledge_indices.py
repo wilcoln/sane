@@ -43,6 +43,7 @@ def compute_knowledge_indices(model, inputs, results_path):
 
         # Show the plot
         plt.show()
+        plt.close()
 
 
 if __name__ == '__main__':
