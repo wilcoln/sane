@@ -54,7 +54,7 @@ def plot_knowledge_attention_map(results_path):
     df.index = list(index_mapping.values())
     # Plot attention maps
     fig, ax = plt.subplots(figsize=(20, 4))
-    sns.set(rc={'text.usetex': True})
+    sns.set(rc={'text.usetex': settings.use_science})
     sns.heatmap(df, ax=ax, cmap='viridis')
     plt.tight_layout()
     plt.savefig(pdf_path)
