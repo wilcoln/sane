@@ -99,9 +99,10 @@ def collate_fn(batch):
         neighboring_concept_ids = neighboring_concept_ids[top_neighboring_concepts_indices]
 
         # Merge exact and neighboring concept ids at sentence-level
-        exact_sent_concept_ids = torch.cat(exact_sent_concept_ids, dim=0).view(-1, len(batch))
-        neighboring_sent_concept_ids = torch.cat(neighboring_sent_concept_ids, dim=0).view(-1, len(batch))
-        sent_concept_ids = torch.hstack((exact_sent_concept_ids, neighboring_sent_concept_ids))
+        sent_concept_ids = [
+            torch.cat([exact_sent_concept_ids[i], neighboring_concept_ids[i]])
+            for i in range(len(batch))
+        ]
 
         # Merge exact and neighboring concept ids and filter out duplicates at batch-level
         concept_ids = torch.cat([exact_concept_ids.flatten(), neighboring_concept_ids.flatten()], dim=0)
