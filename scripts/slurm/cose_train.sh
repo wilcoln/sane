@@ -18,11 +18,11 @@
 # send mail to this address
 #SBATCH --mail-user=wilfried.bounsi@cs.ox.ac.uk
 
-# # SANE - Running
-# python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80  --no_train_nk
+# # SANE - Done
+# python src/experiments/train.py --dataset=cose --chunk_size=5000 --num_epochs=15  --no_train_nk
 
 # # NO-GNN - Done
-# python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80 --no_gnn --no_train_nk
+# python src/experiments/train.py --dataset=cose --chunk_size=5000 --num_epochs=15 --no_gnn --no_train_nk
 
 # # NO-KNOWLEDGE
-# python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80 --no_knowledge
+python src/experiments/train.py --dataset=cose --chunk_size=5000 --num_epochs=15 --no_knowledge

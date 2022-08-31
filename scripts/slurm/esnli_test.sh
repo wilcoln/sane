@@ -21,10 +21,10 @@
 # input_dir='results/trainers/2022-08-30_14-22-00_605716_model=SANE_dataset=esnli_num_epochs=5_batch_size=64_lr=5e-05_weight_decay=0.01_sent_dim=768_hi'
 # python src/experiments/suite.py --input_dir=$input_dir
 
-# NO-GNN
-input_dir='results/trainers/2022-08-30_14-22-00_605716_model=SANE_dataset=esnli_num_epochs=5_batch_size=64_lr=5e-05_weight_decay=0.01_sent_dim=768_hi'
-python src/experiments/suite.py --input_dir=$input_dir
+# # NO-GNN - Done
+# input_dir='results/trainers/2022-08-30_14-22-00_605716_model=SANE_dataset=esnli_num_epochs=5_batch_size=64_lr=5e-05_weight_decay=0.01_sent_dim=768_hi'
+# python src/experiments/suite.py --input_dir=$input_dir
 
-# NO-KNOWLEDGE
+# # NO-KNOWLEDGE
 # input_dir='results/trainers/2022-08-30_14-22-00_605716_model=SANE_dataset=esnli_num_epochs=5_batch_size=64_lr=5e-05_weight_decay=0.01_sent_dim=768_hi'
 # python src/experiments/suite.py --input_dir=$input_dir
