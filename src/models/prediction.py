@@ -79,7 +79,7 @@ class PredictorNoKnowledge(nn.Module):
             nn.Dropout(0.1),
             nn.Linear(settings.sent_dim, settings.sent_dim),
         )
-        self.loss_fn = nn.CrossEntropyLoss(reduction='none')
+        self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, inputs, nle):
         sent_embed, labels = inputs['Sentences_embedding'].to(settings.device), inputs['gold_label'].to(settings.device)

@@ -156,10 +156,8 @@ class TorchModuleBaseTrainer(ABC):
 
 
 class SANETrainer(TorchModuleBaseTrainer):
-    def __init__(self, model, model_nk, optimizer, optimizer_nk, train_loader, val_loader, loss_fn, loss_fn_nk, params):
+    def __init__(self, model, model_nk, optimizer, optimizer_nk, train_loader, val_loader, params):
         super().__init__(model, optimizer, train_loader, val_loader, params)
-        self.loss_fn = loss_fn
-        self.loss_fn_nk = loss_fn_nk
         self.model_nk = model_nk
         self.optimizer_nk = optimizer_nk
 

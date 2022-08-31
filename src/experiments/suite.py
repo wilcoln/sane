@@ -1,6 +1,6 @@
 import torch
 
-from src.datasets.nl import get_dataset, get_loader
+from src.datasets.nl import get_loader
 from src.experiments.auto_nle_eval import compute_auto_nle_scores
 from src.experiments.knowledge_attention_map import compute_knowledge_attention_map, plot_knowledge_attention_map
 from src.experiments.knowledge_indices import compute_knowledge_indices
@@ -24,20 +24,17 @@ def run_suite(results_path):
     test(model, results_path, dataloader)
     # 2. Auto NLE Evaluation
     print('Running auto NLE evaluation...')
-    try:
-        compute_auto_nle_scores(results_path)
-    except Exception as e:
-        print(e)
-        print('Auto NLE evaluation Failed')
-    # 3. Knowledge Attention Map
-    print('Running knowledge attention map...')
-    compute_knowledge_attention_map(model, results_path)
-    plot_knowledge_attention_map(results_path)
-    # 4. Knowledge Indices
-    print('Running knowledge indices...')
-    # Load model
-    inputs = next(iter(dataloader))
-    compute_knowledge_indices(model, inputs, results_path)
+    compute_auto_nle_scores(results_path)
+    if not settings.no_knowledge:
+        # 3. Knowledge Attention Map
+        print('Running knowledge attention map...')
+        compute_knowledge_attention_map(model, results_path)
+        plot_knowledge_attention_map(results_path)
+        # 4. Knowledge Indices
+        print('Running knowledge indices...')
+        # Load model
+        inputs = next(iter(dataloader))
+        compute_knowledge_indices(model, inputs, results_path)
     print('Done.')
 
 
