@@ -44,7 +44,8 @@ def plot_loss_comparison(results):
     plt.savefig(osp.join(results_path, 'loss_comparison.png'))
 
     # Show the plot
-    plt.show()
+    if settings.show_plots:
+        plt.show()
 
 
 if __name__ == '__main__':

@@ -72,4 +72,5 @@ if __name__ == '__main__':
 
     plt.plot(percentiles, influential_occluded_accuracies)
     plt.plot(percentiles, random_occluded_accuracies)
-    plt.show()
+    if settings.show_plots:
+        plt.show()

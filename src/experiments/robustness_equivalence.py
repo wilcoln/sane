@@ -31,4 +31,5 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     plt.plot(sigma2s, accuracies)
-    plt.show()
+    if settings.show_plots:
+        plt.show()

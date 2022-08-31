@@ -42,7 +42,8 @@ def compute_knowledge_indices(model, inputs, results_path):
         print(f'Results saved to {results_path}')
 
         # Show the plot
-        plt.show()
+        if settings.show_plots:
+            plt.show()
         plt.close()
 
 

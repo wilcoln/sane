@@ -59,7 +59,8 @@ def plot_knowledge_attention_map(results_path):
     plt.tight_layout()
     plt.savefig(pdf_path)
     plt.savefig(png_path)
-    plt.show()
+    if settings.show_plots:
+        plt.show()
     plt.close()
 
 
