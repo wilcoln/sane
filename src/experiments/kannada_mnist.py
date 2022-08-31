@@ -348,7 +348,7 @@ if __name__ == '__main__':
     metrics = {key.split('_')[1] for key in keys}
     suffix_style_map = {'': 'solid', '_nk': 'dashed'}
     suffix_legend_map = {
-        '': '$f\circ(h + g_1\cdot g_2)$' if settings.use_cience else 'S',
+        '': '$f\circ(h + g_1\cdot g_2)$' if settings.use_science else 'S',
         '_nk': '$p$' if  settings.use_science else 'P'
     }
     knowledge_color_map = {knowledge: plt.get_cmap('tab10')(i) for i, knowledge in enumerate(knowledge_list)}
