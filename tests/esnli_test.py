@@ -11,13 +11,13 @@ from src.settings import settings
 
 esnli_input_dict = {
     'Sentences': [
-        'Wilfried is a student at the University of Basel.. He is from Cameroon',
-        'John is a professional football player.. He plays basketball for a living.',
-        'SANE is a research project at the University of Basel.. It is a project on AI explanability',
-        'SANE beats state-of-the-art performance on ESNLI dataset by a large margin.. SANE must be bugged',
-        'Github Copilot is an automated pair programming tool.. It is sentient',
-        'A dog is running through long grass in a park-like setting.. A dog runs after a squirrel.',
-        'A fireman searching for something using a flashlight.. A fireman is in the dark.',
+        'Wilfried is a student at the University of Basel. He is from Cameroon',
+        'John is a professional football player. He plays basketball for a living.',
+        'SANE is a research project at the University of Basel. It is a project on AI explanability',
+        'SANE beats state-of-the-art performance on ESNLI dataset by a large margin. SANE must be bugged',
+        'Github Copilot is an automated pair programming tool. It is sentient',
+        'A dog is running through long grass in a park-like setting. A dog runs after a squirrel.',
+        'A fireman searching for something using a flashlight. A fireman is in the dark.',
     ],
     'gold_label': [
         2,

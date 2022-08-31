@@ -26,7 +26,7 @@ class NLDataset(Dataset):
         if data_dict:
             self.nl = data_dict
             # encode sentences
-            self.nl['Sentences_embedding'] = bart(self.nl['Sentences'])
+            self.nl['Sentences_embedding'] = bart(self.nl['Sentences']).detach().cpu()
             if not settings.no_knowledge:
                 self.nl['concept_ids'] = compute_concept_ids(self.nl['Sentences'])
         else:
