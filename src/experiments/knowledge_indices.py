@@ -47,11 +47,10 @@ def compute_knowledge_indices(model, inputs, results_path):
 
 if __name__ == '__main__':
     # Get test dataloader
-    # inputs = next(iter(get_loader('val')))
-    # # Load model
-    # model = SANE().to(settings.device)
-    # results_path = settings.input_dir
-    # model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
-    # model.eval()
-    model, inputs, results_path = None, None, settings.results_dir
+    inputs = next(iter(get_loader('val')))
+    # Load model
+    model = SANE().to(settings.device)
+    results_path = settings.input_dir
+    model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
+    model.eval()
     compute_knowledge_indices(model, inputs, results_path)
