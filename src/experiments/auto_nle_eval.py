@@ -10,8 +10,9 @@ from src.datasets.nl import get_dataset
 from src.settings import settings
 
 
-def compute_auto_nle_scores(results_path, test_dataset):
+def compute_auto_nle_scores(results_path):
     # Load test results
+    test_dataset = get_dataset('test', settings.dataset)
     test_results_df = pd.read_csv(osp.join(results_path, f'test_results{settings.in_suffix}.csv'))
 
     assert len(test_results_df) == len(
@@ -66,6 +67,5 @@ def compute_auto_nle_scores(results_path, test_dataset):
 
 if __name__ == '__main__':
     # Get test dataloader
-    test_dataset = get_dataset('test', settings.dataset)
     results_path = settings.input_dir
-    compute_auto_nle_scores(results_path, test_dataset)
+    compute_auto_nle_scores(results_path)

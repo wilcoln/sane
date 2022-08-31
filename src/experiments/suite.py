@@ -13,6 +13,7 @@ import os.path as osp
 def run_suite(results_path):
     # Setup model and loader
     dataloader = get_loader('test')
+    batch = next(iter(dataloader))
     model = SANE().to(settings.device)
     model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
     model.eval()
@@ -23,11 +24,13 @@ def run_suite(results_path):
     test(model, results_path, dataloader)
     # 2. Auto NLE Evaluation
     print('Running auto NLE evaluation...')
-    test_dataset = get_dataset('test', settings.dataset)
-    compute_auto_nle_scores(results_path, test_dataset)
+    try:
+        compute_auto_nle_scores(results_path)
+    except:
+        print('Auto NLE evaluation Failed')
     # 3. Knowledge Attention Map
     print('Running knowledge attention map...')
-    inputs = next(iter(dataloader))[:5]  # Get first 5 inputs
+    inputs = batch[:5]  # Get first 5 inputs
     tmp = settings.max_concepts_per_sentence
     settings.max_concepts_per_sentence = 5  # Set max concepts per sentence to 5
     csv_name = compute_knowledge_attention_map(inputs, model)
@@ -36,7 +39,7 @@ def run_suite(results_path):
     # 4. Knowledge Indices
     print('Running knowledge indices...')
     # Load model
-    inputs = next(iter(dataloader))
+    inputs = batch
     compute_knowledge_indices(model, inputs, results_path)
     print('Done.')
 
@@ -44,4 +47,3 @@ def run_suite(results_path):
 if __name__ == '__main__':
     results_path = settings.input_dir
     run_suite(results_path)
-
