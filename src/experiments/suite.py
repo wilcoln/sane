@@ -13,8 +13,9 @@ import os.path as osp
 def run_suite(results_path):
     # Setup model and loader
     dataloader = get_loader('test')
-    model = SANE().to(settings.device)
+    model = SANE()
     model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
+    model = model.to(settings.device)
     model.eval()
 
     # Run experiments
