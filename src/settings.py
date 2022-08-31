@@ -8,10 +8,12 @@ parser = argparse.ArgumentParser()
 # Experiment settings
 _exp_settings = [
     ('dataset', 'Dataset', str, 'esnli'),
+    ('no_gnn', 'Disable GNN', bool, False),
     ('num_epochs', 'Number of epochs', int, 5),
     ('batch_size', 'Batch size', int, 128),
     ('lr', 'Learning rate', float, 5e-5),
     ('weight_decay', 'Weight Decay', float, 1e-2),
+    ('no_train_nk', 'Train No Knowledge model', bool, False),
     ('sent_dim', 'Sentence dimension', int, 768),  # Bart-base d_model = 768
     ('hidden_dim', 'Hidden dimension', int, 64),
     ('max_concepts_per_sent', 'Max concepts per sentence', int, 200),
@@ -22,8 +24,6 @@ _exp_settings = [
     ('beta', 'Regret loss weight in regret-augmented loss', float, 0.5),
     ('num_attn_heads', 'Number of heads of the knowledge attention', int, 1),
     ('no_knowledge', 'Disable Knowledge attention', bool, False),
-    ('no_train_nk', 'Train No Knowledge model', bool, False),
-    ('no_gnn', 'Disable GNN', bool, False),
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
     ('patience', 'Maximum num epochs with no progress on the val set', int, 3),
     ('num_runs', 'Number of runs', int, 10),
