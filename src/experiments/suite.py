@@ -19,11 +19,14 @@ def run_suite(results_path):
 
     # Run experiments
     # 1. Test
+    print('Running test...')
     test(model, results_path, dataloader)
     # 2. Auto NLE Evaluation
+    print('Running auto NLE evaluation...')
     test_dataset = get_dataset('test', settings.dataset)
     compute_auto_nle_scores(results_path, test_dataset)
     # 3. Knowledge Attention Map
+    print('Running knowledge attention map...')
     inputs = next(iter(dataloader))[:5]  # Get first 5 inputs
     tmp = settings.max_concepts_per_sentence
     settings.max_concepts_per_sentence = 5  # Set max concepts per sentence to 5
@@ -31,9 +34,11 @@ def run_suite(results_path):
     plot_knowledge_attention_map(results_path, csv_name)
     settings.max_concepts_per_sentence = tmp  # Reset max concepts per sentence
     # 4. Knowledge Indices
+    print('Running knowledge indices...')
     # Load model
     inputs = next(iter(dataloader))
     compute_knowledge_indices(model, inputs, results_path)
+    print('Done.')
 
 
 if __name__ == '__main__':
