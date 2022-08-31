@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from sklearn.datasets import fetch_california_housing
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import random_split
 from tqdm import tqdm
 
@@ -91,7 +92,7 @@ class SimpleSANE(nn.Module):
         r, k_tilde = self.g(x, k)
         rk_tilde = r * k_tilde
         x_tilde_plus = x_tilde + rk_tilde
-        yhat = self.f(x_tilde_plus)
+        yhat = self.f(F.relu(x_tilde_plus))
 
         # Compute kci
         ck = torch.norm(rk_tilde, dim=1) ** 2
@@ -235,6 +236,7 @@ if __name__ == '__main__':
         'batch_size': settings.batch_size,
         'lr': 1e-2,
         'input': 'pca',
+        'patience': float('inf'),
     }
 
     date = str(dt.now()).replace(' ', '_').replace(':', '-').replace('.', '_')
@@ -339,13 +341,16 @@ if __name__ == '__main__':
         plt.style.use('science')
     else:
         plt.rcParams.update({
-            "text.usetex": True,
+            "text.usetex": settings.use_science,
             "font.family": "Helvetica"
         })
 
     metrics = {key.split('_')[1] for key in keys}
     suffix_style_map = {'': 'solid', '_nk': 'dashed'}
-    suffix_legend_map = {'': '$f\circ(h + g_1\cdot g_2)$', '_nk': '$p$'}
+    suffix_legend_map = {
+        '': '$f\circ(h + g_1\cdot g_2)$' if settings.use_cience else 'S',
+        '_nk': '$p$' if  settings.use_science else 'P'
+    }
     knowledge_color_map = {knowledge: plt.get_cmap('tab10')(i) for i, knowledge in enumerate(knowledge_list)}
     x = range(params['num_epochs'])
 

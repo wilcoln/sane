@@ -15,6 +15,7 @@ from src.utils.semantic_search import semantic_search
 
 string_keys = {'Sentences', 'Explanation_1', 'Explanation_2', 'Explanation_3'}
 
+
 class NLDataset(Dataset):
     """
     A Natural Language dataset
