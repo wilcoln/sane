@@ -13,7 +13,7 @@ from src.utils.types import ChunkedList
 
 def encode(splits, output_dir):
     for split, split_set in splits.items():
-        sentences_embedding_path = osp.join(output_dir, f'{split}_Sentences_embedding')
+        sentences_embedding_path = osp.join(output_dir, f'{split}_Sentences_embedding{settings.embed_suffix}')
         try:
             # Load Sentences_embeddings
             ic('Loading Sentences_embeddings')

@@ -50,7 +50,8 @@ class NLDataset(Dataset):
 
             self.nl = {}
             for k in keys:
-                key_path = osp.join(self.path, f'{split}_{k}', f'chunk{chunk}.pkl')
+                k_ = f'{k}{settings.embed_suffix}' if k.endswith('_embedding') else k
+                key_path = osp.join(self.path, f'{split}_{k_}', f'chunk{chunk}.pkl')
                 try:
                     self.nl[k] = pickle.load(open(key_path, 'rb'))
                     if isinstance(self.nl[k], torch.Tensor):
