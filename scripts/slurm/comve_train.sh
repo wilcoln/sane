@@ -10,7 +10,7 @@
 #SBATCH --gres=gpu:1
 
 # Set partition
-#SBATCH --partition=small
+#SBATCH --partition=devel
 
 # mail alert at start, end and abortion of execution
 #SBATCH --mail-type=ALL
@@ -24,5 +24,5 @@
 # # NO-GNN - Done
 # python src/experiments/train.py --dataset=comve --num_epochs=15 --no_gnn --no_train_nk
 
-# # NO-KNOWLEDGE
-python src/experiments/train.py --dataset=comve --num_epochs=5 --no_knowledge
+# # NO-KNOWLEDGE - Running
+# python src/experiments/train.py --dataset=comve --num_epochs=5 --no_knowledge

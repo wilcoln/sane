@@ -9,7 +9,7 @@
 # set number of GPUs
 #SBATCH --gres=gpu:1
 
-#SBATCH --partition=devel
+#SBATCH --partition=small
 
 # mail alert at start, end and abortion of execution
 #SBATCH --mail-type=ALL
@@ -17,14 +17,14 @@
 # send mail to this address
 #SBATCH --mail-user=wilfried.bounsi@cs.ox.ac.uk
 
-# # SANE - Done
-# input_dir='results/trainers/2022-08-30_16-08-51_582298_model=SANE_dataset=cose_num_epochs=15_batch_size=128_lr=5e-05_weight_decay=0.01_sent_dim=768_h'
-# python src/experiments/suite.py --dataset=cose --input_dir=$input_dir --chunk_size=5000
+# SANE - Done
+input_dir='results/trainers/2022-08-30_16-08-51_582298_model=SANE_dataset=cose_num_epochs=15_batch_size=128_lr=5e-05_weight_decay=0.01_sent_dim=768_h'
+python src/experiments/suite.py --dataset=cose --input_dir=$input_dir --chunk_size=5000
 
-# # NO-GNN - Done
-# input_dir='results/trainers/2022-08-30_15-15-19_607626_model=SANE_dataset=cose_num_epochs=15_batch_size=128_lr=5e-05_weight_decay=0.01_sent_dim=768_h'
-# python src/experiments/suite.py --dataset=cose --input_dir=$input_dir --chunk_size=5000
+# NO-GNN - Done
+input_dir='results/trainers/2022-08-30_15-15-19_607626_model=SANE_dataset=cose_num_epochs=15_batch_size=128_lr=5e-05_weight_decay=0.01_sent_dim=768_h'
+python src/experiments/suite.py --dataset=cose --input_dir=$input_dir --chunk_size=5000 --no_gnn
 
-# NO-KNOWLEDGE
-# input_dir='results/trainers/2022-08-30_14-22-00_605716_model=SANE_dataset=esnli_num_epochs=5_batch_size=64_lr=5e-05_weight_decay=0.01_sent_dim=768_hi'
-# python src/experiments/suite.py --input_dir=$input_dir
+# NO-KNOWLEDGE - Running
+input_dir='results/trainers/2022-08-31_16-33-03_673181_model=SANENoKnowledge_dataset=cose_num_epochs=15_batch_size=128_lr=5e-05_weight_decay=0.01_sen'
+python src/experiments/suite.py --dataset=cose --input_dir=$input_dir --chunk_size=5000 --no_knowledge
