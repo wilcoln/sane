@@ -36,7 +36,7 @@ def compute_auto_nle_scores(results_path):
     if num_refs == 3:
         refs = list(zip(get_explanations(1), get_explanations(2), get_explanations(3)))
     else:
-        refs = [get_explanations(1)]
+        refs = get_explanations(1)
 
     # Compute bert score
     (P, R, F), hashname = bert_score(candidates, refs, lang='en', return_hash=True)
