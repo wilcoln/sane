@@ -56,7 +56,7 @@ parser.add_argument('--use_science', action='store_true', help='Whether to use s
 settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
 setattr(settings, 'exp', {k: v for k, v in vars(settings).items() if k in [s[0] for s in _exp_settings] and v})
-
+setattr(settings, 'embed_suffix', '' if settings.bart_version == 'base' else '_large')
 # Print Experimental Settings
 print('*** Experimental Settings ***')
 for key, value in settings.exp.items():
