@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser()
 _exp_settings = [
     ('dataset', 'Dataset', str, 'esnli'),
     ('no_gnn', 'Disable GNN', bool, False),
+    ('bart_version', 'BART version', str, 'large'),
     ('num_epochs', 'Number of epochs', int, 5),
     ('batch_size', 'Batch size', int, 128),
     ('lr', 'Learning rate', float, 5e-5),

@@ -9,7 +9,7 @@ from src.utils.embeddings import frozen_bart_model
 class Explainer(nn.Module):
     def __init__(self):
         super().__init__()
-        self.model = BartWithKnowledgeForConditionalGeneration.from_pretrained("facebook/bart-base")
+        self.model = BartWithKnowledgeForConditionalGeneration.from_pretrained(f'facebook/bart-{settings.bart_version}')
 
     def forward(self, inputs, knowledge):
         # send tensors to gpu
@@ -23,7 +23,7 @@ class Explainer(nn.Module):
 class ExplainerNoKnowledge(nn.Module):
     def __init__(self):
         super().__init__()
-        self.model = BartForConditionalGeneration.from_pretrained("facebook/bart-base")
+        self.model = BartForConditionalGeneration.from_pretrained(f'facebook/bart-{settings.bart_version}')
 
     def forward(self, inputs):
         # send tensors to gpu
