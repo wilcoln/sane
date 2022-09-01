@@ -13,7 +13,7 @@ from src.settings import settings
 def compute_auto_nle_scores(results_path):
     # Check if results already exist
     txt_path = osp.join(results_path, f'auto_nle_eval.txt')
-    if osp.exists(txt_path):
+    if not settings.overwrite and osp.exists(txt_path):
         return
 
     # Load test results

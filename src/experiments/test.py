@@ -17,7 +17,7 @@ def test(model, results_path, dataloader):
     # Check if results already exist
     csv_path = osp.join(results_path, f'test_results.csv')
     txt_path = osp.join(results_path, f'test_stats.txt')
-    if osp.exists(csv_path) and osp.exists(txt_path):
+    if not settings.overwrite and osp.exists(csv_path) and osp.exists(txt_path):
         return
 
     sentences = []

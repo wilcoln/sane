@@ -29,7 +29,6 @@ def run_suite(results_path):
         # 3. Knowledge Attention Map
         print('Running knowledge attention map...')
         compute_knowledge_attention_map(model, results_path)
-        plot_knowledge_attention_map(results_path)
         # 4. Knowledge Indices
         print('Running knowledge indices...')
         # Load model

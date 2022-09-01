@@ -11,9 +11,15 @@ from src.settings import settings
 
 
 def compute_knowledge_indices(model, results_path, dataloader):
-    # run model
     pki_dict = {'relevance': [], 'contribution': []}
     eki_dict = {'relevance': [], 'contribution': []}
+
+    pdf_path, png_path = {}, {}
+    for index in pki_dict.keys():
+        pdf_path[index] = osp.join(results_path, f'knowledge_{index}_index.pdf')
+        png_path[index] = osp.join(results_path, f'knowledge_{index}_index.png')
+
+    # run model
     for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
         pred, nle, _, _ = model(inputs)
         for index in {'relevance', 'contribution'}:
@@ -45,8 +51,8 @@ def compute_knowledge_indices(model, results_path, dataloader):
         plt.legend(loc='upper right')
         plt.tight_layout()
         # Save the plot in the results directory
-        plt.savefig(osp.join(results_path, f'knowledge_{index}_index.pdf'))
-        plt.savefig(osp.join(results_path, f'knowledge_{index}_index.png'))
+        plt.savefig(pdf_path[index])
+        plt.savefig(png_path[index])
 
         # Print results dir
         print(f'Results saved to {results_path}')

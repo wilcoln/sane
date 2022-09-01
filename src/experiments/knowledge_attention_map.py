@@ -15,7 +15,7 @@ from src.utils.embeddings import frozen_bart_tokenizer
 def compute_knowledge_attention_map(model, results_path):
     # Check if results already exist
     csv_path = osp.join(results_path, f'knowledge_attention_map.csv')
-    if osp.exists(csv_path):
+    if not settings.overwrite and osp.exists(csv_path):
         return
 
     inputs = next(iter(get_loader('test', batch_size=5)))
@@ -36,12 +36,14 @@ def compute_knowledge_attention_map(model, results_path):
 
     settings.max_concepts_per_sentence = tmp  # Reset max concepts per sentence
 
+    plot_knowledge_attention_map(results_path)
+
 
 def plot_knowledge_attention_map(results_path):
     # Check if results already exist
     pdf_path = osp.join(results_path, 'knowledge_attention_map.pdf')
     png_path = osp.join(results_path, 'knowledge_attention_map.png')
-    if osp.exists(pdf_path) and osp.exists(png_path):
+    if not settings.overwrite and osp.exists(pdf_path) and osp.exists(png_path):
         return
 
     # Load attention maps
@@ -71,4 +73,3 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(osp.join(results_path, 'model.pt')))
     model.eval()
     compute_knowledge_attention_map(model, results_path)
-    plot_knowledge_attention_map(results_path)
