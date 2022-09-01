@@ -18,6 +18,10 @@
 # send mail to this address
 #SBATCH --mail-user=wilfried.bounsi@cs.ox.ac.uk
 
+# Get Auto NLE CACHE
+python src/utils/get_auto_nle_cache.py
+
+
 # # SANE - Done
 # python src/experiments/train.py --dataset=comve --num_epochs=15  --no_train_nk
 
