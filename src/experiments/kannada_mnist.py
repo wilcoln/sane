@@ -92,7 +92,7 @@ class SimpleSANE(nn.Module):
         r, k_tilde = self.g(x, k)
         rk_tilde = r * k_tilde
         x_tilde_plus = x_tilde + rk_tilde
-        yhat = self.f(F.relu(x_tilde_plus))
+        yhat = self.f(x_tilde_plus)
 
         # Compute kci
         ck = torch.norm(rk_tilde, dim=1) ** 2
