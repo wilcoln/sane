@@ -51,32 +51,32 @@ class Conceptnet:
             torch.save(self.pyg, pyg_path)
 
         # Concept Embeddings
-        dirname = f'concept_embedding{settings.embed_suffix}'
+        dirpath = osp.join(cn_dir, f'concept_embedding{settings.embed_suffix}')
         try:
-            concept_embedding = ChunkedList(n=len(self.concept_dict), dirpath=osp.join(cn_dir, dirname))
+            concept_embedding = ChunkedList(n=len(self.concept_dict), dirpath=dirpath)
         except FileNotFoundError:
             concept_embedding = ChunkedList(
                 lst=list(self.concept_dict.keys()),
                 num_chunks=math.ceil(len(self.concept_dict) / settings.chunk_size)
-            ).apply(lambda l: bart(l, verbose=True), dirpath=dirname)
+            ).apply(lambda l: bart(l, verbose=True), dirpath=dirpath)
 
         self.concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
         # corrupt concept embedding with knowledge noise
-        self.concept_embedding = corrupt(self.concept_embedding, settings.knowledge_noise_prop).detach()
+        self.concept_embedding = corrupt(self.concept_embedding, settings.knowledge_noise_prop).detach().cpu()
 
         # Relation Embeddings
-        dirname = f'relation_embedding{settings.embed_suffix}'
+        dirpath = osp.join(cn_dir, f'relation_embedding{settings.embed_suffix}')
         try:
-            relation_embedding = ChunkedList(n=len(self.relation_dict), dirpath=osp.join(cn_dir, dirname))
+            relation_embedding = ChunkedList(n=len(self.relation_dict), dirpath=dirpath)
         except FileNotFoundError:
             relation_embedding = ChunkedList(
                 lst=list(self.relation_dict.keys()),
                 num_chunks=math.ceil(len(self.relation_dict) / settings.chunk_size)
-            ).apply(lambda l: bart(l, verbose=True), dirpath=dirname)
+            ).apply(lambda l: bart(l, verbose=True), dirpath=dirpath)
 
         self.relation_embedding = torch.cat(relation_embedding.get_chunks(), dim=0)
         # corrupt relation embedding with knowledge noise
-        self.relation_embedding = corrupt(self.relation_embedding, settings.knowledge_noise_prop).detach()
+        self.relation_embedding = corrupt(self.relation_embedding, settings.knowledge_noise_prop).detach().cpu()
 
         # Add self loop
         self.self_loop, self.self_loop_id = 'IdenticalTo', -1

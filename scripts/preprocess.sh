@@ -21,6 +21,7 @@
 # run the application
 
 # python src/preprocessing/comve.py
-# python src/preprocessing/cose.py --chunk_size=5000
+# python src/preprocessing/cose.py --chunk_size=5000 --bart_version=large
 # python src/preprocessing/esnli.py --data_frac=.05
-python src/preprocessing/esnli.py
+# python src/preprocessing/esnli.py --bart_version=large
+# python src/preprocessing/comve.py --bart_version=large # --> Running

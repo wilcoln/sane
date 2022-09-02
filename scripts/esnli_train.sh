@@ -10,7 +10,7 @@
 #SBATCH --gres=gpu:1
 
 # Set partition
-#SBATCH --partition=devel
+#SBATCH --partition=small
 
 # mail alert at start, end and abortion of execution
 #SBATCH --mail-type=ALL
@@ -19,10 +19,21 @@
 #SBATCH --mail-user=wilfried.bounsi@cs.ox.ac.uk
 
 # # SANE - Running
-python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80  --no_train_nk
+# python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80  --no_train_nk
 
 # # NO-GNN - Done
 # python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80 --no_gnn --no_train_nk
 
 # # NO-KNOWLEDGE - Running
 # python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80 --no_knowledge
+
+# With Bart-Large
+
+# # SANE - Running
+python src/experiments/train.py --dataset=esnli --bart_version=large --num_epochs=5 --batch_size=64  --no_train_nk
+
+# # NO-GNN - Done
+# python src/experiments/train.py --dataset=esnli --bart_version=large --num_epochs=5 --batch_size=80 --no_gnn --no_train_nk
+
+# # NO-KNOWLEDGE - Running
+# python src/experiments/train.py --dataset=esnli --bart_version=large --num_epochs=5 --batch_size=80 --no_knowledge
