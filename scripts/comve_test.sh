@@ -22,9 +22,23 @@
 # python src/experiments/suite.py --dataset=comve --input_dir=$input_dir
 
 # NO-GNN - Done
-input_dir='results/trainers/2022-08-30_15-15-17_061483_model=SANE_dataset=comve_num_epochs=15_batch_size=128_lr=5e-05_weight_decay=0.01_sent_dim=768_'
-python src/experiments/suite.py --dataset=comve --input_dir=$input_dir --no_gnn
+# input_dir='results/trainers/2022-08-30_15-15-17_061483_model=SANE_dataset=comve_num_epochs=15_batch_size=128_lr=5e-05_weight_decay=0.01_sent_dim=768_'
+# python src/experiments/suite.py --dataset=comve --input_dir=$input_dir --no_gnn
 
 # NO-KNOWLEDGE - Running
 # input_dir='results/trainers/2022-08-31_16-46-33_830328_model=SANENoKnowledge_dataset=comve_num_epochs=5_batch_size=128_lr=5e-05_weight_decay=0.01_sen'
 # python src/experiments/suite.py --dataset=comve --input_dir=$input_dir --no_knowledge
+
+# With large
+
+# SANE - Done
+input_dir='results/trainers/2022-09-01_17-00-00_503397_model=SANE_dataset=comve_bart_version=large_num_epochs=15_batch_size=128_lr=5e-05_weight_decay'
+python src/experiments/suite.py --dataset=comve --bart_version=large --input_dir=$input_dir
+
+# NO-GNN - Done
+# input_dir='results/trainers/2022-08-30_15-15-17_061483_model=SANE_dataset=comve_num_epochs=15_batch_size=128_lr=5e-05_weight_decay=0.01_sent_dim=768_'
+# python src/experiments/suite.py --dataset=comve --bart_version=large --input_dir=$input_dir --no_gnn
+
+# NO-KNOWLEDGE - Running
+# input_dir='results/trainers/2022-08-31_16-46-33_830328_model=SANENoKnowledge_dataset=comve_num_epochs=5_batch_size=128_lr=5e-05_weight_decay=0.01_sen'
+# python src/experiments/suite.py --dataset=comve --bart_version=large --input_dir=$input_dir --no_knowledge

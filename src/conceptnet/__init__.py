@@ -62,7 +62,7 @@ class Conceptnet:
 
         self.concept_embedding = torch.cat(concept_embedding.get_chunks(), dim=0)
         # corrupt concept embedding with knowledge noise
-        self.concept_embedding = corrupt(self.concept_embedding, settings.knowledge_noise_prop).detach()
+        self.concept_embedding = corrupt(self.concept_embedding, settings.knowledge_noise_prop).detach().cpu()
 
         # Relation Embeddings
         dirpath = osp.join(cn_dir, f'relation_embedding{settings.embed_suffix}')
@@ -76,7 +76,7 @@ class Conceptnet:
 
         self.relation_embedding = torch.cat(relation_embedding.get_chunks(), dim=0)
         # corrupt relation embedding with knowledge noise
-        self.relation_embedding = corrupt(self.relation_embedding, settings.knowledge_noise_prop).detach()
+        self.relation_embedding = corrupt(self.relation_embedding, settings.knowledge_noise_prop).detach().cpu()
 
         # Add self loop
         self.self_loop, self.self_loop_id = 'IdenticalTo', -1

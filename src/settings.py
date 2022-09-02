@@ -15,7 +15,6 @@ _exp_settings = [
     ('lr', 'Learning rate', float, 5e-5),
     ('weight_decay', 'Weight Decay', float, 1e-2),
     ('no_train_nk', 'Train No Knowledge model', bool, False),
-    ('sent_dim', 'Sentence dimension', int, 768),  # Bart-base d_model = 768
     ('hidden_dim', 'Hidden dimension', int, 64),
     ('max_concepts_per_sent', 'Max concepts per sentence', int, 200),
     ('sentence_pool', 'Sentence pool', str, 'mean'),
@@ -57,6 +56,7 @@ settings, unknown = parser.parse_known_args()
 setattr(settings, 'device', torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
 setattr(settings, 'exp', {k: v for k, v in vars(settings).items() if k in [s[0] for s in _exp_settings] and v})
 setattr(settings, 'embed_suffix', '' if settings.bart_version == 'base' else '_large')
+setattr(settings, 'sent_dim', 768 if settings.bart_version == 'base' else 1024)
 # Print Experimental Settings
 print('*** Experimental Settings ***')
 for key, value in settings.exp.items():
