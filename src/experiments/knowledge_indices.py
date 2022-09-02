@@ -3,36 +3,30 @@ import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from tqdm import tqdm
 
 from src.datasets.nl import get_loader
 from src.models.sane import SANE
 from src.settings import settings
 
 
-def compute_knowledge_indices(model, results_path, dataloader):
-    pki_dict = {'relevance': [], 'contribution': []}
-    eki_dict = {'relevance': [], 'contribution': []}
+def compute_knowledge_indices(model, results_path, inputs):
+    kri_pdf_path = osp.join(results_path, f'knowledge_relevance_index.pdf')
+    kci_pdf_path = osp.join(results_path, f'knowledge_contribution_index.pdf')
 
-    pdf_path, png_path = {}, {}
-    for index in pki_dict.keys():
-        pdf_path[index] = osp.join(results_path, f'knowledge_{index}_index.pdf')
-        png_path[index] = osp.join(results_path, f'knowledge_{index}_index.png')
-
+    if not settings.overwrite and osp.exists(kri_pdf_path) and osp.exists(kci_pdf_path):
+        return
     # run model
-    for i, inputs in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
-        pred, nle, _, _ = model(inputs)
-        for index in {'relevance', 'contribution'}:
-            pki_dict[index].append(getattr(pred, f'knowledge_{index}'))
-            eki_dict[index].append(getattr(nle, f'knowledge_{index}'))
+    pred, nle, att_knwl, knwl = model(inputs)
+    for index in ['relevance', 'contribution']:
+        pdf_path = osp.join(results_path, f'knowledge_{index}_index.pdf')
+        png_path = osp.join(results_path, f'knowledge_{index}_index.png')
 
-    pki_dict = {k: torch.cat(v, dim=0) for k, v in pki_dict.items()}
-    eki_dict = {k: torch.cat(v, dim=0) for k, v in eki_dict.items()}
+        pki = getattr(pred, f'knowledge_{index}')
+        eki = getattr(nle, f'knowledge_{index}')
+        pki = pki.cpu().detach().numpy()
 
-    for index in {'relevance', 'contribution'}:
-        pki = pki_dict[index].cpu().detach().numpy()
-        eki_factor = 1 / eki_dict[index].shape[1]
-        eki = eki_dict[index].flatten().cpu().detach().numpy()
+        eki_factor = 1 / eki.shape[1]
+        eki = eki.flatten().cpu().detach().numpy()
 
         # Plot histogram of pki and eki
         if settings.use_science:
@@ -51,8 +45,8 @@ def compute_knowledge_indices(model, results_path, dataloader):
         plt.legend(loc='upper right')
         plt.tight_layout()
         # Save the plot in the results directory
-        plt.savefig(pdf_path[index])
-        plt.savefig(png_path[index])
+        plt.savefig(pdf_path)
+        plt.savefig(png_path)
 
         # Print results dir
         print(f'Results saved to {results_path}')
