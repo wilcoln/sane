@@ -1,5 +1,4 @@
 import torch.optim as optim
-from torch import nn
 
 from src.datasets.nl import get_loader
 from src.experiments.suite import run_suite
@@ -46,5 +45,4 @@ else:
 trainer.run()
 
 # Run experiments
-results_path = trainer.results_path
-run_suite(results_path)
+run_suite(trainer.results_path)

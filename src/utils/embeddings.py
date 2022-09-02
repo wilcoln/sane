@@ -56,7 +56,7 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
     batches = tqdm(batches, total=math.ceil(num_sentences / batch_size)) if verbose else batches
 
     for i, batch in enumerate(batches):
-        encoded_inputs = frozen_bart_tokenizer(batch, max_length=512, truncation=True, padding=True,
+        encoded_inputs = frozen_bart_tokenizer(batch, max_length=settings.max_length, truncation=True, padding=True,
                                                return_tensors='pt')
         encoded_inputs = {k: v.to(settings.device) for k, v in encoded_inputs.items()}
         model_outputs = frozen_bart_model(**encoded_inputs)
@@ -71,7 +71,8 @@ def bart(sentences: List[str], verbose: bool = False) -> torch.Tensor:
 
 
 def tokenize(sentence_list):
-    return frozen_bart_tokenizer(sentence_list, max_length=512, truncation=True, padding=True, return_tensors='pt')
+    return frozen_bart_tokenizer(sentence_list, max_length=settings.max_length, truncation=True, padding=True,
+                                 return_tensors='pt')
 
 
 def corrupt(tensor, noise_prop=None, sigma2=None):

@@ -17,6 +17,7 @@ _exp_settings = [
     ('no_train_nk', 'Train No Knowledge model', bool, False),
     ('hidden_dim', 'Hidden dimension', int, 64),
     ('max_concepts_per_sent', 'Max concepts per sentence', int, 200),
+    ('max_length', 'Max Number of tokens per sentence', int, 512),
     ('sentence_pool', 'Sentence pool', str, 'mean'),
     ('data_frac', 'Data fraction', float, 1.0),
     ('alpha', 'NLE loss weight in total loss', float, 0.4),
