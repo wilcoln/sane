@@ -39,12 +39,13 @@ class Encoder(nn.Module):
             x = self.gnn(x, edge_index, edge_attr)
 
         # Add self-loops
-        self_loop_index = torch.arange(len(nodes)).view(-1, 1).repeat(1, 2).T.to(settings.device)
-        edge_index = torch.hstack((edge_index, self_loop_index))
-        self_loop_attr = conceptnet.self_loop_embedding.repeat(len(nodes), 1)
-        self_loops = torch.Tensor([conceptnet.self_loop_id]).repeat(len(nodes))
-        edge_relation = torch.cat([edge_relation, self_loops])
-        edge_attr = torch.vstack((edge_attr, self_loop_attr))
+        if settings.self_loops:
+            self_loop_index = torch.arange(len(nodes)).view(-1, 1).repeat(1, 2).T.to(settings.device)
+            edge_index = torch.hstack((edge_index, self_loop_index))
+            self_loop_attr = conceptnet.self_loop_embedding.repeat(len(nodes), 1)
+            self_loops = torch.Tensor([conceptnet.self_loop_id]).repeat(len(nodes))
+            edge_relation = torch.cat([edge_relation, self_loops])
+            edge_attr = torch.vstack((edge_attr, self_loop_attr))
 
         # Convert to triples and project to sentence dimension
         encoded_triples = self.lin(singles_to_triples(x, edge_index, edge_attr))

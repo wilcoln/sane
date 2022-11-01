@@ -18,22 +18,17 @@
 # send mail to this address
 #SBATCH --mail-user=wilfried.bounsi@cs.ox.ac.uk
 
-# # SANE - Done
-# python src/experiments/train.py --dataset=comve --num_epochs=15  --no_train_nk
-
-# # NO-GNN - Done
-# python src/experiments/train.py --dataset=comve --num_epochs=15 --no_gnn --no_train_nk
-
-# # NO-KNOWLEDGE - Running
-# python src/experiments/train.py --dataset=comve --num_epochs=5 --no_knowledge
-
 # With Bart-Large
 
-# # SANE - Done
-python src/experiments/train.py --bart_version=large --dataset=comve --num_epochs=15  --no_train_nk --patience=15
+# # SANE 
+# with regret - running
+# python src/experiments/train.py --bart_version=large --dataset=comve --num_epochs=15 --patience=15 --batch_size=64
+
+# without regret - running
+# python src/experiments/train.py --bart_version=large --dataset=comve --num_epochs=15  --no_train_nk --patience=15
 
 # # NO-GNN - Done
-# python src/experiments/train.py --bart_version=large --dataset=comve --num_epochs=15 --no_gnn --no_train_nk
+# python src/experiments/train.py --bart_version=large --dataset=comve --num_epochs=15 --no_gnn --no_train_nk --patience=15
 
 # # NO-KNOWLEDGE - Running
-# python src/experiments/train.py --bart_version=large --dataset=comve --num_epochs=5 --no_knowledge
+# python src/experiments/train.py --bart_version=large --dataset=comve --num_epochs=15 --no_knowledge --patience=15

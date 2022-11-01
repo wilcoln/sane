@@ -1,4 +1,3 @@
-import nltk
 import evaluate
 from bert_score import score as bert_score
 from bleurt import score as bleurt_score
@@ -13,4 +12,4 @@ meteor.compute(predictions=candidates, references=refs)
 ic('load bleurt score cache')
 bleurt_scorer = bleurt_score.BleurtScorer()
 bleurt_scorer.score(candidates=candidates, references=refs)
-ic('load')
+ic('loaded')

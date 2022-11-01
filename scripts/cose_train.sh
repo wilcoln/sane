@@ -18,22 +18,15 @@
 # send mail to this address
 #SBATCH --mail-user=wilfried.bounsi@cs.ox.ac.uk
 
-# # SANE - Done
-# python src/experiments/train.py --dataset=cose --chunk_size=5000 --num_epochs=15  --no_train_nk
+# SANE - Running
+# with regret
+# python src/experiments/train.py --dataset=cose --bart_version=large --chunk_size=5000 --num_epochs=30 --batch_size=64 --patience=15
 
-# # NO-GNN - Done
-# python src/experiments/train.py --dataset=cose --chunk_size=5000 --num_epochs=15 --no_gnn --no_train_nk
-
-# # NO-KNOWLEDGE - Running
-# python src/experiments/train.py --dataset=cose --chunk_size=5000 --num_epochs=15 --no_knowledge
-
-# With Bart-Large
-
-# SANE - Done
-python src/experiments/train.py --dataset=cose --bart_version=large --chunk_size=5000 --num_epochs=15  --no_train_nk --batch_size=64
+# without regret
+python src/experiments/train.py --dataset=cose --bart_version=large --chunk_size=5000 --num_epochs=100  --no_train_nk --batch_size=64 --patience=15
 
 # NO-GNN - Done
-# python src/experiments/train.py --dataset=cose --bart_version=large --chunk_size=5000 --num_epochs=15 --no_gnn --no_train_nk --batch_size=64
+# python src/experiments/train.py --dataset=cose --bart_version=large --chunk_size=5000 --num_epochs=100 --no_gnn --no_train_nk --batch_size=64 --patience=15
 
 # NO-KNOWLEDGE - Running
-# python src/experiments/train.py --dataset=cose --bart_version=large --chunk_size=5000 --num_epochs=15 --no_knowledge --batch_size=64
+# python src/experiments/train.py --dataset=cose --bart_version=large --chunk_size=5000 --num_epochs=100 --no_knowledge --batch_size=64 --patience=15

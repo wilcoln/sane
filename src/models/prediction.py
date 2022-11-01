@@ -52,8 +52,8 @@ class Predictor(nn.Module):
         sent_embed = x_tilde + rk_tilde
 
         # Knowledge contribution
-        ck = torch.norm(rk_tilde, dim=1) ** 2
-        cx = torch.norm(x_tilde, dim=1) ** 2
+        ck = torch.norm(rk_tilde, dim=1)
+        cx = torch.norm(x_tilde, dim=1)
         c = ck / (ck + cx)
 
         # Prediction

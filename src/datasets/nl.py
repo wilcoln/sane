@@ -22,7 +22,7 @@ class NLDataset(Dataset):
     """
 
     def __init__(self, path: str = None, name: str = 'esnli', split: str = 'train', frac=1.0, chunk=0,
-                 data_dict=None):
+                 data_dict=None, keys: list = None):
         assert name in {'esnli', 'comve', 'cose'}, 'Dataset name not supported'
         if data_dict:
             self.nl = data_dict
@@ -40,16 +40,19 @@ class NLDataset(Dataset):
 
             # Load pickle file
             self.path = osp.join(path, f'{name}_{frac}')
-            keys = ['Sentences', 'Sentences_embedding', 'gold_label', 'Explanation_1']
+            if keys is not None:
+                _keys = keys
+            else:
+                _keys = ['Sentences', 'Sentences_embedding', 'gold_label', 'Explanation_1']
 
-            if not settings.no_knowledge:
-                keys += ['concept_ids']
+                if not settings.no_knowledge:
+                    _keys += ['concept_ids']
 
-            if split in {'val', 'test'}:
-                keys += ['Explanation_2', 'Explanation_3']
+                if split in {'val', 'test'}:
+                    _keys += ['Explanation_2', 'Explanation_3']
 
             self.nl = {}
-            for k in keys:
+            for k in _keys:
                 k_ = f'{k}{settings.embed_suffix}' if k.endswith('_embedding') else k
                 key_path = osp.join(self.path, f'{split}_{k_}', f'chunk{chunk}.pkl')
                 try:
@@ -124,7 +127,7 @@ def collate_fn(batch):
     return inputs
 
 
-def get_dataset(split: str, name: str):
+def get_dataset(split: str, name: str, keys: list = None):
     if name == 'esnli':
         og_sizes = {'train': 549367, 'val': 9842, 'test': 9824}
     elif name == 'comve':
@@ -138,7 +141,7 @@ def get_dataset(split: str, name: str):
     num_chunks = {split: math.ceil(new_size / settings.chunk_size) for split, new_size in new_sizes.items()}
 
     datasets = [
-        NLDataset(path=settings.data_dir, name=name, split=split, frac=settings.data_frac, chunk=chunk)
+        NLDataset(path=settings.data_dir, name=name, split=split, frac=settings.data_frac, chunk=chunk, keys=keys)
         for chunk in range(num_chunks[split])
     ]
     return ConcatDataset(datasets)

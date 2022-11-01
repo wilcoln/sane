@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 
 # set max wallclock time
-#SBATCH --time=5:00:00
+#SBATCH --time=72:00:00
 
 # set number of GPUs
 #SBATCH --gres=gpu:1
@@ -29,4 +29,4 @@
 # input_dir='results/trainers/2022-08-30_14-22-00_605716_model=SANE_dataset=esnli_num_epochs=5_batch_size=64_lr=5e-05_weight_decay=0.01_sent_dim=768_hi'
 # python src/experiments/suite.py --input_dir=$input_dir
 
-python src/experiments/kannada_mnist.py --no_knowledge --num_epochs=500 --num_runs=10 --batch_size=4096
+python src/experiments/kannada_mnist.py --no_knowledge --num_epochs=2000 --num_runs=20 --batch_size=4096 --lr=.01

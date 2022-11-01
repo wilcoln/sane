@@ -18,22 +18,15 @@
 # send mail to this address
 #SBATCH --mail-user=wilfried.bounsi@cs.ox.ac.uk
 
-# # SANE - Running
-# python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80  --no_train_nk
+# # SANE
+# with regret - running
+# python src/experiments/train.py --dataset=esnli --bart_version=large --num_epochs=5 --batch_size=16
 
-# # NO-GNN - Done
-# python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80 --no_gnn --no_train_nk
+# without regret - running
+python src/experiments/train.py --dataset=esnli --bart_version=large --num_epochs=10 --batch_size=32  --no_train_nk
 
-# # NO-KNOWLEDGE - Running
-# python src/experiments/train.py --dataset=esnli --num_epochs=5 --batch_size=80 --no_knowledge
-
-# With Bart-Large
-
-# # SANE - Running
-python src/experiments/train.py --dataset=esnli --bart_version=large --num_epochs=5 --batch_size=64  --no_train_nk
-
-# # NO-GNN - Done
+# # NO-GNN
 # python src/experiments/train.py --dataset=esnli --bart_version=large --num_epochs=5 --batch_size=80 --no_gnn --no_train_nk
 
-# # NO-KNOWLEDGE - Running
+# # NO-KNOWLEDGE
 # python src/experiments/train.py --dataset=esnli --bart_version=large --num_epochs=5 --batch_size=80 --no_knowledge

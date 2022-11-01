@@ -25,8 +25,9 @@ def compute_knowledge_indices(model, results_path, inputs):
         eki = getattr(nle, f'knowledge_{index}')
         pki = pki.cpu().detach().numpy()
 
-        eki_factor = 1 / eki.shape[1]
         eki = eki.flatten().cpu().detach().numpy()
+        
+        eki_factor = len(pki)/len(eki)
 
         # Plot histogram of pki and eki
         if settings.use_science:
@@ -37,7 +38,7 @@ def compute_knowledge_indices(model, results_path, inputs):
         e_label = f'NLE (Token) {abbr}'
         min_ = min(pki.min(), eki.min())
         max_ = max(pki.max(), eki.max())
-        bins = np.arange(0, 1.1, 1./60) if index == 'relevance' else np.linspace(min_, max_, 60)
+        bins = np.linspace(min_, max_, 60)
         plt.hist(pki, bins=bins, alpha=0.5, label=p_label, edgecolor='black', linewidth=1.)
         plt.hist(eki, bins=bins, alpha=0.5, weights=eki_factor*np.ones_like(eki), label=e_label,
                  edgecolor='black', linewidth=1.)

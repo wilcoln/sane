@@ -23,8 +23,8 @@ def run_suite(results_path):
     print('Running test...')
     test(model, results_path, dataloader)
     # 2. Auto NLE Evaluation
-    print('Running auto NLE evaluation...')
-    compute_auto_nle_scores(results_path)
+    # print('Running auto NLE evaluation...')
+    # compute_auto_nle_scores(results_path)
     if not settings.no_knowledge:
         # 3. Knowledge Attention Map
         print('Running knowledge attention map...')
@@ -32,7 +32,8 @@ def run_suite(results_path):
         # 4. Knowledge Indices
         print('Running knowledge indices...')
         # Load model
-        compute_knowledge_indices(model, results_path, dataloader)
+        inputs = next(iter(dataloader))
+        compute_knowledge_indices(model, results_path, inputs)
     print('Done.')
 
 

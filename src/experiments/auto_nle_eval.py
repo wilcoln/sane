@@ -1,14 +1,15 @@
+print('here')
 import os.path as osp
-
 import evaluate
+print('here')
 import pandas as pd
 import torch
+print('here')
 from bert_score import score as bert_score
 from bleurt import score as bleurt_score
-
-from src.datasets.nl import get_dataset
 from src.settings import settings
-
+from src.datasets.nl import get_dataset
+print('here')
 
 def compute_auto_nle_scores(results_path):
     # Check if results already exist
@@ -17,7 +18,7 @@ def compute_auto_nle_scores(results_path):
         return
 
     # Load test results
-    test_dataset = get_dataset('test', settings.dataset)
+    test_dataset = get_dataset('test', settings.dataset, keys=['Explanation_1', 'Explanation_2', 'Explanation_3'])
     test_results_df = pd.read_csv(osp.join(results_path, f'test_results.csv'))
 
     assert len(test_results_df) == len(

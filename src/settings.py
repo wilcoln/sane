@@ -28,6 +28,7 @@ _exp_settings = [
     ('knowledge_noise_prop', 'Knowledge Noise prop', float, 0.0),
     ('patience', 'Maximum num epochs with no progress on the val set', int, 3),
     ('num_runs', 'Number of runs', int, 10),
+    ('self_loops', 'Wheteher to include self loops', bool, True),
     ('desc', 'Additional description', str, None)
 ]
 for name, desc, type_, default in _exp_settings:

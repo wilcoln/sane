@@ -32,7 +32,7 @@ class TorchModuleBaseTrainer(ABC):
 
         self.results_path = None
         self.folder_name_dict = None
-        self.best_epoch = 0
+        self.best_epoch = None
         self.best_model_state_dict = None
         self.model = model
         self.optimizer = optimizer
@@ -80,7 +80,7 @@ class TorchModuleBaseTrainer(ABC):
 
         torch.save(self.best_model_state_dict, osp.join(self.results_path, 'model.pt'))
 
-    def run(self, val_metric='loss', less_is_more=True):
+    def run(self, val_metric='acc', less_is_more=False):
         if not settings.no_save:
             self.save_params_and_prepare_to_save_results()
 
@@ -97,8 +97,8 @@ class TorchModuleBaseTrainer(ABC):
             if self.are_best_results(epoch_results, f'val_{val_metric}', less_is_more):
                 # Save best model epoch & reset patience
                 self.best_epoch = epoch
-                self.best_model_state_dict = self.model.state_dict()
-                self.patience = self.params['patience']
+                self.best_model_state_dict = self.model.state_dict()  # save model state dict
+                self.patience = self.params['patience']  # reset patience
             else:
                 self.patience -= 1
 
@@ -134,7 +134,7 @@ class TorchModuleBaseTrainer(ABC):
         print(f'Epoch: {epoch:02d}, {epoch_results_str}')
 
     def are_best_results(self, epoch_results, val_metric_key, less_is_more):
-        if not self.best_epoch:
+        if self.best_epoch is None:
             return True
         if less_is_more:
             return self.results[self.best_epoch - 1][val_metric_key] >= epoch_results[val_metric_key]

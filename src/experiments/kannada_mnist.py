@@ -8,8 +8,8 @@ import torch
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from sklearn.datasets import fetch_california_housing
+from sklearn.decomposition import TruncatedSVD
 from torch import nn
-import torch.nn.functional as F
 from torch.utils.data import random_split
 from tqdm import tqdm
 
@@ -128,7 +128,12 @@ class Trainer(TorchModuleBaseTrainer):
 
         train = split == 'train' and (not settings.frozen)
 
-        self.model.train() if train else self.model.eval()
+        if train:
+            self.model.train()
+            self.model_nk.train()
+        else:
+            self.model.eval()
+            self.model_nk.eval()
 
         # Set split loss values
         split_loss = 0.0
@@ -226,7 +231,6 @@ class Trainer(TorchModuleBaseTrainer):
 
 if __name__ == '__main__':
     torch.manual_seed(0)
-
     settings.no_save = True
 
     params = {
@@ -234,7 +238,7 @@ if __name__ == '__main__':
         'num_runs': settings.num_runs,
         'train_size': 0.8,
         'batch_size': settings.batch_size,
-        'lr': 1e-2,
+        'lr': settings.lr,
         'input': 'pca',
         'patience': float('inf'),
     }
@@ -269,8 +273,9 @@ if __name__ == '__main__':
         if knowledge == 'gaussian':
             k = torch.randn_like(x)
         elif knowledge == 'confusing':
-            housing = fetch_california_housing().data
-            k = torch.from_numpy(housing[:x.shape[0]]).float()
+            housing = fetch_california_housing().data[:x.shape[0]]
+            housing2d = TruncatedSVD(n_components=2).fit_transform(housing)
+            k = torch.from_numpy(housing2d).float()
         else:
             k = x_k[:, _slice[knowledge]]
 
@@ -292,14 +297,15 @@ if __name__ == '__main__':
         h_dim = x_dim
 
         run_results = []
-        for _ in range(params['num_runs']):
+        for num_run in range(params['num_runs']):
             # Create the models
+            # torch.manual_seed(num_run)
             model = SimpleSANE(x_dim, k_dim, y_dim, h_dim).to(settings.device)
             model_nk = SimpleSANENoKnowledge(x_dim, k_dim, y_dim, h_dim).to(settings.device)
 
             # Create the optimizers
-            optimizer = torch.optim.Adam(model.parameters(), lr=params['lr'])
-            optimizer_nk = torch.optim.Adam(model_nk.parameters(), lr=params['lr'])
+            optimizer = torch.optim.AdamW(model.parameters(), lr=params['lr'])
+            optimizer_nk = torch.optim.AdamW(model_nk.parameters(), lr=params['lr'])
 
             # Create the loss functions
             loss_fn = nn.CrossEntropyLoss(reduction='none')
@@ -349,7 +355,7 @@ if __name__ == '__main__':
     suffix_style_map = {'': 'solid', '_nk': 'dashed'}
     suffix_legend_map = {
         '': '$f\circ(h + g_1\cdot g_2)$' if settings.use_science else 'S',
-        '_nk': '$p$' if  settings.use_science else 'P'
+        '_nk': '$p$' if settings.use_science else 'P'
     }
     knowledge_color_map = {knowledge: plt.get_cmap('tab10')(i) for i, knowledge in enumerate(knowledge_list)}
     x = range(params['num_epochs'])

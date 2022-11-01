@@ -23,7 +23,7 @@ class BartWithKnowledgeModel(BartModel):
             nn.Linear(self.config.d_model, 1),
             nn.Sigmoid()
         )
-        self.sent_id = None
+        self.sent_id = 0
 
     def forward(
             self,
@@ -87,14 +87,11 @@ class BartWithKnowledgeModel(BartModel):
 
         # Fuse knowledge and encoder transformed outputs
         encoder_last_hidden_state = encoder_outputs.last_hidden_state
-        n = encoder_last_hidden_state.shape[0]
         m = encoder_outputs.last_hidden_state.shape[1]
-        if n == init_input_embeds.shape[0]:  # training (batch-level)
-            self.sent_id = -1
-        else:  # text generation (sentence-level)
-            self.sent_id += 1
+        if not self.training:
             knowledge_embedding = knowledge_embedding[self.sent_id].view(1, -1)
             init_input_embeds = torch.unsqueeze(init_input_embeds[self.sent_id], dim=0)
+            self.sent_id = (self.sent_id + 1) % len(knowledge_embedding)
 
         knowledge_embedding = torch.unsqueeze(knowledge_embedding, dim=1).repeat(1, m, 1)
         input_fusion_head = torch.cat([init_input_embeds, knowledge_embedding], dim=2)
@@ -107,8 +104,8 @@ class BartWithKnowledgeModel(BartModel):
         encoder_last_hidden_state += rk_tilde
 
         # Knowledge contribution
-        ck = torch.norm(rk_tilde, dim=2) ** 2
-        cx = torch.norm(encoder_outputs.last_hidden_state, dim=2) ** 2
+        ck = torch.norm(rk_tilde, dim=2)
+        cx = torch.norm(encoder_outputs.last_hidden_state, dim=2)
         c = ck / (ck + cx)
 
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
